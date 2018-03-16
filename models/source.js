@@ -1,5 +1,9 @@
 'use strict';
 
+
+/*
+allow for firstname and lastname of sources made by the system to be null (ex: CNN)
+*/
 function allowNullforSystemMade(value, field, systemMade) {
 
     if (systemMade != 1 && !value) {

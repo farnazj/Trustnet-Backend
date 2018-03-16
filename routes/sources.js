@@ -1,52 +1,110 @@
-var models  = require('../models');
 var express = require('express');
 var router = express.Router();
+var models  = require('../models');
+var routeHelpers = require('../helpers/routeHelpers');
 
 
-function getSpecifictions(req_fields){
+router.route('/sources')
 
-  let specifications = {};
-  for (let key of Object.keys(req_fields)){
-    specifications[key] = req_fields[key];
-  }
-  return specifications
-}
+.get(function(req, res){
+  let offset_ = req.body.offset;
+  let limit_ = req.body.limit_;
 
+  models.Source.findAndCountAll({
+    offset: offset_,
+    limit: limit_
+   }).then( result => {
+    res.send(result); //result.count, result.rows
+  }).catch(err => {
+    res.send(err);
+  });
+})
+.post(function(req, res) {
 
-router.post('/create', function(req, res) {
-
-  let sourceSpecs = getSpecifictions(req.body);
+  let sourceSpecs = routeHelpers.getSpecifictions(req.body);
 
   models.Source.create(sourceSpecs).then(function() {
     res.redirect('/');
-  }).catch(function(err){
-    console.log(err);
+  }).catch(err => {
     res.send(err);
   });
 });
 
 
-router.delete('/:source_id/destroy', function(req, res) {
+router.route('/sources/:username')
+
+.get(function(req, res){
+
+  models.Source.findOne({where: {userName: req.params.username}}
+  ).then(result =>{
+    res.send(result);
+  }).catch(err => res.send(err));
+})
+
+.delete(function(req, res) {
+
   models.Source.destroy({
     where: {
-      id: req.params.source_id
+      userName: req.params.username
     }
-  }).then(function() {
+  }).then(result => {
     res.redirect('/');
-  }).catch(function(err){
+  }).catch(err => {
+    res.send(err);
+  });
+})
+
+.put(function(req, res) {
+
+  let sourceSpecs = routeHelpers.getSpecifictions(req.body);
+
+  models.Source.update(
+
+    sourceSpecs,
+    {where: {userName: req.params.username} }
+  ).then(result => {
+    res.send(result);
+  }).catch(err => {
     res.send(err);
   });
 });
 
 
-router.post('/:source_id/posts/initiate', function (req, res) {
-  let postSpecs = getSpecifictions(req.body);
-  postSpecs.SourceId = req.params.source_id;
+router.route('/sources/:username/posts')
 
-  models.Post.create(postSpecs).then(function() {
-    res.redirect('/');
+.get(function(req, res){
+
+  let offset_ = req.body.offset;
+  let limit_ = req.body.limit_;
+
+  models.Source.findOne( {where: {userName: req.params.username }}
+  ).then(source => {
+     return models.Post.findAndCountAll({ where: {SourceId: source.id},
+      offset: offset_,
+      limit: limit_
+    })
+  }).then( result => {
+    res.send(result); //result.count, result.rows
+  }).catch(err => {
+    res.send(err);
   });
-});
+})
+
+
+// .post(function(req, res){
+//   let postSpecs = routeHelpers.getSpecifictions(req.body);
+//
+//   models.Source.findOne( {where: {userName: req.params.username }}
+//   ).then(source => {
+//     postSpecs.SourceId = source.id;
+//     return models.Post.create(postSpecs);
+//
+//   }).then( result => {
+//     res.redirect('/');
+//   }).catch(err => {
+//     res.send(err);
+//   });
+// });
 
 
 module.exports = router;
