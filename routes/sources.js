@@ -59,9 +59,8 @@ router.route('/sources/:username')
   let sourceSpecs = routeHelpers.getSpecifictions(req.body);
 
   models.Source.update(
-
     sourceSpecs,
-    {where: {userName: req.params.username} }
+    { where: {userName: req.params.username} }
   ).then(result => {
     res.send(result);
   }).catch(err => {

@@ -2,12 +2,18 @@
 
 
 /*
+The defaultValue = '' is a workaround to Sequelize's bug that skips custom validation when
+the provided value is undefined or null. It
+*/
+
+
+/*
 allow for firstname and lastname of sources made by the system to be null (ex: CNN)
 */
-function allowNullforSystemMade(value, field, systemMade) {
+function allowNullforSystemMade(value, systemMade, field) {
 
     if (systemMade != 1 && !value) {
-      throw new Error( field, ' should be defined!')
+      throw new Error( field, ' should be defined!');
       }
     }
 
@@ -18,17 +24,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     firstName: {
       type: DataTypes.STRING,
+      defaultValue: '',
       validate: {
         function(value){
-          allowNullforSystemMade(value, this.systemMade);
+          allowNullforSystemMade(value, this.systemMade, "firstName");
         }
       }
     },
     lastName: {
       type: DataTypes.STRING,
+      defaultValue: '',
       validate: {
         function(value){
-          allowNullforSystemMade(value, this.systemMade);
+          allowNullforSystemMade(value, this.systemMade, "lastName");
         }
       }
     },
@@ -36,12 +44,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
+    passwordHash: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
     email: {
         type: DataTypes.STRING,
+        defaultValue: '',
         validate: {
           isEmail: true,
           function(value){
-            allowNullforSystemMade(value, this.systemMade);
+            allowNullforSystemMade(value, this.systemMade, "email");
           }
         }
     },
