@@ -3,7 +3,6 @@ var LocalStrategy = require('passport-local').Strategy;
 var models = require('../../models');
 
 
-
 module.exports = function(passport) {
 
     var User = models.Source;
@@ -14,7 +13,7 @@ module.exports = function(passport) {
         function(req, username, password, done) {
 
             var generateHash = function(password) {
-                return bCrypt.hashSync(password, bCrypt.genSaltSync(8), null);
+                return bCrypt.hash(password, bCrypt.genSaltSync(8), null); // a promise
             };
 
             User.findOne({
@@ -43,7 +42,8 @@ module.exports = function(passport) {
                          });
                       }
                       else {
-                        var userPassword = generateHash(password);
+                        generateHash(password).then((userPassword) => {
+
                         var data =
                             {
                               firstName: req.body.firstname,
@@ -69,6 +69,8 @@ module.exports = function(passport) {
                           }).catch(function(reason){
                               return done(null, false, { message: reason });
                           });
+
+                        });
                       }
 
                    });
@@ -84,26 +86,51 @@ module.exports = function(passport) {
     ));
 
     passport.serializeUser(function(user, done) {
-
       done(null, user.id);
 
     });
 
     passport.deserializeUser(function(id, done) {
-
       User.findById(id).then(function(user) {
 
           if (user) {
-
               done(null, user.get());
-
-          } else {
-
+          }
+          else {
               done(user.errors, null);
-
           }
 
       });
 
   });
-}
+
+
+  passport.use('local-login', new LocalStrategy({
+        passReqToCallback : true
+    },
+    function(req, username, password, done) {
+
+        User.findOne({where: {userName: username}}).then(function(user){
+
+          // if no user is found, return the message
+          if (!user)
+              return done(null, false, req.flash('loginMessage', 'No user found.'));
+
+          bCrypt.compare(password, user.passwordHash, (err, isValid) => {
+
+               if (err) {
+                 return done(err)
+               }
+               if (!isValid) {
+                 return done(null, false);
+               }
+               return done(null, user)
+             })
+
+        }).catch(function(err){
+          return done(err);
+        });
+
+    }));
+
+  };

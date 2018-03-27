@@ -50,16 +50,7 @@ app.use(passport.session());
  });
 
 
-console.log("inja", models.Source);
  require('./config/passport/passport.js')(passport);
-
-//bootstrap api
-// var apiPath = path.join(__dirname, 'api');
-// fs.readdirSync(apiPath).forEach(function(file){
-//   console.log("hello");
-//   console.log(apiPath + '/' + file);
-//   app.use('/api', require(apiPath + '/' + file));
-// });
 
 
 // catch 404 and forward to error handler

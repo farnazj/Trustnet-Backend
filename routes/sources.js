@@ -54,7 +54,7 @@ router.route('/sources/:username')
   });
 })
 
-.put(function(req, res) {
+.put(routeHelpers.isLoggedIn, function(req, res) {
 
   let sourceSpecs = routeHelpers.getSpecifictions(req.body);
 
@@ -88,22 +88,6 @@ router.route('/sources/:username/posts')
     res.send(err);
   });
 })
-
-
-// .post(function(req, res){
-//   let postSpecs = routeHelpers.getSpecifictions(req.body);
-//
-//   models.Source.findOne( {where: {userName: req.params.username }}
-//   ).then(source => {
-//     postSpecs.SourceId = source.id;
-//     return models.Post.create(postSpecs);
-//
-//   }).then( result => {
-//     res.redirect('/');
-//   }).catch(err => {
-//     res.send(err);
-//   });
-// });
 
 
 module.exports = router;

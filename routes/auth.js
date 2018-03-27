@@ -6,6 +6,14 @@ const passport = require('passport');
 
 var authController = require('../controllers/authcontroller.js');
 
+
+router.route('/login')
+.post(passport.authenticate('local-login', {
+    successRedirect : '/',
+    failureRedirect : '/login',
+    failureFlash : true
+}));
+
 router.route('/signup')
 
 .get( authController.signup)
