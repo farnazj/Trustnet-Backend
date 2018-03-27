@@ -73,11 +73,10 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.hasMany(models.Post, {as: 'InitiatedPosts'});
     models.Source.hasMany(models.Assessment, {as: 'SourceAssessments'});
 
-
-    models.Source.belongsToMany(models.Source, { as: 'Trustee', through: 'SourceTrustee' });
-    models.Source.belongsToMany(models.Source, { as: 'Followee', through: 'SourceFollowee' });
-    models.Source.belongsToMany(models.Source, { as: 'Mutee', through: 'SourceMutee' });
-    models.Source.belongsToMany(models.Source, { as: 'Blockee', through: 'SourceBlockee' });
+    models.Source.belongsToMany(models.Source, { as: 'Trusteds', through: 'SourceTrusteds' });
+    models.Source.belongsToMany(models.Source, { as: 'Follows', through: 'SourceFollows' });
+    models.Source.belongsToMany(models.Source, { as: 'Mutes', through: 'SourceMutes' });
+    models.Source.belongsToMany(models.Source, { as: 'Blocks', through: 'SourceBlocks' });
 };
 
 
