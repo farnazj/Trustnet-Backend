@@ -115,7 +115,7 @@ router.route('/mutes')
   models.Source.findById(req.user.id)
   .then(user => {
     return user.getMutes();
-  }).send(result => {
+  }).then(result => {
     res.send(result)
   }).catch(err => {
     res.send(err);
@@ -132,8 +132,8 @@ router.route('/mutes')
   Promise.all([source_user, muted_user])
   .then(sources => {
     return sources[0].addMute(sources[1]);
-  }).then(res =>{
-    res.send(res);
+  }).then(result =>{
+    res.send(result);
   }).catch(err => {
     res.send(err);
   });
@@ -165,7 +165,7 @@ router.route('/trusts')
   models.Source.findById(req.user.id)
   .then(user => {
     return user.getTrusteds();
-  }).send(result => {
+  }).then(result => {
     res.send(result)
   }).catch(err => {
     res.send(err);
@@ -182,8 +182,8 @@ router.route('/trusts')
   Promise.all([source_user, trusted_user])
   .then(sources => {
     return sources[0].addTrusted(sources[1]);
-  }).then(res =>{
-    res.send(res);
+  }).then(result =>{
+    res.send(result);
   }).catch(err => {
     res.send(err);
   });
@@ -198,8 +198,8 @@ router.route('/trusts')
   Promise.all([source_user, trusted_user])
   .then(sources => {
     return sources[0].removeTrusted(sources[1]);
-  }).then(res => {
-    res.send(res);
+  }).then(result => {
+    res.send(result);
   }).catch(err => {
     res.send(err)
   });

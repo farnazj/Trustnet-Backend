@@ -6,10 +6,16 @@ var router = express.Router();
 
 
 router.get('/', routeHelpers.isLoggedIn, function(req, res, next) {
-  // console.log(req.user);
-  // models.Source.findOne(req.user).then( user => {
-  //   user.getTrusteds();
-  // })
+
+      models.Source.findById(req.user.id).then( user => {
+        return user.getTrusteds();
+      }).then(trusteds => {
+        trusteds.map(el => {
+          console.log(el.rssfeed)
+        })
+
+      })
+
 
   res.render('index', { title: 'Express' });
 });
