@@ -2,8 +2,9 @@
 
 
 /*
-The defaultValue = '' is a workaround to Sequelize's bug that skips custom validation when
-the provided value is undefined or null. It
+The defaultValue = '' is a workaround to Sequelize's restriction that skips custom validation when
+the provided value is undefined or null. For this workaround to work, the passed value needs to be
+null.
 */
 
 
@@ -66,10 +67,9 @@ module.exports = (sequelize, DataTypes) => {
   });
 
 
-
   Source.associate = function (models) {
 
-    models.Source.belongsToMany(models.Post, { through: 'SourcePostBoosts' });
+    models.Source.belongsToMany(models.Post, {as: 'PostBoosts', through: 'SourcePostBoosts' });
     models.Source.hasMany(models.Post, {as: 'InitiatedPosts'});
     models.Source.hasMany(models.Assessment, {as: 'SourceAssessments'});
 
