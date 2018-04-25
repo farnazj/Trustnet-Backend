@@ -14,10 +14,9 @@ router.route('/login')
     failureFlash : true
 }));
 
+
 router.route('/signup')
-
 .get( authController.signup)
-
 .post( passport.authenticate('local-signup', {
         successRedirect: '/',
         failureRedirect: '/signup',

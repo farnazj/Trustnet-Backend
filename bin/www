@@ -11,7 +11,6 @@ var models = require("../models");
 var registerMedia = require('../registerNewsMedia');
 
 
-
 /**
  * Get port from environment and store in Express.
  */
@@ -31,6 +30,7 @@ var server = http.createServer(app);
 
 
  models.sequelize.sync().then(function () {
+
    registerMedia(); //async
    server.listen(port);
    server.on('error', onError);

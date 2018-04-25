@@ -8,9 +8,11 @@
   "dependencies": {
     "bcrypt": "^1.0.3",
     "body-parser": "~1.18.2",
+    "connect-flash": "^0.1.1",
     "connect-redis": "^3.3.3",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
+    "dotenv": "^5.0.1",
     "express": "~4.15.5",
     "express-session": "^1.15.6",
     "jade": "~1.11.0",

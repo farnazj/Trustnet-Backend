@@ -67,18 +67,23 @@ module.exports = function(passport) {
                               }
 
                           }).catch(function(reason){
-                              return done(null, false, { message: reason });
+                              return done(null, false, {message: reason});
                           });
 
+                        }).catch(function(reason){
+                            return done(null, false, {message: reason});
                         });
                       }
 
+                   }).catch(function(reason){
+                       return done(null, false, {message: reason});
                    });
-
 
 
                 }
 
+            }).catch(function(reason){
+                return done(null, false, {message: reason});
             });
 
         }
@@ -124,7 +129,7 @@ module.exports = function(passport) {
                if (!isValid) {
                  return done(null, false);
                }
-               return done(null, user)
+               return done(null, user);
              })
 
         }).catch(function(err){
