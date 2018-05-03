@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var models  = require('../models');
 const passport = require('passport');
+var routeHelpers = require('../helpers/routeHelpers');
 
 
 var authController = require('../controllers/authcontroller.js');
@@ -14,6 +15,11 @@ router.route('/login')
     failureFlash : true
 }));
 
+router.route('/logout')
+.post(routeHelpers.isLoggedIn, function(req, res){
+  req.logout();
+  res.redirect('/login');
+});
 
 router.route('/signup')
 .get( authController.signup)
