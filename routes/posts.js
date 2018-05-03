@@ -68,7 +68,7 @@ router.route('/posts/boosts')
 
     let post_assessment_promises = [];
     unique_post_boosts.map(post_booster => {
-       post_assessment_promises.push(post_booster[0].getPostAssessments({where: {SourceId: {[Op.contains]: cred_source_ids }}}));
+       post_assessment_promises.push(post_booster[0].getPostAssessments({where: {SourceId: {[Op.in]: cred_source_ids }}}));
       })
 
     let post_assessments = await Promise.all(post_assessment_promises);
@@ -78,20 +78,20 @@ router.route('/posts/boosts')
     //each array is of the form: [ [ [post, [booster_sources]], [assessments]], ... ]
     //all also contains posts with no assessments
 
-    for (let i = 0 ; i < posts_assessments.length ; i++){
-       let credibility = posts_assessments[i].map(assessment => assessment.postCredibility);
+    for (let i = 0 ; i < post_assessments.length ; i++){
+       let credibility = post_assessments[i].map(assessment => assessment.postCredibility);
 
-       if (crediblity.length) {
+       if (credibility.length) {
 
          if (credibility.every(function(value){return value == 1 }))
-           confirmed.push([unique_post_boosts[i], posts_assessments[i]]);
+           confirmed.push([unique_post_boosts[i], post_assessments[i]]);
          else if (credibility.every(function(value){return value == 0 }))
-           refuted.push([unique_post_boosts[i], posts_assessments[i]]);
+           refuted.push([unique_post_boosts[i], post_assessments[i]]);
          else
-           debated.push([unique_post_boosts[i], posts_assessments[i]]);
+           debated.push([unique_post_boosts[i], post_assessments[i]]);
        }
 
-       all.push([unique_post_boosts, posts_assessments[i]]);
+       all.push([unique_post_boosts, post_assessments[i]]);
 
      }
 

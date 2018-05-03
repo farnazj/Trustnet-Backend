@@ -67,6 +67,13 @@ module.exports = (sequelize, DataTypes) => {
   });
 
 
+  Source.prototype.toJSON =  function () {
+    var values = Object.assign({}, this.get());
+
+    delete values.passwordHash;
+    return values;
+  }
+
   Source.associate = function (models) {
 
     models.Source.belongsToMany(models.Post, {as: 'PostBoosts', through: 'SourcePostBoosts' });
