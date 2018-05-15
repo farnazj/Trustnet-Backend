@@ -2,18 +2,25 @@
 
 module.exports = (sequelize, DataTypes) => {
   const Post = sequelize.define('Post', {
-    title: DataTypes.STRING,
-    body: DataTypes.STRING,
-    version: DataTypes.INTEGER,
+    title: DataTypes.TEXT('long'),
+    description: DataTypes.TEXT('long'),
+    body: DataTypes.TEXT('long'),
+    version: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1
+    },
     url:{
        type: DataTypes.STRING,
        validate:{
           isUrl: true
        }
-     }
-  
-
-
+     },
+     image: {
+        type: DataTypes.STRING,
+        validate:{
+           isUrl: true
+        }
+      }
   });
 
   Post.associate = function (models) {

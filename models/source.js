@@ -16,7 +16,7 @@ function allowNullforSystemMade(value, systemMade, field) {
     if (systemMade != 1 && !value) {
       throw new Error( field, ' should be defined!');
       }
-    }
+}
 
 module.exports = (sequelize, DataTypes) => {
   const Source = sequelize.define('Source', {
@@ -58,12 +58,13 @@ module.exports = (sequelize, DataTypes) => {
             allowNullforSystemMade(value, this.systemMade, "email");
           }
         }
-    },
-
-    rssfeed: {
-      type: DataTypes.STRING,
-      isUrl: true
-    }
+      }
+    //,
+    //
+    // rssfeed: {
+    //   type: DataTypes.STRING,
+    //   isUrl: true
+    // }
   });
 
 
@@ -71,6 +72,11 @@ module.exports = (sequelize, DataTypes) => {
     var values = Object.assign({}, this.get());
 
     delete values.passwordHash;
+    delete values.SourceTrusteds;
+    delete values.SourceFollows;
+    delete values.SourceMutes;
+    delete values.SourceBlocks;
+
     return values;
   }
 
@@ -79,6 +85,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.belongsToMany(models.Post, {as: 'PostBoosts', through: 'SourcePostBoosts' });
     models.Source.hasMany(models.Post, {as: 'InitiatedPosts'});
     models.Source.hasMany(models.Assessment, {as: 'SourceAssessments'});
+    models.Source.hasMany(models.Feed, {as: 'SourceFeeds'});
 
     models.Source.belongsToMany(models.Source, { as: 'Trusteds', through: 'SourceTrusteds' });
     models.Source.belongsToMany(models.Source, { as: 'Follows', through: 'SourceFollows' });

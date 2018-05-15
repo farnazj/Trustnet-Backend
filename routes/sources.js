@@ -41,7 +41,7 @@ router.route('/sources/:username')
   }).catch(err => res.send(err));
 })
 
-.delete(function(req, res) {
+.delete(routeHelpers.isLoggedIn, function(req, res) {
 
   models.Source.destroy({
     where: {

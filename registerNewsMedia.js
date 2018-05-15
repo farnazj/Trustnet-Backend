@@ -13,24 +13,25 @@ var media = [
   {userName: 'CNN',
   rssfeed: 'http://rss.cnn.com/rss/cnn_allpolitics.rss'},
   {userName: 'FOX News',
-  rssfeed: 'http://http://feeds.foxnews.com/foxnews/sports'},
+  rssfeed: 'http://feeds.foxnews.com/foxnews/sports.rss'},
 ]
 
-module.exports = function(){
+module.exports =  function(){
 
   generateHash(process.env.ADMIN_KEY).then((entityPassword) => {
 
-    let media_sources = media.map(el => models.Source.findOne({where:{
+    let media_sources = media.map(el => models.Feed.findOne({where:{
       rssfeed: el.rssfeed,
-    }}).then(source => {
-      if (!source){
-         models.Source.findOrCreate({where:{
+    }}).then(async feed => {
+      if (!feed){
+        let rss_feed = await models.Feed.create({rssfeed: el.rssfeed});
+        let source = await models.Source.create({
           systemMade: true,
           userName: el.userName,
-          rssfeed: el.rssfeed,
           passwordHash: entityPassword,
           email: null
-        }})
+        });
+        return source.addSourceFeed(rss_feed);
       }
     }));
 
