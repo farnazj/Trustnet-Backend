@@ -65,7 +65,9 @@ module.exports = (sequelize, DataTypes) => {
     //   type: DataTypes.STRING,
     //   isUrl: true
     // }
-  });
+  }, {
+  timestamps: false
+});
 
 
   Source.prototype.toJSON =  function () {

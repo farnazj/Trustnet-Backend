@@ -1,20 +1,40 @@
 const ogs = require('open-graph-scraper');
 const FeedParser = require('feedparser');
 const axios = require('axios');
+var moment = require('moment');
 var models = require('../models');
+var routeHelpers = require('./routeHelpers');
 
 
-async function checkFeedUpdate(url){
+async function checkFeedUpdate(feed){
+  //if two hours have passed since last time
+  if ((Date.now() - feed.lastUpdated)/3600*1000 > 2) {
 
+    const res = await axios({
+      method:'get',
+      url: feed.rssfeed,
+      responseType:'stream',
+      headers: {
+        'If-Modified-Since': feed.lastUpdated
+      }
+    });
+
+  }
 }
 
-async function getFeed(url) {
+
+async function getFeed(feed) {
 
   const res = await axios({
     method:'get',
-    url:url,
-    responseType:'stream'
+    url: feed.rssfeed,
+    responseType:'stream',
+    headers: {
+      'If-Modified-Since': feed.lastUpdated ? feed.lastUpdated.toString() : (new Date(0)).toString()
+    }
   });
+
+  feed.update({lastUpdated: moment()});
 
   const feedparser = new FeedParser();
   return [res.data.pipe(feedparser), feedparser];
@@ -42,10 +62,9 @@ async function readFeedStream([stream, feedparser]) {
 
     feedparser.on('error', function (error) {
       reject(error);
-   });
+    });
   })
 }
-
 
 
 async function getOGPArticle(article){
@@ -65,14 +84,14 @@ async function getOGPArticle(article){
 
 async function updateRSSPosts(feeds, source_ids){
 
-  let urls = feeds.map(feed => {return feed.rssfeed});
+  //let urls = feeds.map(feed => {return feed.rssfeed});
 
   let stream_proms = [], post_proms = [], post_boost_proms = [];
   let feed_lookup = [], source_id_lookup = [];
 
-  return new Promise( async (resolve, reject) => {
+  return new Promise( (resolve, reject) => {
 
-    urls.forEach(url => stream_proms.push(getFeed(url)
+    feeds.forEach(feed => stream_proms.push(getFeed(feed)
     .then(readFeedStream)
     .catch(err => {
       console.log("1st", err);
@@ -90,45 +109,47 @@ async function updateRSSPosts(feeds, source_ids){
 
         articles_in_feed.forEach(article => {
           ogp_promises.push(getOGPArticle(article.link));
-          feed_lookup.push(feeds[i]);
           source_id_lookup.push(source_ids[i]);
          });
+       //feeds[i].update({lastUpdated: Date.now()});
       }
 
-      let ogp_articles = await Promise.all(ogp_promises);
+      let ogp_articles = await Promise.all(ogp_promises.map(p => p.catch(() => undefined)));
 
       for (let i = 0 ; i < ogp_articles.length ; i++){
         let article = ogp_articles[i];
 
-        let create_post_prom = models.Post.create({
-          title: article.data.ogTitle,
-          description: article.data.ogDescription,
-          url: article.data.ogUrl,
-          image: article.data.ogImage.url
-        }).then(async post => {
-          let source = await models.Source.findById(source_id_lookup[i]);
-          post_boost_proms.push(source.addInitiatedPost(post));
-          feed_lookup[i].update({lastUpdated: Date.now()});
+        if (article != undefined) {
 
-        }).catch( err => {
-          console.log("2nd", err);
-        });
-        post_proms.push(create_post_prom);
+          let create_post_prom = models.Post.create({
+            title: article.data.ogTitle,
+            description: article.data.ogDescription,
+            url: article.data.ogUrl,
+            image: article.data.ogImage.url
+          }).then(async post => {
+            let source = await models.Source.findById(source_id_lookup[i]);
+            post_boost_proms.push(routeHelpers.initiatePost(source, post));
 
+          }).catch( err => {
+            console.log("2nd", err);
+          });
+          post_proms.push(create_post_prom);
+
+          }
+
+        }
+
+      try{
+        await Promise.all(post_proms);
+        await Promise.all(post_boost_proms.map(p=> p.catch(()=> undefined)));
+        resolve('resolve');
+      }
+      catch(err){
+        reject(err);
       }
 
-    });
-    try{
-      await Promise.all(post_proms);
-      await Promise.all(post_boost_proms);
-      console.log("hatake")
-      resolve('resolve');
-    }
-    catch(err){
-      console.log("last", err);
-      reject(err);
-    }
 
+    });
   });
 
 }

@@ -48,7 +48,6 @@ app.use(passport.session());
 //bootstrap routes
  var routesPath = path.join(__dirname, 'routes');
  fs.readdirSync(routesPath).forEach(function(file){
-   console.log("route ", file);
    app.use('/', require(routesPath + '/' + file));
  });
 

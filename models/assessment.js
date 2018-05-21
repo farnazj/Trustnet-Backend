@@ -19,7 +19,9 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 1
     }
 
-  });
+  }, {
+  timestamps: false
+});
 
   return Assessment;
 };

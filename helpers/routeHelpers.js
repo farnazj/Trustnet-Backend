@@ -1,3 +1,5 @@
+var models  = require('../models');
+
 function getSpecifictions(req_fields){
 
   let specifications = {};
@@ -18,7 +20,21 @@ function isLoggedIn(req, res, next) {
     res.redirect('/');
 }
 
+
+async function initiatePost(source, post){
+  let assessment = await models.Assessment.create({postCredibility: 1});
+  let initiates_post = source.addInitiatedPost(post);
+  let boosts = source.addPostBoost(post);
+  let post_assessment = post.addPostAssessment(assessment);
+  let source_assessment = source.addSourceAssessment(assessment);
+
+
+  await Promise.all([initiates_post, boosts, post_assessment, source_assessment]);
+  return;
+}
+
 module.exports = {
   isLoggedIn: isLoggedIn,
-	getSpecifictions: getSpecifictions
+	getSpecifictions: getSpecifictions,
+  initiatePost: initiatePost
 };

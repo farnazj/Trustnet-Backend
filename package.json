@@ -18,6 +18,7 @@
     "express-session": "^1.15.6",
     "feedparser": "^2.2.9",
     "jade": "~1.11.0",
+    "moment": "^2.22.1",
     "morgan": "~1.9.0",
     "mysql2": "^1.5.2",
     "open-graph-scraper": "^3.3.0",

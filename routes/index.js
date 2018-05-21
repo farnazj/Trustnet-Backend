@@ -28,7 +28,7 @@ router.get('/', routeHelpers.isLoggedIn, async function(req, res, next) {
 
     await feedHelpers.updateRSSPosts(feeds_flattened, source_ids);
     res.redirect('/posts/boosts');
-
+    //res.send({});
 });
 
 module.exports = router;
