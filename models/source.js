@@ -59,15 +59,7 @@ module.exports = (sequelize, DataTypes) => {
           }
         }
       }
-    //,
-    //
-    // rssfeed: {
-    //   type: DataTypes.STRING,
-    //   isUrl: true
-    // }
-  }, {
-  timestamps: false
-});
+  });
 
 
   Source.prototype.toJSON =  function () {

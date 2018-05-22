@@ -9,7 +9,6 @@ router.route('/posts/boosts')
 
 .get(routeHelpers.isLoggedIn, async function(req, res){
 
-  console.log("avale get")
   try {
     let auth_user = await db.Source.findById(req.user.id);
     let mutes = await auth_user.getMutes();
@@ -39,28 +38,43 @@ router.route('/posts/boosts')
       cred_sources = unmuted_boosters_ids;
 
 
-      console.log("============", await db.sequelize.queryInterface.describeTable('Assessments'));
+    //validity status
+    let validity_status;
+    if (req.headers.validity == "confirmed")
+      validity_status = [1];
+    else if (req.headers.validity == "refuted")
+      validity_status = [0];
+    else if (req.headers.validity == "debated")
+      validity_status = [2];
+    else //all
+      validity_status = [0, 1, 2];
+
+
     //TODO: add pagination support
     let post_boosts = await db.Post.findAll({
+      subQuery: false,
       include: [
         {
           model: db.Source,
           as: 'Boosters',
           where: {id: {[Op.in]: unmuted_boosters_ids }}
-        },
-        {
+         }
+        ,{
           model: db.Assessment,
           as: 'PostAssessments',
           where: {SourceId: {[Op.in]: cred_sources}}
         }
       ],
-      attributes: {include:[[db.sequelize.fn('AVG', db.sequelize.col("Assessments.postCredibility")), 'average']]},
-      group: ['id'],
-      limit: 20
+      // attributes: {include: [[db.sequelize.fn('AVG', db.sequelize.col('PostAssessments.postCredibility')), 'average']]},
+      order: [['updatedAt', 'DESC']],
+      having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('PostAssessments.postCredibility')), {
+           [Op.in]: validity_status,
+         }),
+      limit: 20,
+      offset: req.params.offset ? req.params.offset : 0,
+      group: ['Post.id', 'Boosters.id', 'PostAssessments.id']
     })
-//
-//
-//group: ['id'],
+
 
     // let response;
     // if (req.headers.validity == "confirmed")
@@ -74,85 +88,6 @@ router.route('/posts/boosts')
 
 
     res.send(JSON.stringify(post_boosts));
-
-    // let post_boost_promises = [];
-    // unmuted_boosters.map(followee => post_boost_promises.push(followee.getPostBoosts()));
-    // let post_boosts = await Promise.all(post_boost_promises.map(p => p.catch(() => undefined))); //boosted posts by followee and trusteds excluding mutes
-    //
-    // let unique_post_ids = [];
-    // let unique_post_boosts = []; //contains elements of the form [post, [boosters]]
-    //
-    // for (let i = 0 ; i < post_boosts.length ; i++){
-    //   for (let j = 0 ; j < post_boosts[i].length; j++){
-    //
-    //     if (!unique_post_ids.includes(post_boosts[i][j].id)){
-    //       unique_post_boosts.push([post_boosts[i][j], [unmuted_boosters[i]]]);
-    //       unique_post_ids.push(post_boosts[i][j].id);
-    //     }
-    //     else{
-    //       let index = unique_post_ids.indexOf(post_boosts[i][j].id);
-    //       unique_post_boosts[index][1].push(unmuted_boosters[i]);
-    //     }
-    //   }
-    // }
-
-    //crediblity criteria
-  //   if (req.headers.source == "trusted")
-  //       cred_sources = trusteds;
-  //   else if (req.headers.source == "me")
-  //       cred_sources = [auth_user];
-  //   else if (req.headers.source == "usernames") //as is, you can check anyone's opinion, doesn't need to be followed or trusted by you
-  //      {
-  //        let source_promises = [];
-  //        req.headers.source_usernames.split(',').map( src =>{
-  //          source_promises.push(db.Source.findOne({where: {userName: src}}));
-  //        })
-  //        cred_sources = await Promise.all(source_promises);
-  //      }
-  //   else
-  //     cred_sources = followees.filter(followee => !mutes.includes(followee));
-  //
-  //
-  //   let cred_source_ids = cred_sources.map(source => source.id);
-  //
-  //   let post_assessment_promises = [];
-  //   unique_post_boosts.map(post_booster => {
-  //      post_assessment_promises.push(post_booster[0].getPostAssessments({where: {SourceId: {[Op.in]: cred_source_ids }}}));
-  //    });
-  //
-  //   let post_assessments = await Promise.all(post_assessment_promises);
-  //
-  //
-  //   let confirmed = [], debated = [], refuted = [], all = [];
-  //   //each array is of the form: [ [ [post, [booster_sources]], [assessments]], ... ]
-  //   //array all also contains posts with no assessments
-  //
-  //   for (let i = 0 ; i < post_assessments.length ; i++){
-  //      let credibility = post_assessments[i].map(assessment => assessment.postCredibility);
-  //
-  //      if (credibility.length) {
-  //
-  //        if (credibility.every(function(value){return value == 1 }))
-  //          confirmed.push([unique_post_boosts[i], post_assessments[i]]);
-  //        else if (credibility.every(function(value){return value == 0 }))
-  //          refuted.push([unique_post_boosts[i], post_assessments[i]]);
-  //        else
-  //          debated.push([unique_post_boosts[i], post_assessments[i]]);
-  //      }
-  //
-  //      all.push([unique_post_boosts[i], post_assessments[i]]);
-  //    }
-  //
-  //
-  //    if (req.headers.validity == "confirmed")
-  //      res.send(JSON.stringify(confirmed));
-  //    else if (req.headers.validity == "refuted")
-  //      res.send(JSON.stringify(refuted));
-  //    else if (req.headers.validity == "debated")
-  //      res.send(JSON.stringify(debated));
-  //    else
-  //      res.send(JSON.stringify(all));
-  //
   }
   catch(err){
     console.log(err);
@@ -197,7 +132,7 @@ router.route('/posts/initiated')
   db.Source.findById(req.user.id)
   .then( user => {
     return user.getInitiatedPosts();
-  }).then( posts => {
+  }).then( result => {
     res.send(result);
   }).catch(err => {
     res.send(err);

@@ -26,7 +26,7 @@ router.get('/', routeHelpers.isLoggedIn, async function(req, res, next) {
       for (let j = 0 ; j < followed_feeds[i].length ; j++)
         source_ids.push(followees[i].id);
 
-    await feedHelpers.updateRSSPosts(feeds_flattened, source_ids);
+    //await feedHelpers.updateRSSPosts(feeds_flattened, source_ids);
     res.redirect('/posts/boosts');
     //res.send({});
 });

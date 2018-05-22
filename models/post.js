@@ -21,9 +21,7 @@ module.exports = (sequelize, DataTypes) => {
            isUrl: true
         }
       }
-  }, {
-  timestamps: false
-});
+  });
 
   Post.prototype.toJSON = function () {
     var values = Object.assign({}, this.get());
