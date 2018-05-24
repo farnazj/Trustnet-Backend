@@ -2,42 +2,40 @@ const ogs = require('open-graph-scraper');
 const FeedParser = require('feedparser');
 const axios = require('axios');
 var moment = require('moment');
-var models = require('../models');
+var db = require('../models');
 var routeHelpers = require('./routeHelpers');
-
-
-async function checkFeedUpdate(feed){
-  //if two hours have passed since last time
-  if ((Date.now() - feed.lastUpdated)/3600*1000 > 2) {
-
-    const res = await axios({
-      method:'get',
-      url: feed.rssfeed,
-      responseType:'stream',
-      headers: {
-        'If-Modified-Since': feed.lastUpdated
-      }
-    });
-
-  }
-}
 
 
 async function getFeed(feed) {
 
-  const res = await axios({
-    method:'get',
-    url: feed.rssfeed,
-    responseType:'stream',
-    headers: {
-      'If-Modified-Since': feed.lastUpdated ? feed.lastUpdated.toString() : (new Date(0)).toString()
-    }
-  });
+  return new Promise(async (resolve, reject)=>{
+    try{
+      if (!feed.lastUpdated || (Date.now() - feed.lastUpdated)/3600*1000 > 2) {
 
-  feed.update({lastUpdated: moment()});
+        let head_response = await axios({
+          method:'head',
+          url: feed.rssfeed
+        });
 
-  const feedparser = new FeedParser();
-  return [res.data.pipe(feedparser), feedparser];
+        if (!feed.lastUpdated || moment(head_response.headers['last-modified']).isAfter(feed.lastUpdated)){
+          const res = await axios({
+            method:'get',
+            url: feed.rssfeed,
+            responseType:'stream'
+          });
+
+          const feedparser = new FeedParser();
+          resolve([res.data.pipe(feedparser), feedparser]);
+        }
+
+      }
+  }
+  catch(err){
+    reject(new Error(`something went wrong in fetching the feed ${err}`));
+  }
+    reject(new Error(`feed not changed`));
+  })
+
 }
 
 
@@ -73,84 +71,58 @@ async function getOGPArticle(article){
     ogs({'url':article})
     .then(function (result) {
       resolve(result);
+
     })
     .catch(function (error) {
-      reject(error)
+      reject(new Error(`Couldn't retrieve ogp of article ${error}`));
     });
   })
 
 }
 
 
-async function updateRSSPosts(feeds, source_ids){
+async function updateRSSPosts(sources){
 
-  //let urls = feeds.map(feed => {return feed.rssfeed});
+  await Promise.all(sources.map(source => {
+    return Promise.all(source.SourceFeeds.map( feed => {
+      return getFeed(feed)
+      .then(readFeedStream)
+      .then(articles_in_feed =>{
+        return Promise.all(articles_in_feed.map(article => {
+          return db.Post.findOne({where: {url: article.link}}).then(post =>{
+            if (!post){
+              return getOGPArticle(article.link).then(article_ogp =>{
 
-  let stream_proms = [], post_proms = [], post_boost_proms = [];
-  let feed_lookup = [], source_id_lookup = [];
+                return db.Post.create({
+                  title: article_ogp.data.ogTitle,
+                  description: article_ogp.data.ogDescription,
+                  url: article_ogp.data.ogUrl,
+                  image: article_ogp.data.ogImage.url
+                }).then(db_post =>{
+                    feed.update({lastUpdated: moment()});
+                    return routeHelpers.initiatePost(source, db_post);
+                }).catch(err => {
+                  console.log("Couldn't create post or add it to the initated posts of user.", err);
+                })
 
-  return new Promise( (resolve, reject) => {
+              }).catch(err => {
+                console.log("Couldn't retrieve the ogp of the article.", err)
+              })
 
-    feeds.forEach(feed => stream_proms.push(getFeed(feed)
-    .then(readFeedStream)
-    .catch(err => {
-      console.log("1st", err);
+            }
+
+          }).catch(err => {
+            console.log("Sth went wrong with fetching the post from the db", err);
+          })
+        })
+        )
+      }).catch(err =>{
+        console.log("Sth went wrong with fetching the feed", err)
+      })
     })
-    ));
-
-    let rss_format_articles = [];
-
-    Promise.all(stream_proms.map(p => p.catch(() => undefined)))
-    .then( async articles_cross_feeds => {
-      let ogp_promises = [];
-
-      for (let i = 0 ; i < articles_cross_feeds.length ; i++){
-        let articles_in_feed = articles_cross_feeds[i];
-
-        articles_in_feed.forEach(article => {
-          ogp_promises.push(getOGPArticle(article.link));
-          source_id_lookup.push(source_ids[i]);
-         });
-       //feeds[i].update({lastUpdated: Date.now()});
-      }
-
-      let ogp_articles = await Promise.all(ogp_promises.map(p => p.catch(() => undefined)));
-
-      for (let i = 0 ; i < ogp_articles.length ; i++){
-        let article = ogp_articles[i];
-
-        if (article != undefined) {
-
-          let create_post_prom = models.Post.create({
-            title: article.data.ogTitle,
-            description: article.data.ogDescription,
-            url: article.data.ogUrl,
-            image: article.data.ogImage.url
-          }).then(async post => {
-            let source = await models.Source.findById(source_id_lookup[i]);
-            post_boost_proms.push(routeHelpers.initiatePost(source, post));
-
-          }).catch( err => {
-            console.log("2nd", err);
-          });
-          post_proms.push(create_post_prom);
-
-          }
-
-        }
-
-      try{
-        await Promise.all(post_proms);
-        await Promise.all(post_boost_proms.map(p=> p.catch(()=> undefined)));
-        resolve('resolve');
-      }
-      catch(err){
-        reject(err);
-      }
-
-
-    });
-  });
+    )
+  })
+  );
 
 }
 

@@ -1,4 +1,4 @@
-var models = require('../models');
+var db = require('../models');
 var express = require('express');
 var routeHelpers = require('../helpers/routeHelpers');
 var feedHelpers = require('../helpers/feedHelpers');
@@ -9,26 +9,36 @@ var router = express.Router();
 
 router.get('/', routeHelpers.isLoggedIn, async function(req, res, next) {
 
-    let auth_user = await models.Source.findById(req.user.id);
+    let auth_user = await db.Source.findById(req.user.id);
 
-    let followees = await auth_user.getFollows();
-    let feeds_proms = [];
-    followees.map(source => feeds_proms.push(source.getSourceFeeds()));
+    let auth_user_ = await db.Source.findOne({
+      where: {
+        id: req.user.id
+      },
+      include: [{
+        model: db.Source,
+        as: 'Follows',
+        include: [{
+          model: db.Feed,
+          as: 'SourceFeeds'
+        }]
+      },
+      {
+        model: db.Source,
+        as: 'Mutes'
+      },
+      {
+        model: db.Source,
+        as: 'Trusteds'
+      }
+      ]
+    });
 
-    let followed_feeds = await Promise.all(feeds_proms); //an array of (array) feeds of each source
+    let unmuted_boosters = auth_user_.Follows.filter(source => (!auth_user_.Mutes.map(muted_source => {return muted_source.id}).includes(source.id) ));
 
-    let feeds_flattened = followed_feeds.reduce( function(accumulator, currentValue) {
-      return accumulator.concat(currentValue);
-    },[]);
 
-    let source_ids = [];
-    for (let i = 0 ; i < followed_feeds.length ; i++)
-      for (let j = 0 ; j < followed_feeds[i].length ; j++)
-        source_ids.push(followees[i].id);
-
-    //await feedHelpers.updateRSSPosts(feeds_flattened, source_ids);
+    await feedHelpers.updateRSSPosts(unmuted_boosters);
     res.redirect('/posts/boosts');
-    //res.send({});
 });
 
 module.exports = router;

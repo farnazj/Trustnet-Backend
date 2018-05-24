@@ -50,7 +50,6 @@ router.route('/posts/boosts')
       validity_status = [0, 1, 2];
 
 
-    //TODO: add pagination support
     let post_boosts = await db.Post.findAll({
       subQuery: false,
       include: [
@@ -74,7 +73,6 @@ router.route('/posts/boosts')
       offset: req.params.offset ? req.params.offset : 0,
       group: ['Post.id', 'Boosters.id', 'PostAssessments.id']
     })
-
 
     // let response;
     // if (req.headers.validity == "confirmed")
@@ -112,9 +110,6 @@ router.route('/posts/boosts')
     return Promise.all([boosted_post, auth_user])
   })
   .then( post_user => {
-        return db.Assessment.find({where:{
-          SourceId: req.user.id
-        }})
         return post_user[0].addBooster(post_user[1]);
     }).then(result => {
       res.send(result);
@@ -182,7 +177,7 @@ router.route( '/posts/:post_id')
       id: req.params.post_id,
       SourceId: req.user.id
     }
-  }).then(function() {
+  }).then(() => {
     res.redirect('/');
   }).catch(function(err){
     res.send(err);

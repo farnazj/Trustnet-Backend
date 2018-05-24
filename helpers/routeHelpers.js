@@ -29,8 +29,8 @@ async function initiatePost(source, post){
   let source_assessment = source.addSourceAssessment(assessment);
 
 
-  await Promise.all([initiates_post, boosts, post_assessment, source_assessment]);
-  return;
+  return Promise.all([initiates_post, boosts, post_assessment, source_assessment]);
+
 }
 
 module.exports = {

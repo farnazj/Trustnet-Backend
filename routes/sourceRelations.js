@@ -8,10 +8,10 @@ var routeHelpers = require('../helpers/routeHelpers');
 router.route('/follows')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
-  let offset_ = req.body.offset;
-  let limit_ = req.body.limit_;
+  let offset_ = 0;
+  let limit_ = 20;
 
-  models.Source.findById(req.user.id)
+  db.Source.findById(req.user.id)
   .then(user => {
     return user.getFollows();
   }).then( result => {
@@ -24,8 +24,8 @@ router.route('/follows')
 
 .post(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let followed_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let followed_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, followed_user])
@@ -40,8 +40,8 @@ router.route('/follows')
 
 .delete(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let followee_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let followee_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, followee_user])
@@ -62,7 +62,7 @@ router.route('/blocks')
   let offset_ = req.body.offset;
   let limit_ = req.body.limit_;
 
-  models.Source.findById(req.user.id)
+  db.Source.findById(req.user.id)
   .then(user => {
     return user.getBlocks();
   }).then( result => {
@@ -74,8 +74,8 @@ router.route('/blocks')
 
 .post(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let blocked_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let blocked_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, blocked_user])
@@ -90,8 +90,8 @@ router.route('/blocks')
 
 .delete(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let blocked_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let blocked_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, followee_user])
@@ -112,7 +112,7 @@ router.route('/mutes')
   let offset_ = req.body.offset;
   let limit_ = req.body.limit_;
 
-  models.Source.findById(req.user.id)
+  db.Source.findById(req.user.id)
   .then(user => {
     return user.getMutes();
   }).then(result => {
@@ -125,8 +125,8 @@ router.route('/mutes')
 
 .post(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let muted_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let muted_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, muted_user])
@@ -141,8 +141,8 @@ router.route('/mutes')
 
 .delete(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let muted_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let muted_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, muted_user])
@@ -162,7 +162,7 @@ router.route('/trusts')
   let offset_ = req.body.offset;
   let limit_ = req.body.limit_;
 
-  models.Source.findById(req.user.id)
+  db.Source.findById(req.user.id)
   .then(user => {
     return user.getTrusteds();
   }).then(result => {
@@ -175,8 +175,8 @@ router.route('/trusts')
 
 .post(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let trusted_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let trusted_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, trusted_user])
@@ -191,8 +191,8 @@ router.route('/trusts')
 
 .delete(routeHelpers.isLoggedIn, function(req, res) {
 
-  let source_user = models.Source.findById(req.user.id);
-  let trusted_user = models.Source.findOne(
+  let source_user = db.Source.findById(req.user.id);
+  let trusted_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
   Promise.all([source_user, trusted_user])

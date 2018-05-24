@@ -21,6 +21,8 @@ module.exports = (sequelize, DataTypes) => {
            isUrl: true
         }
       }
+  }, {
+    charset: 'utf8mb4',
   });
 
   Post.prototype.toJSON = function () {
