@@ -9,12 +9,13 @@ router.route('/follows')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getFollows({
-      limit: parseInt(req.query.limit),
-      offset: parseInt(req.query.offset)
-    });
+    return user.getFollows(
+      pagination_req
+    );
   }).then( result => {
     res.send(result);
   }).catch(err => {
@@ -61,12 +62,13 @@ router.route('/blocks')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getBlocks({
-      limit: parseInt(req.query.limit),
-      offset: parseInt(req.query.offset)
-    });
+    return user.getBlocks(
+      pagination_req
+    );
   }).then( result => {
     res.send(result);
   }).catch(err => {
@@ -112,12 +114,13 @@ router.route('/mutes')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getMutes({
-      limit: parseInt(req.query.limit),
-      offset: parseInt(req.query.offset)
-    });
+    return user.getMutes(
+      pagination_req
+    );
   }).then(result => {
     res.send(result)
   }).catch(err => {
@@ -163,12 +166,13 @@ router.route('/trusts')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getTrusteds({
-      limit: parseInt(req.query.limit),
-      offset: parseInt(req.query.offset)
-    });
+    return user.getTrusteds(
+      pagination_req
+    );
   }).then(result => {
     res.send(result)
   }).catch(err => {

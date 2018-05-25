@@ -90,7 +90,7 @@ router.route('/posts/boosts')
 
 .post(routeHelpers.isLoggedIn, function(req, res) {
 
-  db.Assessment.find({where:{
+  db.Assessment.findOne({where:{
       SourceId: req.user.id,
       PostId: req.body.post_id
   }})
@@ -117,12 +117,11 @@ router.route('/posts/initiated')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
   db.Source.findById(req.user.id)
   .then( user => {
-    return user.getInitiatedPosts({
-      limit: parseInt(req.query.limit),
-      offset: parseInt(req.query.offset)
-    });
+    return user.getInitiatedPosts(pagination_req);
   }).then( result => {
     res.send(result);
   }).catch(err => {

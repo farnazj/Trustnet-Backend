@@ -9,6 +9,16 @@ function getSpecifictions(req_fields){
   return specifications
 }
 
+function getLimitOffset(req){
+  let pagination_obj = {};
+  for (let key of ['limit', 'offset']){
+    if (req.query[key])
+      pagination_obj[key] = parseInt(req.query[key]);
+  }
+
+  return pagination_obj;
+}
+
 
 function isLoggedIn(req, res, next) {
 
@@ -36,5 +46,6 @@ async function initiatePost(source, post){
 module.exports = {
   isLoggedIn: isLoggedIn,
 	getSpecifictions: getSpecifictions,
+  getLimitOffset: getLimitOffset,
   initiatePost: initiatePost
 };

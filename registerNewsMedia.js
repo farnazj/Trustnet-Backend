@@ -1,4 +1,4 @@
-var models = require('./models');
+var db = require('./models');
 var bCrypt = require('bcrypt');
 
 var generateHash = function(password) {
@@ -20,12 +20,12 @@ module.exports =  function(){
 
   generateHash(process.env.ADMIN_KEY).then((entityPassword) => {
 
-    let media_sources = media.map(el => models.Feed.findOne({where:{
+    let media_sources = media.map(el => db.Feed.findOne({where:{
       rssfeed: el.rssfeed,
     }}).then(async feed => {
       if (!feed){
-        let rss_feed = await models.Feed.create({rssfeed: el.rssfeed});
-        let source = await models.Source.create({
+        let rss_feed = await db.Feed.create({rssfeed: el.rssfeed});
+        let source = await db.Source.create({
           systemMade: true,
           userName: el.userName,
           passwordHash: entityPassword,

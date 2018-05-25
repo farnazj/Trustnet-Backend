@@ -33,7 +33,8 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   Post.associate = function (models) {
-    models.Post.belongsToMany(models.Source, {as: 'Boosters', through: 'SourcePostBoosts' });
+    models.Post.belongsToMany(models.Source, {as: 'Boosters',  through: 'SourcePostBoosts'});
+
     models.Post.hasMany(models.Assessment, {as: 'PostAssessments'});
   };
 

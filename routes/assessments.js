@@ -8,11 +8,12 @@ router.route('/posts/:post_id/assessments')
 //TODO: need to change this if some posts become private
 .get(routeHelpers.isLoggedIn, function(req, res){
 
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
   db.Post.findById(req.params.post_id).then(async (post) =>{
-    return post.getPostAssessments({
-      limit: parseInt(req.query.limit),
-      offset: parseInt(req.query.offset)
-    });
+    return post.getPostAssessments(
+      pagination_req
+    );
   }).then( assessments => {
     res.send(assessments);
   }).catch(err => res.send(err));

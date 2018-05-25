@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     body: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT('long')
       // allowNull: false
     },
     version: {
@@ -19,6 +19,8 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 1
     }
 
+  }, {
+    charset: 'utf8mb4',
   });
 
   return Assessment;

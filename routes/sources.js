@@ -8,15 +8,16 @@ router.route('/sources')
 
 .get(function(req, res){
 
-  models.Source.findAndCountAll({
-    limit: parseInt(req.query.limit),
-    offset: parseInt(req.query.offset)
-   }).then( result => {
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
+  models.Source.findAndCountAll(pagination_req)
+  .then( result => {
     res.send(result); //result.count, result.rows
   }).catch(err => {
     res.send(err);
   });
 })
+
 .post(function(req, res) {
 
   let sourceSpecs = routeHelpers.getSpecifictions(req.body);
@@ -71,12 +72,14 @@ router.route('/sources/:username/posts')
 
 .get(function(req, res){
 
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
   models.Source.findOne( {where: {userName: req.params.username }}
   ).then(source => {
-     return models.Post.findAndCountAll({ where: {SourceId: source.id},
-       limit: parseInt(req.query.limit),
-       offset: parseInt(req.query.offset)
-    })
+
+    let specs = pagination_req;
+    specs.where = {SourceId: source.id};
+     return models.Post.findAndCountAll(specs)
   }).then( result => {
     res.send(result); //result.count, result.rows
   }).catch(err => {
