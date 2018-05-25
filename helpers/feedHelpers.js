@@ -83,7 +83,7 @@ async function getOGPArticle(article){
 
 async function updateRSSPosts(sources){
 
-  await Promise.all(sources.map(source => {
+  return Promise.all(sources.map(source => {
     return Promise.all(source.SourceFeeds.map( feed => {
       return getFeed(feed)
       .then(readFeedStream)

@@ -7,12 +7,10 @@ var routeHelpers = require('../helpers/routeHelpers');
 router.route('/sources')
 
 .get(function(req, res){
-  let offset_ = req.body.offset;
-  let limit_ = req.body.limit_;
 
   models.Source.findAndCountAll({
-    offset: offset_,
-    limit: limit_
+    limit: parseInt(req.query.limit),
+    offset: parseInt(req.query.offset)
    }).then( result => {
     res.send(result); //result.count, result.rows
   }).catch(err => {
@@ -73,14 +71,11 @@ router.route('/sources/:username/posts')
 
 .get(function(req, res){
 
-  let offset_ = req.body.offset;
-  let limit_ = req.body.limit_;
-
   models.Source.findOne( {where: {userName: req.params.username }}
   ).then(source => {
      return models.Post.findAndCountAll({ where: {SourceId: source.id},
-      offset: offset_,
-      limit: limit_
+       limit: parseInt(req.query.limit),
+       offset: parseInt(req.query.offset)
     })
   }).then( result => {
     res.send(result); //result.count, result.rows

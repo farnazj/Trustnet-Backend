@@ -8,19 +8,20 @@ var routeHelpers = require('../helpers/routeHelpers');
 router.route('/follows')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
-  let offset_ = 0;
-  let limit_ = 20;
 
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getFollows();
+    return user.getFollows({
+      limit: parseInt(req.query.limit),
+      offset: parseInt(req.query.offset)
+    });
   }).then( result => {
     res.send(result);
   }).catch(err => {
     res.send(err);
   });
 
-})
+  })
 
 .post(routeHelpers.isLoggedIn, function(req, res) {
 
@@ -55,16 +56,17 @@ router.route('/follows')
 });
 
 
-//Those sources that a specific user blocks
+//Those sources that the auth user blocks
 router.route('/blocks')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
-  let offset_ = req.body.offset;
-  let limit_ = req.body.limit_;
 
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getBlocks();
+    return user.getBlocks({
+      limit: parseInt(req.query.limit),
+      offset: parseInt(req.query.offset)
+    });
   }).then( result => {
     res.send(result);
   }).catch(err => {
@@ -109,12 +111,13 @@ router.route('/blocks')
 router.route('/mutes')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
-  let offset_ = req.body.offset;
-  let limit_ = req.body.limit_;
 
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getMutes();
+    return user.getMutes({
+      limit: parseInt(req.query.limit),
+      offset: parseInt(req.query.offset)
+    });
   }).then(result => {
     res.send(result)
   }).catch(err => {
@@ -155,16 +158,17 @@ router.route('/mutes')
   });
 });
 
-//Those sources that a specific user trusts
+//Those sources that the auth user trusts
 router.route('/trusts')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
-  let offset_ = req.body.offset;
-  let limit_ = req.body.limit_;
 
   db.Source.findById(req.user.id)
   .then(user => {
-    return user.getTrusteds();
+    return user.getTrusteds({
+      limit: parseInt(req.query.limit),
+      offset: parseInt(req.query.offset)
+    });
   }).then(result => {
     res.send(result)
   }).catch(err => {
@@ -188,6 +192,7 @@ router.route('/trusts')
     res.send(err);
   });
 })
+
 
 .delete(routeHelpers.isLoggedIn, function(req, res) {
 

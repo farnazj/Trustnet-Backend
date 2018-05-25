@@ -9,7 +9,10 @@ router.route('/posts/:post_id/assessments')
 .get(routeHelpers.isLoggedIn, function(req, res){
 
   db.Post.findById(req.params.post_id).then(async (post) =>{
-    return post.getPostAssessments();
+    return post.getPostAssessments({
+      limit: parseInt(req.query.limit),
+      offset: parseInt(req.query.offset)
+    });
   }).then( assessments => {
     res.send(assessments);
   }).catch(err => res.send(err));
@@ -40,6 +43,20 @@ router.route('/posts/:post_id/assessments')
     res.send(err);
   }
 
+})
+
+.put(routeHelpers.isLoggedIn, function(req, res){
+
+    let assessmentSpecs = routeHelpers.getSpecifictions(req.body);
+
+    db.Assessment.findById(req.params.assessment_id)
+    .then(assessment => {
+      assessmentSpecs.version = assessment.version + 1;
+      return assessment.update(assessmentSpecs);
+    })
+    .then(result =>{
+      res.redirect('/');
+    }).catch(err => res.send(err));
 
 })
 

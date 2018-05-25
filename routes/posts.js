@@ -70,20 +70,13 @@ router.route('/posts/boosts')
            [Op.in]: validity_status,
          }),
       limit: 20,
-      offset: req.params.offset ? req.params.offset : 0,
+      offset: req.query.offset ? parseInt(req.query.offset) : 0,
       group: ['Post.id', 'Boosters.id', 'PostAssessments.id']
     })
 
     // let response;
     // if (req.headers.validity == "confirmed")
     //   response = post_boosts.filter(post => post.PostAssessments.every(function(assessment){return assessment.postCredibility == 1 }));
-    // else if (req.headers.validity == "refuted")
-    //   response = post_boosts.filter(post => post.PostAssessments.every(function(assessment){return assessment.postCredibility == 0 }));
-    // else if (req.headers.validity == "debated")
-    //   response = post_boosts.filter(post => post.PostAssessments.every(function(assessment){return assessment.postCredibility == 2 }));
-    // else
-    //   response = post_boosts;
-
 
     res.send(JSON.stringify(post_boosts));
   }
@@ -126,7 +119,10 @@ router.route('/posts/initiated')
 
   db.Source.findById(req.user.id)
   .then( user => {
-    return user.getInitiatedPosts();
+    return user.getInitiatedPosts({
+      limit: parseInt(req.query.limit),
+      offset: parseInt(req.query.offset)
+    });
   }).then( result => {
     res.send(result);
   }).catch(err => {
@@ -189,12 +185,13 @@ router.route( '/posts/:post_id')
 
     let postSpecs = routeHelpers.getSpecifictions(req.body);
 
-    db.Post.update(postSpecs,
-      {where: {id: req.params.post_id,
-      SourceId: req.user.id
-    }}).then(result =>{
+    db.Post.findById(req.params.post_id)
+    .then(post => {
+      postSpecs.version = post.version + 1;
+      return post.update(postSpecs);
+    })
+    .then(result =>{
       res.redirect('/');
-
     }).catch(err => res.send(err));
 });
 
