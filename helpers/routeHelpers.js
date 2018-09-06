@@ -1,4 +1,6 @@
-var models  = require('../models');
+var db  = require('../models');
+const Op = db.sequelize.Op;
+
 
 function getSpecifictions(req_fields){
 
@@ -6,7 +8,7 @@ function getSpecifictions(req_fields){
   for (let key of Object.keys(req_fields)){
     specifications[key] = req_fields[key];
   }
-  return specifications
+  return specifications;
 }
 
 function getLimitOffset(req){
@@ -31,15 +33,56 @@ function isLoggedIn(req, res, next) {
 }
 
 
-async function initiatePost(source, post){
-  let assessment = await models.Assessment.create({postCredibility: 1});
-  let initiates_post = source.addInitiatedPost(post);
-  let boosts = source.addPostBoost(post);
-  let post_assessment = post.addPostAssessment(assessment);
-  let source_assessment = source.addSourceAssessment(assessment);
+async function boostPost(source, post_id, target_usernames) {
+
+  let post = await db.Post.findById(post_id);
+
+  return db.Boost.find({
+    include: [ {
+      model: db.Post,
+      as: 'Posts',
+      where: {
+        id: post_id
+      }
+    }]
+  })
+  .then( async boost => {
+    let promises = [];
+    if (!boost){
+      boost = await db.Boost.create({});
+      promises.push(booster.addPost(post));
+    }
+
+    promises.push(boost.addBooster(source));
+
+    return db.Source.findAll({
+      where: {userName: {[Op.in]: target_usernames}}
+    }).then(targets => {
+      promises.push(boost.addTargets(targets));
+      return promises;
+    })
+
+  })
+}
 
 
-  return Promise.all([initiates_post, boosts, post_assessment, source_assessment]);
+async function initiatePost(source, post) {
+
+  let assessment_proms = db.Assessment.create({postCredibility: 1})
+  .then(assessment => {
+    return Promise.all([post.addPostAssessment(assessment),
+    source.addSourceAssessment(assessment)]);
+  });
+
+  let boost_proms = db.Boost.create()
+  .then(boost => {
+    return Promise.all([ boost.addBooster(source),
+    boost.addPost(post)]);
+  })
+
+  let post_prom = source.addInitiatedPost(post);
+
+  return Promise.all([assessment_proms, boost_proms, post_prom]);
 
 }
 
@@ -47,5 +90,6 @@ module.exports = {
   isLoggedIn: isLoggedIn,
 	getSpecifictions: getSpecifictions,
   getLimitOffset: getLimitOffset,
-  initiatePost: initiatePost
+  initiatePost: initiatePost,
+  boostPost: boostPost
 };

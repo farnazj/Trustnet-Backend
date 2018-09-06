@@ -174,7 +174,7 @@ router.route('/trusts')
       pagination_req
     );
   }).then(result => {
-    res.send(result)
+    res.send(result);
   }).catch(err => {
     res.send(err);
   });
@@ -189,7 +189,8 @@ router.route('/trusts')
 
   Promise.all([source_user, trusted_user])
   .then(sources => {
-    return sources[0].addTrusted(sources[1]);
+    return Promise.all([sources[0].addTrusted(sources[1]),
+    sources[0].addFollow(sources[1])]);
   }).then(result =>{
     res.send(result);
   }).catch(err => {

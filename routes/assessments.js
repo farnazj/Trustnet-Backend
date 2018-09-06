@@ -36,7 +36,7 @@ router.route('/posts/:post_id/assessments')
 
     await Promise.all([source_assessment, post_assessment]);
 
-    res.redirect('/'); //TODO: change
+    res.send({}); //TODO: change
 
   }
   catch (err){
@@ -59,6 +59,6 @@ router.route('/posts/:post_id/assessments')
       res.redirect('/');
     }).catch(err => res.send(err));
 
-})
+});
 
 module.exports = router;

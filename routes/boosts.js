@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../helpers/routeHelpers');
+var feedHelpers = require('../helpers/feedHelpers');
 const Op = db.sequelize.Op;
 
 
@@ -10,15 +11,49 @@ router.route('/boosts')
 .get(routeHelpers.isLoggedIn, async function(req, res){
 
   try {
-    let auth_user = await db.Source.findById(req.user.id);
-    let mutes = await auth_user.getMutes();
-    let mute_ids = mutes.map(muted => {return muted.id});
+    // let auth_user = await db.Source.findById(req.user.id);
+    //
+    // let follows = auth_user.getFollows();
+    // let mutes = await auth_user.getMutes();
+    // let mute_ids = mutes.map(muted => {return muted.id});
+    //
+    // let unmuted_boosters = await db.Source.findAll({
+    //   where: {id: { [Op.and]: {
+    //     [Op.notIn]: mute_ids,
+    //     [Op.in]: follows
+    //   }  }}
+    // })
+    //
+    // unmuted_boosters_ids = unmuted_boosters.map(booster => {return booster.id});
 
-    let unmuted_boosters = await db.Source.findAll({
-      where: {id: { [Op.notIn]: mute_ids }}
-    })
+    let auth_user_ = await db.Source.findOne({
+      where: {
+        id: req.user.id
+      },
+      include: [{
+        model: db.Source,
+        as: 'Follows',
+        include: [{
+          model: db.Feed,
+          as: 'SourceFeeds'
+        }]
+      },
+      {
+        model: db.Source,
+        as: 'Mutes'
+      },
+      {
+        model: db.Source,
+        as: 'Trusteds'
+      }
+      ]
+    });
 
-    unmuted_boosters_ids = unmuted_boosters.map(booster => {return booster.id});
+    let unmuted_boosters = auth_user_.Follows.filter(source => (!auth_user_.Mutes.map(muted_source => {return muted_source.id}).includes(source.id) ));
+
+    await feedHelpers.updateRSSPosts(unmuted_boosters);
+
+    let unmuted_boosters_ids = unmuted_boosters.map(booster => {return booster.id});
 
     //crediblity criteria
     let cred_sources;
@@ -50,28 +85,34 @@ router.route('/boosts')
       validity_status = [0, 1, 2];
 
 
-    let post_boosts = await db.Post.findAll({
+    let post_boosts = await db.Boost.findAll({
       subQuery: false,
       include: [
         {
           model: db.Source,
           as: 'Boosters',
           where: {id: {[Op.in]: unmuted_boosters_ids }}
-         }
-        ,{
-          model: db.Assessment,
-          as: 'PostAssessments',
-          where: {SourceId: {[Op.in]: cred_sources}}
+        },
+        {
+          model: db.Post,
+          as: 'Posts',
+          include: [
+            {
+              model: db.Assessment,
+              as: 'PostAssessments',
+              where: {SourceId: {[Op.in]: cred_sources}}
+            }
+          ]
         }
       ],
       // attributes: {include: [[db.sequelize.fn('AVG', db.sequelize.col('PostAssessments.postCredibility')), 'average']]},
       order: [['updatedAt', 'DESC']],
-      having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('PostAssessments.postCredibility')), {
+      having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Posts->PostAssessments.postCredibility')), {
            [Op.in]: validity_status,
          }),
       limit: 20,
       offset: req.query.offset ? parseInt(req.query.offset) : 0,
-      group: ['Post.id', 'Boosters.id', 'PostAssessments.id']
+      group: ['Boost.id', 'Posts.id', 'Boosters.id', 'Posts->PostAssessments.id']
     })
 
     // let response;
@@ -87,52 +128,78 @@ router.route('/boosts')
 
 })
 
-
 .post(routeHelpers.isLoggedIn, async function(req, res) {
 
   try {
-    let assessment = await db.Assessment.findOne({where:{
-        SourceId: req.user.id,
-        PostId: req.body.post_id
-    }});
-    if (!assessment) //TODO: check to see if the source has assessed the post yet
-      throw "Cannot boost the post before assessing its credibility";
+    let auth_user = await db.Source.findById(req.user.id);
 
-      let boosted_post_pr = db.Post.findById(req.body.post_id);
-      let auth_user_pr = db.Source.findById(req.user.id);
+    let assessment = await db.Assessment.findOne({
+      where: {
+          SourceId: req.user.id,
+          PostId: req.body.post_id
+        }
+    });
 
-      let boosted_post, auth_user = await Promise.all([boosted_post_pr, auth_user_pr]);
+    if (!assessment)
+        throw "Cannot boost the post before assessing its credibility";
 
-      let target_promises = [];
-      req.body.target_usernames.split(',').map( src =>{
-        target_promises.push(db.Source.findOne({where: {userName: src}}));
-      });
-
-      let targets = await Promise.all(target_promises);
-      let boost = await db.Boost.create();
-      boost.addBooster(auth_user);
-      boost.setTargets(targets);
-      boost.addPost()
-
-
+    let target_usernames = JSON.parse(req.body.target_usernames);
+    routeHelpers.boostPost(auth_user, req.body.post_id, target_usernames);
+    res.send({}); //TODO: change
   }
   catch(err) {
+    console.log(err);
     res.send(err);
   }
-
-
-  .then( assessment => {
-
-
-
-    return Promise.all([boosted_post, auth_user])
-  })
-  .then( post_user => {
-        return
-    }).then(result => {
-      res.send(result);
-    }).catch(err => {
-      res.send(err);
-    })
-
 });
+//
+// .post(routeHelpers.isLoggedIn, async function(req, res) {
+//
+//   try {
+//     let assessment = await db.Assessment.findOne({where:{
+//         SourceId: req.user.id,
+//         PostId: req.body.post_id
+//     }});
+//     if (!assessment) //TODO: check to see if the source has assessed the post yet
+//       throw "Cannot boost the post before assessing its credibility";
+//
+//       let boosted_post_pr = db.Post.findById(req.body.post_id);
+//       let auth_user_pr = db.Source.findById(req.user.id);
+//
+//       let boosted_post, auth_user = await Promise.all([boosted_post_pr, auth_user_pr]);
+//
+//       let target_promises = [];
+//       req.body.target_usernames.split(',').map( src =>{
+//         target_promises.push(db.Source.findOne({where: {userName: src}}));
+//       });
+//
+//       let targets = await Promise.all(target_promises);
+//       let boost = await db.Boost.create();
+//       boost.addBooster(auth_user);
+//       boost.setTargets(targets);
+//       boost.addPost()
+//
+//
+//   }
+//   catch(err) {
+//     res.send(err);
+//   }
+//
+//
+//   .then( assessment => {
+//
+//
+//
+//     return Promise.all([boosted_post, auth_user])
+//   })
+//   .then( post_user => {
+//         return
+//     }).then(result => {
+//       res.send(result);
+//     }).catch(err => {
+//       res.send(err);
+//     })
+//
+// });
+
+module.exports = router;

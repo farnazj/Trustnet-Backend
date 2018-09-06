@@ -28,12 +28,12 @@ module.exports = (sequelize, DataTypes) => {
   Post.prototype.toJSON = function () {
     var values = Object.assign({}, this.get());
 
-    delete values.SourcePostBoosts;
+    //delete values.SourcePostBoosts;
     return values;
   }
 
   Post.associate = function (models) {
-    models.Post.belongsToMany(models.Source, {as: 'Boosters',  through: 'SourcePostBoosts'});
+    //models.Post.belongsToMany(models.Boosts, {as: 'Boosters',  through: 'SourcePostBoosts'});
 
     models.Post.hasMany(models.Assessment, {as: 'PostAssessments'});
   };
