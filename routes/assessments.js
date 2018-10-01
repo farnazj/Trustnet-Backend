@@ -1,33 +1,42 @@
 var express = require('express');
 var router = express.Router();
 var db  = require('../models');
-var routeHelpers = require('../helpers/routeHelpers');
+var routeHelpers = require('../lib/routeHelpers');
+var wrapAsync = require('../lib/wrappers').wrapAsync;
 
 
 router.route('/posts/:post_id/assessments')
 //TODO: need to change this if some posts become private
-.get(routeHelpers.isLoggedIn, function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
   let pagination_req = routeHelpers.getLimitOffset(req);
 
-  db.Post.findById(req.params.post_id).then(async (post) =>{
-    return post.getPostAssessments(
-      pagination_req
-    );
-  }).then( assessments => {
-    res.send(assessments);
-  }).catch(err => res.send(err));
-})
+  let post = await db.Post.findOne({
+    where: {id: req.params.post_id},
+    include: [
+      {
+        model: db.Assessment,
+        as: 'PostAssessments'
+      }
+    ]
+  })
+
+  res.send(post.PostAssessments);
+}))
 
 
-.post(routeHelpers.isLoggedIn, async function(req, res){
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  try{
-    let assessmentSpecs = routeHelpers.getSpecifictions(req.body);
+  let assessment = await db.Assessment.find({where: {
+    SourceId: req.user.id,
+    PostId: req.params.post_id
+  }});
 
-    let assessment_prom = db.Assessment.create(assessmentSpecs);
+  if (!assessment) {
     let auth_user_prom = db.Source.findById(req.user.id);
     let post_prom = db.Post.findById(req.params.post_id);
+
+    let assessment_prom = db.Assessment.create(req.body);
 
     let [post, auth_user, assessment] = await Promise.all([post_prom, auth_user_prom, assessment_prom]);
 
@@ -35,30 +44,44 @@ router.route('/posts/:post_id/assessments')
     let post_assessment = post.addPostAssessment(assessment);
 
     await Promise.all([source_assessment, post_assessment]);
-
-    res.send({}); //TODO: change
-
-  }
-  catch (err){
-    console.log(err);
-    res.send(err);
   }
 
-})
+  res.send({}); //TODO: change
 
-.put(routeHelpers.isLoggedIn, function(req, res){
+}))
+
+
+router.route('/posts/:post_id/:username/assessment')
+
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+
+  let source = await db.Source.findOne({
+    where: {
+      userName: req.params.username
+    },
+    include: [{
+      model: db.Assessment,
+      as: 'SourceAssessments',
+      where: {PostId: req.params.post_id}
+    }]
+  })
+
+  if (source)
+    result = source.SourceAssessments[0];
+  else
+    result = {}
+
+  res.send(result);
+}))
+.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
     let assessmentSpecs = routeHelpers.getSpecifictions(req.body);
+    let assessment = await db.Assessment.findById(req.params.assessment_id);
+    assessmentSpecs.version = assessment.version + 1;
+    await assessment.update(assessmentSpecs);
 
-    db.Assessment.findById(req.params.assessment_id)
-    .then(assessment => {
-      assessmentSpecs.version = assessment.version + 1;
-      return assessment.update(assessmentSpecs);
-    })
-    .then(result =>{
-      res.redirect('/');
-    }).catch(err => res.send(err));
+    res.redirect('/');
 
-});
+}));
 
 module.exports = router;

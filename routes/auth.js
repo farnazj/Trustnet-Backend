@@ -1,10 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var models  = require('../models');
 const passport = require('passport');
-var routeHelpers = require('../helpers/routeHelpers');
-
-
+var routeHelpers = require('../lib/routeHelpers');
 var authController = require('../controllers/authcontroller.js');
 
 

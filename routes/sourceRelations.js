@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var db  = require('../models');
-var routeHelpers = require('../helpers/routeHelpers');
+var routeHelpers = require('../lib/routeHelpers');
 
 
 //Those sources that a specific user

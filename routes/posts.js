@@ -1,75 +1,61 @@
 var express = require('express');
 var router = express.Router();
 var db  = require('../models');
-var routeHelpers = require('../helpers/routeHelpers');
+var routeHelpers = require('../lib/routeHelpers');
+var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = db.sequelize.Op;
 
 
 router.route('/posts') //initiated posts
 
-.get(routeHelpers.isLoggedIn, function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
   let pagination_req = routeHelpers.getLimitOffset(req);
+  let auth_user = await db.Source.findById(req.user.id);
+  let posts = await auth_user.getInitiatedPosts(pagination_req);
+  res.send(posts);
 
-  db.Source.findById(req.user.id)
-  .then( user => {
-    return user.getInitiatedPosts(pagination_req);
-  }).then( result => {
-    res.send(result);
-  }).catch(err => {
-    res.send(err);
-  })
+}))
 
-})
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-.post(routeHelpers.isLoggedIn, async function(req, res) {
+  let post_specs = routeHelpers.getSpecifictions(req.body);
 
-  try{
-    let post_specs = routeHelpers.getSpecifictions(req.body);
+  let post_prom = db.Post.create(post_specs);
+  let auth_user_prom = db.Source.findById(req.user.id);
 
-    let post_prom = db.Post.create(post_specs);
-    let auth_user_prom = db.Source.findById(req.user.id);
+  //when a source initiates a post, a credibility assessment is automatically generated
+  //for post, with the source as the sourceId and a value of "valid"
 
-    //when a source initiates a post, a credibility assessment is automatically generated
-    //for post, with the source as the sourceId and a value of "valid"
+  let [auth_user, post] = await Promise.all([auth_user_prom, post_prom]);
 
-    let [auth_user, post] = await Promise.all([auth_user_prom, post_prom]);
+  await routeHelpers.initiatePost(auth_user, post);
 
-    await routeHelpers.initiatePost(auth_user, post);
+  res.redirect('/');
 
-    res.redirect('/');
-  }
-  catch(e){
-    console.log(e);
-    res.send(e);
-  }
-
-});
+}));
 
 
-
-router.route( '/posts/:post_id')
+router.route('/posts/:post_id')
 
 //TODO: need to change this if some posts become private
-.get(routeHelpers.isLoggedIn, function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  db.Post.findById(req.params.post_id).then(result =>{
-    res.send(result);
-  }).catch(err => res.send(err));
-})
+  let post = await db.Post.findById(req.params.post_id)
+  res.send(post);
+}))
 
-.delete(routeHelpers.isLoggedIn, function(req, res) {
-  db.Post.destroy({
+.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+  await db.Post.destroy({
     where: {
       id: req.params.post_id,
       SourceId: req.user.id
     }
-  }).then(() => {
-    res.redirect('/');
-  }).catch(function(err){
-    res.send(err);
-  });
-})
+  })
+
+  res.redirect('/');
+
+}))
 
 
 .put(routeHelpers.isLoggedIn, function(req, res){
@@ -85,6 +71,26 @@ router.route( '/posts/:post_id')
       res.redirect('/');
     }).catch(err => res.send(err));
 });
+
+
+router.route('/posts/:username')
+
+.get(routeHelpers.isLoggedIn, function(req, res){
+
+  let pagination_req = routeHelpers.getLimitOffset(req);
+
+  db.Source.findOne( {where: {userName: req.params.username }}
+  ).then(source => {
+
+    let specs = pagination_req;
+    specs.where = {SourceId: source.id};
+     return db.Post.findAndCountAll(specs)
+  }).then( result => {
+    res.send(result); //result.count, result.rows
+  }).catch(err => {
+    res.send(err);
+  });
+})
 
 
 module.exports = router;
