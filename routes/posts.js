@@ -77,8 +77,6 @@ router.route('/posts/:username')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
-  let pagination_req = routeHelpers.getLimitOffset(req);
-
   db.Source.findOne( {where: {userName: req.params.username }}
   ).then(source => {
 

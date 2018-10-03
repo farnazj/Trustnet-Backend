@@ -64,7 +64,7 @@ router.route('/posts/:post_id/:username/assessment')
       as: 'SourceAssessments',
       where: {PostId: req.params.post_id}
     }]
-  })
+  });
 
   if (source)
     result = source.SourceAssessments[0];

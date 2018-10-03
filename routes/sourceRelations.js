@@ -5,7 +5,7 @@ var routeHelpers = require('../lib/routeHelpers');
 
 
 //Those sources that a specific user
-router.route('/follows')
+router.route('/followeds')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
@@ -58,7 +58,7 @@ router.route('/follows')
 
 
 //Those sources that the auth user blocks
-router.route('/blocks')
+router.route('/blockeds')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
@@ -110,7 +110,7 @@ router.route('/blocks')
 
 
 //Those sources that a specific user mutes
-router.route('/mutes')
+router.route('/muteds')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 
@@ -162,7 +162,7 @@ router.route('/mutes')
 });
 
 //Those sources that the auth user trusts
-router.route('/trusts')
+router.route('/trusteds')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
 

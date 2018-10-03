@@ -118,11 +118,12 @@ router.route('/boosts')
   if (!assessment)
       throw "Cannot boost the post before assessing its credibility";
 
-  let target_usernames = JSON.parse(req.body.target_usernames);
-  routeHelpers.boostPost(auth_user, req.body.post_id, target_usernames);
+  console.log(req.body.post_id, req.body.target_usernames)
+  routeHelpers.boostPost(auth_user, req.body.post_id, req.body.target_usernames);
   res.send({}); //TODO: change
 
-}));
+}))
+
 //
 // .post(routeHelpers.isLoggedIn, async function(req, res) {
 //
