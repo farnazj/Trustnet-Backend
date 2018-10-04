@@ -164,7 +164,7 @@ router.route('/muteds')
 //Those sources that the auth user trusts
 router.route('/trusteds')
 
-.get(routeHelpers.isLoggedIn, function(req, res){
+.get(routeHelpers.isLoggedIn, function(req, res) {
 
   let pagination_req = routeHelpers.getLimitOffset(req);
 
