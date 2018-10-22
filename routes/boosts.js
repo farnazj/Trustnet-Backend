@@ -81,7 +81,7 @@ router.route('/boosts')
       },
       {
         model: db.Post,
-        as: 'Posts',
+        //as: 'Posts',
         include: [
           {
             model: db.Assessment,
@@ -93,19 +93,18 @@ router.route('/boosts')
     ],
     // attributes: {include: [[db.sequelize.fn('AVG', db.sequelize.col('PostAssessments.postCredibility')), 'average']]},
     order: [['updatedAt', 'DESC']],
-    having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Posts->PostAssessments.postCredibility')), {
+    having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
          [Op.in]: validity_status,
        }),
     limit: 20,
     offset: req.query.offset ? parseInt(req.query.offset) : 0,
-    group: ['Boost.id', 'Posts.id', 'Boosters.id', 'Posts->PostAssessments.id']
+    group: ['Boost.id', 'Post.id', 'Boosters.id', 'Post->PostAssessments.id']
   })
 
   res.send(JSON.stringify(post_boosts));
 }))
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
   let auth_user = await db.Source.findById(req.user.id);
 
   let assessment = await db.Assessment.findOne({
@@ -120,7 +119,6 @@ router.route('/boosts')
 
   routeHelpers.boostPost(auth_user, req.body.post_id, req.body.target_usernames);
   res.send({}); //TODO: change
-
 }))
 
 //
