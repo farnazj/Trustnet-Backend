@@ -10,6 +10,7 @@ var session = require('express-session');
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('./models');
 var flash = require('connect-flash');
+var cors = require('cors');
 require('dotenv').config(); //for loading environment variables into process.env
 
 //var LocalStrategy = require('passport-local').Strategy;
@@ -26,6 +27,7 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(cors({credentials: true, origin: true}));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -35,7 +37,7 @@ app.use(flash());
 
 app.use(session({
     secret: process.env.SESSION_KEY,
-    resave: true,
+    resave: false,
     saveUninitialized: true
 }));
 app.use(passport.initialize())
