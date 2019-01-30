@@ -2,7 +2,7 @@ var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
-var cookieParser = require('cookie-parser');
+//var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var fs = require('fs');
 var passport = require('passport');
@@ -31,15 +31,22 @@ app.use(cors({credentials: true, origin: true}));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+//app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(flash());
 
 app.use(session({
     secret: process.env.SESSION_KEY,
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    cookie: { secure: false, maxAge: 864000000 }
 }));
+
+if (app.get('env') === 'production') {
+    app.set('trust proxy', 1)
+    sess.cookie.secure = true //TODO: serve secure cookies
+}
+
 app.use(passport.initialize())
 app.use(passport.session());
 

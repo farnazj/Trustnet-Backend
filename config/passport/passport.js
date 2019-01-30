@@ -116,21 +116,21 @@ module.exports = function(passport) {
     function(req, username, password, done) {
 
         User.findOne({where: {userName: username}}).then(function(user){
-
+          
           // if no user is found, return the message
           if (!user)
               return done(null, false, req.flash('loginMessage', 'No user found.'));
 
           bCrypt.compare(password, user.passwordHash, (err, isValid) => {
 
-               if (err) {
-                 return done(err)
-               }
-               if (!isValid) {
-                 return done(null, false);
-               }
-               return done(null, user);
-             })
+             if (err) {
+               return done(err)
+             }
+             if (!isValid) {
+               return done(null, false);
+             }
+             return done(null, user);
+           })
 
         }).catch(function(err){
           return done(err);
