@@ -59,25 +59,19 @@ router.route('/boosts')
     cred_sources = unmuted_boosters_ids;
 
 
-  //validity status
-  let validity_status;
-  if (req.headers.validity == constants.VALIDITY.CONFIRMED)
-    validity_status = [1];
-  else if (req.headers.validity == constants.VALIDITY.REFUTED)
-    validity_status = [0];
-  else if (req.headers.validity == constants.VALIDITY.DEBATED)
-    validity_status = [2];
-  else //all
-    validity_status = [0, 1, 2];
-
-
   let post_boosts = await db.Boost.findAll({
     subQuery: false,
     include: [
       {
         model: db.Source,
         as: 'Boosters',
-        where: {id: {[Op.in]: unmuted_boosters_ids }}
+        where: {id: {[Op.in]: unmuted_boosters_ids }},
+        attributes: {
+          exclude: ["passwordHash"]
+        },
+        through: {
+          attributes: []
+        }
       },
       {
         model: db.Post,
@@ -91,15 +85,28 @@ router.route('/boosts')
         ]
       }
     ],
-    // attributes: {include: [[db.sequelize.fn('AVG', db.sequelize.col('PostAssessments.postCredibility')), 'average']]},
     order: [['updatedAt', 'DESC']],
-    having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
-         [Op.in]: validity_status,
-       }),
+    // having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
+    //      [Op.in]: validity_status,
+    //    }),
     limit: 20,
     offset: req.query.offset ? parseInt(req.query.offset) : 0,
     group: ['Boost.id', 'Post.id', 'Boosters.id', 'Post->PostAssessments.id']
   })
+
+  filtered_post_boosts = []
+
+  //validity status
+  let validity_status;
+  if (req.headers.validity == constants.VALIDITY.CONFIRMED)
+    filtered_post_boosts = post_boosts.filter(item => item.PostAssessments.every(x => x.postCredibility == 1));
+  else if (req.headers.validity == constants.VALIDITY.REFUTED)
+    filtered_post_boosts = post_boosts.filter(item => item.PostAssessments.every(x => x.postCredibility == 0));
+  else if (req.headers.validity == constants.VALIDITY.DEBATED)
+    filtered_post_boosts = post_boosts.filter(item => item.PostAssessments.some(x => x.postCredibility == 0) &&
+     item.PostAssessments.some(x => x.postCredibility == 1));
+  else //all
+    filtered_post_boosts = post_boosts;
 
   res.send(JSON.stringify(post_boosts));
 }))
