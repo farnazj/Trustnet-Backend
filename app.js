@@ -16,9 +16,6 @@ require('dotenv').config(); //for loading environment variables into process.env
 //var LocalStrategy = require('passport-local').Strategy;
 
 
-//var index = require('./routes/index');
-//var sources = require('./routes/sources');
-
 var app = express();
 
 // view engine setup
@@ -50,9 +47,6 @@ if (app.get('env') === 'production') {
 app.use(passport.initialize())
 app.use(passport.session());
 
-
-//app.use('/', index);
-//app.use('/sources', sources);
 
 //bootstrap routes
  var routesPath = path.join(__dirname, 'routes');

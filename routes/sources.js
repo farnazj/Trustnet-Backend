@@ -31,9 +31,19 @@ router.route('/sources')
 });
 
 
+router.route('/sources/ids/:id')
+.get(function(req, res) {
+
+  db.Source.findById(req.params.id
+  ).then(result =>{
+    res.send(result);
+  }).catch(err => res.send(err));
+})
+
+
 router.route('/sources/:username')
 
-.get(function(req, res){
+.get(function(req, res) {
 
   db.Source.findOne({where: {userName: req.params.username}}
   ).then(result =>{

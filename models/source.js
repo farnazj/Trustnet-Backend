@@ -76,6 +76,8 @@ module.exports = (sequelize, DataTypes) => {
 
   Source.associate = function (models) {
 
+    models.Source.belongsToMany(models.Post, {as: 'PostBoosts', through:'SourcePostBoosts'});
+
     models.Source.hasMany(models.Post, {as: 'InitiatedPosts'});
     models.Source.hasMany(models.Assessment, {as: 'SourceAssessments'});
     models.Source.hasMany(models.Feed, {as: 'SourceFeeds'});

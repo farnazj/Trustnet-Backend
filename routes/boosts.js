@@ -59,8 +59,51 @@ router.route('/boosts')
     cred_sources = unmuted_boosters_ids;
 
 
+  //validity status
+  let having_statement;
+  if (req.headers.validity == constants.VALIDITY.CONFIRMED) {
+    having_statement = {
+      [Op.and] : {
+        '$minValidity$': {
+            $in: [1, 2] },
+        '$maxValidity$': {
+            $eq: 2}
+      }
+    }
+  }
+  else if (req.headers.validity == constants.VALIDITY.REFUTED) {
+    having_statement = {
+      [Op.and] : {
+        '$minValidity$': {
+            $eq: 0},
+        '$maxValidity$': {
+            $in: [0, 1]}
+      }
+    }
+  }
+  else if (req.headers.validity == constants.VALIDITY.DEBATED) {
+    having_statement = {
+      [Op.and] : {
+        '$minValidity$': {
+            $eq: 0},
+        '$maxValidity$': {
+            $eq: 2}
+      }
+    }
+  }
+  else { //all
+    having_statement = {}
+  }
+
+
   let post_boosts = await db.Boost.findAll({
     subQuery: false,
+    attributes: {
+       include: [
+         [db.sequelize.fn('MIN', db.sequelize.col('Post->PostAssessments.postCredibility')), `minValidity`],
+         [db.sequelize.fn('MAX', db.sequelize.col('Post->PostAssessments.postCredibility')), `maxValidity`]
+       ]
+    },
     include: [
       {
         model: db.Source,
@@ -80,33 +123,22 @@ router.route('/boosts')
           {
             model: db.Assessment,
             as: 'PostAssessments',
-            where: {SourceId: {[Op.in]: cred_sources}}
+            where: {SourceId: {[Op.in]: cred_sources}},
+
           }
         ]
       }
     ],
     order: [['updatedAt', 'DESC']],
-    // having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
-    //      [Op.in]: validity_status,
-    //    }),
+    having: having_statement,
+    //having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
+       //   [Op.in]: validity_status,
+       // }),
+
     limit: 20,
     offset: req.query.offset ? parseInt(req.query.offset) : 0,
     group: ['Boost.id', 'Post.id', 'Boosters.id', 'Post->PostAssessments.id']
   })
-
-  filtered_post_boosts = []
-
-  //validity status
-  let validity_status;
-  if (req.headers.validity == constants.VALIDITY.CONFIRMED)
-    filtered_post_boosts = post_boosts.filter(item => item.PostAssessments.every(x => x.postCredibility == 1));
-  else if (req.headers.validity == constants.VALIDITY.REFUTED)
-    filtered_post_boosts = post_boosts.filter(item => item.PostAssessments.every(x => x.postCredibility == 0));
-  else if (req.headers.validity == constants.VALIDITY.DEBATED)
-    filtered_post_boosts = post_boosts.filter(item => item.PostAssessments.some(x => x.postCredibility == 0) &&
-     item.PostAssessments.some(x => x.postCredibility == 1));
-  else //all
-    filtered_post_boosts = post_boosts;
 
   res.send(JSON.stringify(post_boosts));
 }))

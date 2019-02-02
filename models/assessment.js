@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
-        min: 0, //0 for inaccurate, 1 for accurate, 2 for not sure
+        min: 0, //0 for inaccurate, 2 for accurate, 1 for not sure
         max: 2,
       }
     },

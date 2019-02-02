@@ -19,7 +19,7 @@ router.route('/posts') //initiated posts
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let post_specs = routeHelpers.getSpecifictions(req.body);
+  let post_specs = req.body;
 
   let post_prom = db.Post.create(post_specs);
   let auth_user_prom = db.Source.findById(req.user.id);
