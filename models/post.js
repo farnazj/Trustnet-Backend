@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 1
     },
-    url:{
+    url: {
        type: DataTypes.STRING,
        validate:{
           isUrl: true

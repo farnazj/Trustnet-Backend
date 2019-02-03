@@ -12,6 +12,7 @@ router.route('/boosts')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
+  console.time('auth-user');
   let auth_user_ = await db.Source.findOne({
     where: {
       id: req.user.id
@@ -36,15 +37,18 @@ router.route('/boosts')
   });
 
   let unmuted_boosters = auth_user_.Follows.filter(source => (!auth_user_.Mutes.map(muted_source => {return muted_source.id}).includes(source.id) ));
-
+  console.timeEnd('auth-user');
+  console.time('feed-update');
   await feedHelpers.updateRSSPosts(unmuted_boosters);
+  console.timeEnd('feed-update');
 
   let unmuted_boosters_ids = unmuted_boosters.map(booster => {return booster.id});
 
   //crediblity criteria
+  console.time('credSource-criteria')
   let cred_sources;
   if (req.headers.source == constants.CRED_SOURCES.TRUSTED)
-      cred_sources = (await auth_user.getTrusteds()).map(source => {return source.id});
+      cred_sources = auth_user_.Trusteds.map(source => {return source.id});
   else if (req.headers.source == constants.CRED_SOURCES.ME)
       cred_sources = [auth_user.id];
   else if (req.headers.source == constants.CRED_SOURCES.USERNAMES) //as is, you can check anyone's opinion, doesn't need to be followed or trusted by you
@@ -58,6 +62,7 @@ router.route('/boosts')
   else
     cred_sources = unmuted_boosters_ids;
 
+    console.timeEnd('credSource-criteria')
 
   //validity status
   let having_statement;
@@ -95,7 +100,7 @@ router.route('/boosts')
     having_statement = {}
   }
 
-
+  console.time('fetching-post-boosts');
   let post_boosts = await db.Boost.findAll({
     subQuery: false,
     attributes: {
@@ -135,10 +140,11 @@ router.route('/boosts')
        //   [Op.in]: validity_status,
        // }),
 
-    limit: 20,
+    limit: req.query.limit ? parseInt(req.query.limit) : 15,
     offset: req.query.offset ? parseInt(req.query.offset) : 0,
     group: ['Boost.id', 'Post.id', 'Boosters.id', 'Post->PostAssessments.id']
   })
+  console.timeEnd('fetching-post-boosts');
 
   res.send(JSON.stringify(post_boosts));
 }))
