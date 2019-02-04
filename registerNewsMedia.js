@@ -18,7 +18,7 @@ var media = [
 
 module.exports =  function(){
 
-  generateHash(process.env.ADMIN_KEY).then((entityPassword) => {
+  return generateHash(process.env.ADMIN_KEY).then((entityPassword) => {
 
     let media_sources = media.map(el => db.Feed.findOne({where:{
       rssfeed: el.rssfeed,

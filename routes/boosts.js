@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
-var feedHelpers = require('../lib/feedHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 var constants = require('../lib/constants');
 const Op = db.sequelize.Op;
@@ -38,9 +37,6 @@ router.route('/boosts')
 
   let unmuted_boosters = auth_user_.Follows.filter(source => (!auth_user_.Mutes.map(muted_source => {return muted_source.id}).includes(source.id) ));
   console.timeEnd('auth-user');
-  console.time('feed-update');
-  await feedHelpers.updateRSSPosts(unmuted_boosters);
-  console.timeEnd('feed-update');
 
   let unmuted_boosters_ids = unmuted_boosters.map(booster => {return booster.id});
 
@@ -66,7 +62,7 @@ router.route('/boosts')
 
   //validity status
   let having_statement;
-  if (req.headers.validity == constants.VALIDITY.CONFIRMED) {
+  if (req.headers.validity == constants.VALIDITY_TYPES.CONFIRMED) {
     having_statement = {
       [Op.and] : {
         '$minValidity$': {
@@ -76,7 +72,7 @@ router.route('/boosts')
       }
     }
   }
-  else if (req.headers.validity == constants.VALIDITY.REFUTED) {
+  else if (req.headers.validity == constants.VALIDITY_TYPES.REFUTED) {
     having_statement = {
       [Op.and] : {
         '$minValidity$': {
@@ -86,7 +82,7 @@ router.route('/boosts')
       }
     }
   }
-  else if (req.headers.validity == constants.VALIDITY.DEBATED) {
+  else if (req.headers.validity == constants.VALIDITY_TYPES.DEBATED) {
     having_statement = {
       [Op.and] : {
         '$minValidity$': {
@@ -101,6 +97,7 @@ router.route('/boosts')
   }
 
   console.time('fetching-post-boosts');
+  console.log('offset ', req.query.offset);
   let post_boosts = await db.Boost.findAll({
     subQuery: false,
     attributes: {
