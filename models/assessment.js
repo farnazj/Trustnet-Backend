@@ -5,8 +5,8 @@ module.exports = (sequelize, DataTypes) => {
     postCredibility: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      validate: {
-        min: 0, //0 for inaccurate, 2 for accurate, 1 for not sure
+      validate: { //specified in constants.VALIDITY_CODES
+        min: 0,
         max: 2,
       }
     },

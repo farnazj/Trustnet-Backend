@@ -8,7 +8,8 @@ var authController = require('../controllers/authcontroller.js');
 router.route('/login')
 .post(passport.authenticate('local-login'), function(req, res){
   req.session.save(() => {
-      res.redirect('/');
+      //res.redirect('/');
+      res.send({'msg': 'login successful'});
      })
 });
 
