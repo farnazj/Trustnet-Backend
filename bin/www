@@ -36,7 +36,6 @@ var server = http.createServer(app);
       feedHelpers.updateFeeds();
    });
    setInterval(feedHelpers.updateFeeds, constants.FEED_UPDATE_INT);
-   console.log('moved on');
 
    server.listen(port);
    server.on('error', onError);

@@ -7,10 +7,13 @@ var authController = require('../controllers/authcontroller.js');
 
 router.route('/login')
 .post(passport.authenticate('local-login'), function(req, res){
+  const user = req.user;
   req.session.save(() => {
-      //res.redirect('/');
-      res.send({'msg': 'login successful'});
-     })
+  //     //res.redirect('/');
+  //     res.send({'msg': 'login successful'});
+  res.send({'user': user});
+
+      })
 });
 
 router.route('/logout')
