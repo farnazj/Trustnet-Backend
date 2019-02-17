@@ -54,7 +54,7 @@ router.route('/boosts')
       if (!req.headers.source_usernames)
           cred_sources = [];
       else {
-        source_usernames.split(',').map( src =>{
+        req.headers.source_usernames.split(',').map( src =>{
           source_promises.push(db.Source.findOne({where: {userName: src}}));
         });
         cred_sources = (await Promise.all(source_promises)).map(source => {return source.id});
@@ -116,7 +116,7 @@ router.route('/boosts')
       {
         model: db.Source,
         as: 'Boosters',
-        where: {id: {[Op.in]: unmuted_boosters_ids }},
+        //where: {id: {[Op.in]: unmuted_boosters_ids }},
         attributes: {
           exclude: ["passwordHash"]
         },
@@ -131,12 +131,19 @@ router.route('/boosts')
           {
             model: db.Assessment,
             as: 'PostAssessments',
-            where: {SourceId: {[Op.in]: cred_sources}},
-
+            //where: {SourceId: {[Op.in]: cred_sources}},
           }
         ]
       }
     ],
+    where: {
+      [Op.and] : {
+        '$Post.PostAssessments.SourceId$': {[Op.in]: cred_sources}
+        ,
+        '$Boosters.id$': {[Op.in]: unmuted_boosters_ids }
+      }
+    }
+    ,
     order: [['updatedAt', 'DESC']],
     having: having_statement,
     //having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
