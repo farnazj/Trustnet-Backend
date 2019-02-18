@@ -103,47 +103,61 @@ router.route('/boosts')
   }
 
   console.time('fetching-post-boosts');
-  console.log('offset ', req.query.offset);
-  let post_boosts = await db.Boost.findAll({
+  let post_boosts = await db.Post.findAll({
     subQuery: false,
     attributes: {
        include: [
-         [db.sequelize.fn('MIN', db.sequelize.col('Post->PostAssessments.postCredibility')), `minValidity`],
-         [db.sequelize.fn('MAX', db.sequelize.col('Post->PostAssessments.postCredibility')), `maxValidity`]
+         [db.sequelize.fn('MIN', db.sequelize.col('PostAssessments.postCredibility')), `minValidity`],
+         [db.sequelize.fn('MAX', db.sequelize.col('PostAssessments.postCredibility')), `maxValidity`]
        ]
     },
     include: [
       {
-        model: db.Source,
-        as: 'Boosters',
-        //where: {id: {[Op.in]: unmuted_boosters_ids }},
-        attributes: {
-          exclude: ["passwordHash"]
-        },
-        through: {
-          attributes: []
-        }
-      },
-      {
-        model: db.Post,
-        //as: 'Posts',
+        model: db.Boost,
+        as: 'Boosteds',
         include: [
           {
-            model: db.Assessment,
-            as: 'PostAssessments',
-            //where: {SourceId: {[Op.in]: cred_sources}},
+            model: db.Source,
+            as: 'Boosters',
+            //where: {id: {[Op.in]: unmuted_boosters_ids }},
+            attributes: {
+              exclude: ["passwordHash"]
+            },
+            through: {
+              attributes: []
+            }
+          },
+          {
+            model: db.Source,
+            as: 'Targets',
+            // through: {
+            //   attributes: []
+            // }
           }
         ]
+      },
+      {
+        model: db.Assessment,
+        as: 'PostAssessments',
+        //where: {SourceId: {[Op.in]: cred_sources}},
       }
     ],
     where: {
-      [Op.and] : {
-        '$Post.PostAssessments.SourceId$': {[Op.in]: cred_sources}
-        ,
-        '$Boosters.id$': {[Op.in]: unmuted_boosters_ids }
-      }
-    }
-    ,
+      [Op.and] : [{
+        '$PostAssessments.SourceId$': {
+          [Op.in]: cred_sources
+        },
+        '$Boosteds.Boosters.id$': {
+          [Op.in]: unmuted_boosters_ids
+        },
+        '$Boosteds.Targets.id$': {
+          [Op.or]: {
+            [Op.eq]: null,
+            [Op.in]: [req.user.id]
+          }
+        }
+      }]
+    },
     order: [['updatedAt', 'DESC']],
     having: having_statement,
     //having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
@@ -152,7 +166,7 @@ router.route('/boosts')
 
     limit: req.query.limit ? parseInt(req.query.limit) : 15,
     offset: req.query.offset ? parseInt(req.query.offset) : 0,
-    group: ['Boost.id', 'Post.id', 'Boosters.id', 'Post->PostAssessments.id']
+    group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
   })
   console.timeEnd('fetching-post-boosts');
 

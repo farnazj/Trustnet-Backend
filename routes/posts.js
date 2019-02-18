@@ -19,17 +19,16 @@ router.route('/posts') //initiated posts
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let post_specs = req.body;
+  //let post_specs = req.body;
 
-  let post_prom = db.Post.create(post_specs);
+  let post_prom = db.Post.create(req.body);
   let auth_user_prom = db.Source.findById(req.user.id);
 
   //when a source initiates a post, a credibility assessment is automatically generated
   //for post, with the source as the sourceId and a value of "valid"
 
   let [auth_user, post] = await Promise.all([auth_user_prom, post_prom]);
-
-  await routeHelpers.initiatePost(auth_user, post);
+  await routeHelpers.initiatePost(auth_user, post, req.body.target_usernames);
 
   res.redirect('/');
 
