@@ -130,11 +130,14 @@ router.route('/boosts')
           {
             model: db.Source,
             as: 'Targets',
-            // through: {
-            //   attributes: []
-            // }
+            through: {
+              attributes: []
+            }
           }
-        ]
+        ],
+        through: {
+          attributes: []
+        }
       },
       {
         model: db.Assessment,
