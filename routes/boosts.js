@@ -11,7 +11,6 @@ router.route('/boosts')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  console.time('auth-user');
   let auth_user_ = await db.Source.findOne({
     where: {
       id: req.user.id
@@ -35,13 +34,11 @@ router.route('/boosts')
     ]
   });
 
-  let unmuted_boosters = auth_user_.Follows.filter(source => (!auth_user_.Mutes.map(muted_source => {return muted_source.id}).includes(source.id) ));
-  console.timeEnd('auth-user');
-
+  let unmuted_boosters = auth_user_.Follows.filter(source =>
+    (!auth_user_.Mutes.map(muted_source => {return muted_source.id}).includes(source.id) ));
   let unmuted_boosters_ids = unmuted_boosters.map(booster => {return booster.id});
 
   //crediblity criteria
-  console.time('credSource-criteria')
 
   let cred_sources;
   if (req.headers.source == constants.CRED_SOURCES.TRUSTED)
@@ -62,10 +59,9 @@ router.route('/boosts')
 
      }
   else
-    cred_sources = unmuted_boosters_ids;
+      cred_sources = unmuted_boosters_ids.concat(auth_user_.id);
 
-    console.timeEnd('credSource-criteria')
-
+  console.log("cred sources", cred_sources)
   //validity status
   let having_statement;
   if (req.headers.validity == constants.VALIDITY_TYPES.CONFIRMED) {
@@ -102,7 +98,6 @@ router.route('/boosts')
     having_statement = {}
   }
 
-  console.time('fetching-post-boosts');
   let post_boosts = await db.Post.findAll({
     subQuery: false,
     attributes: {
@@ -146,20 +141,42 @@ router.route('/boosts')
       }
     ],
     where: {
-      [Op.and] : [{
-        '$PostAssessments.SourceId$': {
-          [Op.in]: cred_sources
-        },
-        '$Boosteds.Boosters.id$': {
-          [Op.in]: unmuted_boosters_ids
-        },
-        '$Boosteds.Targets.id$': {
-          [Op.or]: {
-            [Op.eq]: null,
+      [Op.or]: [{
+
+        //for posts that the auth user has boosted
+        [Op.and] : [{
+          '$Boosteds.Boosters.id$': {
             [Op.in]: [req.user.id]
           }
-        }
+        },
+        {
+          '$PostAssessments.SourceId$': {
+            [Op.in]: cred_sources
+          }
+        }]
+      },
+      {
+      //for psosts that others have posted
+      [Op.and] : [{
+          '$PostAssessments.SourceId$': {
+            [Op.in]: cred_sources
+          }
+        },
+        {
+          '$Boosteds.Boosters.id$': {
+            [Op.in]: unmuted_boosters_ids
+          }
+        },
+        {
+          '$Boosteds.Targets.id$': {
+            [Op.or]: {
+              [Op.eq]: null,
+              [Op.in]: [req.user.id]
+            }
+          }
+        }]
       }]
+
     },
     order: [['updatedAt', 'DESC']],
     having: having_statement,
@@ -171,7 +188,6 @@ router.route('/boosts')
     offset: req.query.offset ? parseInt(req.query.offset) : 0,
     group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
   })
-  console.timeEnd('fetching-post-boosts');
 
   res.send(JSON.stringify(post_boosts));
 }))
