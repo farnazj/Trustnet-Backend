@@ -156,7 +156,7 @@ router.route('/boosts')
         }]
       },
       {
-      //for psosts that others have posted
+      //for posts that others have posted
       [Op.and] : [{
           '$PostAssessments.SourceId$': {
             [Op.in]: cred_sources
