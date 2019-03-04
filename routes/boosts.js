@@ -114,7 +114,6 @@ router.route('/boosts')
           {
             model: db.Source,
             as: 'Boosters',
-            //where: {id: {[Op.in]: unmuted_boosters_ids }},
             attributes: {
               exclude: ["passwordHash"]
             },
@@ -136,8 +135,7 @@ router.route('/boosts')
       },
       {
         model: db.Assessment,
-        as: 'PostAssessments',
-        //where: {SourceId: {[Op.in]: cred_sources}},
+        as: 'PostAssessments'
       }
     ],
     where: {
@@ -178,15 +176,14 @@ router.route('/boosts')
       }]
 
     },
+    required: true,
     order: [['updatedAt', 'DESC']],
     having: having_statement,
-    //having: db.sequelize.where(db.sequelize.fn('AVG', db.sequelize.col('Post->PostAssessments.postCredibility')), {
-       //   [Op.in]: validity_status,
-       // }),
 
     limit: req.query.limit ? parseInt(req.query.limit) : 15,
     offset: req.query.offset ? parseInt(req.query.offset) : 0,
     group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
+
   })
 
   res.send(JSON.stringify(post_boosts));

@@ -36,7 +36,7 @@ app.use(session({
     secret: process.env.SESSION_KEY,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false, maxAge: 864000000 }
+    cookie: { secure: false, maxAge: 14400000 }
 }));
 
 if (app.get('env') === 'production') {
