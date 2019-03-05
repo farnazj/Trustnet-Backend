@@ -51,13 +51,13 @@ router.route('/posts/:post_id/assessments')
 }))
 
 
-router.route('/posts/:post_id/:username/assessment')
+router.route('/posts/:post_id/:user_id/assessment')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
   let source = await db.Source.findOne({
     where: {
-      userName: req.params.username
+      id: req.params.user_id
     },
     include: [{
       model: db.Assessment,
