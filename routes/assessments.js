@@ -45,6 +45,11 @@ router.route('/posts/:post_id/assessments')
 
     await Promise.all([source_assessment, post_assessment]);
   }
+  else {
+    let assessmentSpecs = req.body;
+    assessmentSpecs.version = assessment.version + 1;
+    await assessment.update(assessmentSpecs);
+  }
 
   res.send({}); //TODO: change
 
