@@ -60,12 +60,11 @@ module.exports = function(passport) {
                           User.create(data).then(function(newUser, created) {
 
                             if (!newUser) {
-                              return done(null, false, {'message': 'Sth went wrong'});
+                              return done(null, false, {message: 'Sth went wrong'});
                             }
 
                             else {
-                              console.log('heres the newUser', newUser)
-                              return done(null, newUser, {'message': 'New user created'});
+                              return done(null, newUser, {message: 'New user created'});
                             }
 
                           })
