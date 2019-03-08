@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 const passport = require('passport');
 var routeHelpers = require('../lib/routeHelpers');
-var authController = require('../controllers/authcontroller.js');
 
 
 router.route('/login')
@@ -11,25 +10,33 @@ router.route('/login')
   req.session.save(() => {
   //     //res.redirect('/');
   //     res.send({'msg': 'login successful'});
-  res.send({'user': user});
-
+    res.send({'user': user});
       })
 });
 
 router.route('/logout')
 .post(routeHelpers.isLoggedIn, function(req, res){
   req.logout();
-  res.redirect('/login');
+  res.sendStatus(200);
 });
 
 router.route('/signup')
-.get( authController.signup)
-.post( passport.authenticate('local-signup', {
-        successRedirect: '/',
-        failureRedirect: '/signup',
-        failureFlash: true
-    }
-))
 
+.post(function(req, res, next){
+  passport.authenticate('local-signup', function(err, user, info) {
+
+    if (err) {
+      return next(err);
+    }
+
+    if (user) {
+      res.status(200).send({'message': info.message });
+    }
+    else {
+      res.status(400).send({'message': info.message });
+    }
+
+ })(req, res, next);
+})
 
 module.exports = router;

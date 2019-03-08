@@ -17,19 +17,20 @@ module.exports = function(passport) {
             };
 
             User.findOne({
-                where: {
-                    userName: username
-                }
+              where: {
+                userName: username
+              }
             }).then(function(user) {
+
 
                 if (user)
                 {
-                    return done(null, false, {
-                        message: 'That username is already taken'
-                    });
+                  return done(null, false, {
+                    message: 'That username is already taken'
+                  });
 
-                } else
-                {
+                }
+                else {
                   User.findOne({
                      where: {
                        email: req.body.email
@@ -44,42 +45,35 @@ module.exports = function(passport) {
                       else {
                         generateHash(password).then((userPassword) => {
 
-                        var data =
-                            {
-                              firstName: req.body.firstname,
-                              lastName: req.body.lastname,
-                              userName: username,
-                              passwordHash: userPassword,
-                              email: req.body.email,
-                              systemMade: false
-                            };
+                        var data = {
+                          firstName: req.body.firstName,
+                          lastName: req.body.lastName,
+                          userName: username,
+                          passwordHash: userPassword,
+                          email: req.body.email,
+                          systemMade: false
+                        };
+
 
                         Object.entries(data).forEach(([key, value]) => data[key] = value == null ? undefined : value);
 
                           User.create(data).then(function(newUser, created) {
 
-                              if (!newUser) {
-                                  return done(null, false);
-                              }
+                            if (!newUser) {
+                              return done(null, false, {'message': 'Sth went wrong'});
+                            }
 
-                              if (newUser) {
-                                  return done(null, newUser);
-                              }
+                            else {
+                              console.log('heres the newUser', newUser)
+                              return done(null, newUser, {'message': 'New user created'});
+                            }
 
-                          }).catch(function(reason){
-                              return done(null, false, {message: reason});
-                          });
+                          })
 
-                        }).catch(function(reason){
-                            return done(null, false, {message: reason});
-                        });
+                        })
                       }
 
-                   }).catch(function(reason){
-                       return done(null, false, {message: reason});
-                   });
-
-
+                   })
                 }
 
             }).catch(function(reason){

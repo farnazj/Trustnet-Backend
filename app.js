@@ -9,7 +9,7 @@ var passport = require('passport');
 var session = require('express-session');
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('./models');
-var flash = require('connect-flash');
+//var flash = require('connect-flash');
 var cors = require('cors');
 require('dotenv').config(); //for loading environment variables into process.env
 
@@ -30,7 +30,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 //app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(flash());
 
 app.use(session({
     secret: process.env.SESSION_KEY,
