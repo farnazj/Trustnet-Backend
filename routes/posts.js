@@ -14,7 +14,6 @@ router.route('/posts') //initiated posts
   let auth_user = await db.Source.findById(req.user.id);
   let posts = await auth_user.getInitiatedPosts(pagination_req);
   res.send(posts);
-
 }))
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -29,8 +28,6 @@ router.route('/posts') //initiated posts
   await routeHelpers.initiatePost(auth_user, post, req.body.target_usernames);
 
   res.send({'msg': 'Post has been added'});
-  //res.sendStatus(500)
-
 }));
 
 
@@ -51,8 +48,7 @@ router.route('/posts/:post_id')
     }
   })
 
-  res.redirect('/');
-
+  res.send({message: 'Post deleted'});
 }))
 
 
@@ -67,7 +63,8 @@ router.route('/posts/:post_id')
     })
     .then(result =>{
       res.redirect('/');
-    }).catch(err => res.send(err));
+    })
+    .catch(err => res.send(err));
 });
 
 
@@ -77,10 +74,12 @@ router.route('/posts/:username')
 
   db.Source.findOne( {where: {userName: req.params.username }}
   ).then(source => {
-
-    let specs = pagination_req;
-    specs.where = {SourceId: source.id};
-     return db.Post.findAndCountAll(specs)
+     return db.Post.findAndCountAll({
+       where: {
+         SourceId: source.id
+       },
+       ...pagination_req
+     })
   }).then( result => {
     res.send(result); //result.count, result.rows
   }).catch(err => {
@@ -101,8 +100,6 @@ router.route('/posts/import')
      assessment_obj, req.body.target_usernames);
 
   res.send({'msg': 'Post has been imported'});
-  //res.sendStatus(500)
-
 }));
 
 

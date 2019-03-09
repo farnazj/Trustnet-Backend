@@ -3,6 +3,7 @@ var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
+const Op = db.sequelize.Op;
 
 
 router.route('/sources')
@@ -10,10 +11,23 @@ router.route('/sources')
 .get(function(req, res){
 
   let pagination_req = routeHelpers.getLimitOffset(req);
+  let searchTerm = req.headers.search_term ? req.headers.search_term : '';
 
-  db.Source.findAndCountAll(pagination_req)
+  db.Source.findAll({
+    where: {
+      [Op.or]: [
+        db.sequelize.where(db.sequelize.fn('concat', db.sequelize.col('firstName'), ' ', db.sequelize.col('lastName')), {
+          [Op.like]: '%' + searchTerm + '%'
+        }),
+          {
+            userName: { [Op.like]: '%' + searchTerm + '%' }
+          }
+      ]
+    },
+    ...pagination_req
+  })
   .then( result => {
-    res.send(result); //result.count, result.rows
+    res.send(result);
   }).catch(err => {
     res.send(err);
   });
@@ -21,9 +35,7 @@ router.route('/sources')
 
 .post(function(req, res) {
 
-  let sourceSpecs = routeHelpers.getSpecifictions(req.body);
-
-  db.Source.create(sourceSpecs).then(function() {
+  db.Source.create(req.body).then(function() {
     res.redirect('/');
   }).catch(err => {
     res.send(err);
@@ -64,15 +76,12 @@ router.route('/sources/:username')
 
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let sourceSpecs = routeHelpers.getSpecifictions(req.body);
-
   let result = await db.Source.update(
-    sourceSpecs,
+    req.body,
     { where: {userName: req.params.username} }
   );
   res.send(result);
 }));
-
 
 
 module.exports = router;
