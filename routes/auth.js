@@ -23,17 +23,17 @@ router.route('/login')
   })(req, res, next)
 })
 
-.post(passport.authenticate('local-login'), function(req, res){
-  const user = req.user;
-  req.session.save(() => {
-  //     //res.redirect('/');
-  //     res.send({'msg': 'login successful'});
-    res.send({'user': user});
-      })
-});
+// .post(passport.authenticate('local-login'), function(req, res){
+//   const user = req.user;
+//   req.session.save(() => {
+//   //     //res.redirect('/');
+//   //     res.send({'msg': 'login successful'});
+//     res.send({'user': user});
+//       })
+// });
 
 router.route('/logout')
-.post(routeHelpers.isLoggedIn, function(req, res){
+.post( function(req, res){
   req.logout();
   res.sendStatus(200);
 });
