@@ -13,6 +13,8 @@ var models = require('./models');
 var cors = require('cors');
 require('dotenv').config(); //for loading environment variables into process.env
 
+const { AssertionError } = require('assert');
+const { DatabaseError } = require('sequelize');
 
 var app = express();
 
@@ -61,6 +63,30 @@ app.use(function(req, res, next) {
   next(err);
 });
 
+app.use(function handleAssertionError(error, req, res, next) {
+
+  if (error instanceof AssertionError) {
+    logger.error(error.message);
+    return res.status(400).json({
+      type: 'AssertionError',
+      message: 'Not Found'
+    });
+  }
+  next(error);
+});
+
+app.use(function handleDatabaseError(error, req, res, next) {
+
+  if (error instanceof DatabaseError) {
+    console.log(error.message);
+    return res.status(503).json({
+      type: 'DatabaseError',
+      message: 'Error in connceting to the database'
+    });
+  }
+  next(error);
+});
+
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
@@ -69,6 +95,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
+  console.log(err, "*******")
   res.send({message: 'Server error'});
 });
 
