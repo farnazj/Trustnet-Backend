@@ -139,11 +139,12 @@ router.route('/boosts')
       }
     ],
     where: {
+
       [Op.or]: [{
 
         //for posts that the auth user has boosted
         [Op.and] : [{
-          '$Boosteds.Boosters.id$': {
+          '$Boosteds->Boosters.id$': {
             [Op.in]: [req.user.id]
           }
         },
@@ -161,12 +162,12 @@ router.route('/boosts')
           }
         },
         {
-          '$Boosteds.Boosters.id$': {
+          '$Boosteds->Boosters.id$': {
             [Op.in]: unmuted_boosters_ids
           }
         },
         {
-          '$Boosteds.Targets.id$': {
+          '$Boosteds->Targets.id$': {
             [Op.or]: {
               [Op.eq]: null,
               [Op.in]: [req.user.id]
