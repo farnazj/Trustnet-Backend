@@ -54,9 +54,18 @@ module.exports = function(passport) {
                           systemMade: false
                         };
 
+                        let data_complete = true;
+                        Object.entries(data).forEach(([key, value]) => {
 
-                        Object.entries(data).forEach(([key, value]) => data[key] = value == null ? undefined : value);
+                          if (typeof data[key] === 'undefined') {
+                            data_complete = false;
+                          }
+                        });
 
+                        if (!data_complete) {
+                          return done(null, false, {message: 'Request incomplete'});
+                        }
+                        else {
                           User.create(data).then(function(newUser, created) {
 
                             if (!newUser) {
@@ -68,6 +77,7 @@ module.exports = function(passport) {
                             }
 
                           })
+                        }
 
                         })
                       }
@@ -120,7 +130,7 @@ module.exports = function(passport) {
                return done(err)
              }
              if (!isValid) {
-               return done(null, false);
+               return done(null, false, {message: 'Password not valid'});
              }
              return done(null, user);
            })
