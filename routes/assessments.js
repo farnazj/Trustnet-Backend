@@ -78,6 +78,7 @@ router.route('/posts/:post_id/:user_id/assessment')
 
   res.send(result);
 }))
+
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
     let assessmentSpecs = routeHelpers.getSpecifictions(req.body);
