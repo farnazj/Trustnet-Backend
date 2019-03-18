@@ -16,14 +16,11 @@ router.route('/boosts')
     order: [
       [ 'updatedAt', 'DESC'],
       [ 'PostAssessments', 'updatedAt', 'DESC'],
-      [ 'Boosteds', 'id'],
-      [ 'Boosteds', 'Boosters', 'userName', 'DESC'],
-      [ 'Boosteds', 'Targets', 'userName', 'DESC'],
     ],
     //limit: req.query.limit ? parseInt(req.query.limit) : 15,
     //offset: req.query.offset ? parseInt(req.query.offset) : 0,
     group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
-
+    //group: ['Post.id', 'Boosteds.id', 'Boosteds->Boosters.id']
   })
   //temporarily
   let limit = req.query.limit ? parseInt(req.query.limit) : 15;
@@ -62,7 +59,6 @@ router.route('/boosts/:post_id')
 
   });
 
-  console.log(post_boost[0].Boosteds)
   res.send(post_boost[0]);
 }));
 

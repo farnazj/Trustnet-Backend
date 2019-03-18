@@ -24,7 +24,7 @@ router.route('/posts/:post_id/assessments')
   res.send(post.PostAssessments);
 }))
 
-
+//post or update assessment
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
   let assessment = await db.Assessment.find({where: {
@@ -51,7 +51,7 @@ router.route('/posts/:post_id/assessments')
     await assessment.update(assessmentSpecs);
   }
 
-  res.send({}); //TODO: change
+  res.send({message: 'Assessment posted'});
 
 }))
 
@@ -81,12 +81,12 @@ router.route('/posts/:post_id/:user_id/assessment')
 
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-    let assessmentSpecs = routeHelpers.getSpecifictions(req.body);
+    let assessmentSpecs = routeHelpers = req.body;
     let assessment = await db.Assessment.findById(req.params.assessment_id);
     assessmentSpecs.version = assessment.version + 1;
     await assessment.update(assessmentSpecs);
 
-    res.redirect('/');
+    res.send({message: 'Assessment updated'});
 
 }));
 

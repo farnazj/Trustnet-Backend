@@ -33,8 +33,8 @@ router.route('/follows')
   Promise.all([source_user, followed_user])
   .then(sources => {
     return sources[0].addFollow(sources[1]);
-  }).then(result =>{
-    res.send({'message': result + ' source added to follows'});
+  }).then(result => {
+    res.send({message: 'Source added to follows'});
   }).catch(err => {
     res.send(err);
   });
@@ -50,7 +50,7 @@ router.route('/follows')
   .then(sources => {
     return sources[0].removeFollow(sources[1]);
   }).then(result => {
-    res.send({'message': result + ' source removed from follows'});
+    res.send({message: result + ' source removed from follows'});
   }).catch(err => {
     res.send(err)
   });
@@ -86,7 +86,7 @@ router.route('/blocks')
   .then(sources => {
     return sources[0].addBlock(sources[1]);
   }).then(result =>{
-    res.send({'message': result + ' source added to blocks'});
+    res.send({message: 'Source added to blocks'});
   }).catch(err => {
     res.send(err);
   });
@@ -102,7 +102,7 @@ router.route('/blocks')
   .then(sources => {
     return sources[0].removeBlock(sources[1]);
   }).then(result => {
-    res.send({'message': result + ' source removed from blocks'});
+    res.send({message: result + ' source removed from blocks'});
   }).catch(err => {
     res.send(err)
   });
@@ -139,7 +139,7 @@ router.route('/mutes')
   .then(sources => {
     return sources[0].addMute(sources[1]);
   }).then(result =>{
-    res.send({'message': result + ' source added to Mutes'});
+    res.send({message: 'Source added to Mutes'});
   }).catch(err => {
     res.send(err);
   });
@@ -155,7 +155,7 @@ router.route('/mutes')
   .then(sources => {
     return sources[0].removeMute(sources[1]);
   }).then(result => {
-    res.send({'message': result + ' source removed from Mutes'});
+    res.send({message: result + ' source removed from Mutes'});
   }).catch(err => {
     res.send(err)
   });
@@ -192,7 +192,7 @@ router.route('/trusts')
     return Promise.all([sources[0].addTrusted(sources[1]),
     sources[0].addFollow(sources[1])]);
   }).then(result =>{
-    res.send({'message': result + ' source added to trusteds'});
+    res.send({message: 'Source added to trusteds'});
   }).catch(err => {
     res.send(err);
   });
@@ -209,7 +209,7 @@ router.route('/trusts')
   .then(sources => {
     return sources[0].removeTrusted(sources[1]);
   }).then(result => {
-    res.send({'message': result + ' source removed from trusteds'});
+    res.send({message: result + ' source removed from trusteds'});
   }).catch(err => {
     res.send(err)
   });

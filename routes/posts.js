@@ -27,7 +27,7 @@ router.route('/posts') //initiated posts
   let [auth_user, post] = await Promise.all([auth_user_prom, post_prom]);
   await routeHelpers.initiatePost(auth_user, post, req.body.target_usernames);
 
-  res.send({'msg': 'Post has been added'});
+  res.send({message: 'Post has been added'});
 }));
 
 
@@ -54,15 +54,15 @@ router.route('/posts/:post_id')
 
 .put(routeHelpers.isLoggedIn, function(req, res){
 
-    let postSpecs = routeHelpers.getSpecifictions(req.body);
+    let postSpecs = req.body;
 
     db.Post.findById(req.params.post_id)
     .then(post => {
       postSpecs.version = post.version + 1;
       return post.update(postSpecs);
     })
-    .then(result =>{
-      res.redirect('/');
+    .then(result => {
+      res.send({message: 'Post updated'});
     })
     .catch(err => res.send(err));
 });
@@ -99,7 +99,7 @@ router.route('/posts/import')
   await routeHelpers.importPost(auth_user, req.body.postUrl,
      assessment_obj, req.body.target_usernames);
 
-  res.send({'msg': 'Post has been imported'});
+  res.send({message: 'Post has been imported'});
 }));
 
 
