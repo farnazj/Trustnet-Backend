@@ -17,18 +17,16 @@ router.route('/boosts')
       [ 'updatedAt', 'DESC'],
       [ 'PostAssessments', 'updatedAt', 'DESC'],
     ],
-    //limit: req.query.limit ? parseInt(req.query.limit) : 15,
-    //offset: req.query.offset ? parseInt(req.query.offset) : 0,
     group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
-    //group: ['Post.id', 'Boosteds.id', 'Boosteds->Boosters.id']
   })
   //temporarily
-  let limit = req.query.limit ? parseInt(req.query.limit) : 15;
-  let offset= req.query.offset ? parseInt(req.query.offset) : 0;
-  let temp = post_boosts.slice(offset, offset + limit);
+  let results = boostHelpers.sliceResults(req, post_boosts);
+  //let post_ids = results.map(el => el.id);
+  //let results = await boostHelpers.getPostBoosts(post_ids);
 
-  res.send(JSON.stringify(temp));
+  res.send(JSON.stringify(results));
 }))
+
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
   let auth_user = await db.Source.findById(req.user.id);
@@ -47,7 +45,7 @@ router.route('/boosts')
   res.send({}); //TODO: change
 }));
 
-
+//get a boost from the auth_user's perspective
 router.route('/boosts/:post_id')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
@@ -56,10 +54,10 @@ router.route('/boosts/:post_id')
   let post_boost = await db.Post.findAll({
     ...query,
     group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
-
   });
 
   res.send(post_boost[0]);
 }));
+
 
 module.exports = router;
