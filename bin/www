@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+process.env.UV_THREADPOOL_SIZE = 10;
 /**
  * Module dependencies.
  */
@@ -36,7 +36,7 @@ var server = http.createServer(app);
   await registerMedia();
   feedQueue = await FeedQueue.build();
 
-  const job = new CronJob('0 */3 * * * *', function() {
+  const job = new CronJob('0 */10 * * * *', function() {
     feedHelpers.updateFeeds();
   });
 
