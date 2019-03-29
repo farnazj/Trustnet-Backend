@@ -2,68 +2,72 @@
 [
   {
     "username": "Cable News Network",
-    "rssfeed": "http://rss.cnn.com/rss/cnn_world.rss",
-    "name": "World"
-  },
-  {
-    "username": "Cable News Network",
-    "rssfeed": "http://rss.cnn.com/rss/cnn_us.rss",
-    "name": "U.S."
-  },
-  {
-    "username": "Cable News Network",
-    "rssfeed": "http://rss.cnn.com/rss/cnn_health.rss",
-    "name": "Health"
-  },
-  {
-    "username": "Cable News Network",
-    "rssfeed": "http://rss.cnn.com/rss/cnn_allpolitics.rss",
-    "name": "Politics"
-  },
-  {
-    "username": "Fox News Channel",
-    "rssfeed": "feeds.foxnews.com/foxnews/world",
-    "name": "World"
+    "feeds": [
+        {
+          "rssfeed": "http://rss.cnn.com/rss/cnn_world.rss",
+          "name": "World"
+        },
+        {
+          "rssfeed": "http://rss.cnn.com/rss/cnn_us.rss",
+          "name": "U.S."
+        },
+        {
+          "rssfeed": "http://rss.cnn.com/rss/cnn_health.rss",
+          "name": "Health"
+        },
+        {
+          "rssfeed": "http://rss.cnn.com/rss/cnn_allpolitics.rss",
+          "name": "Politics"
+        }
+    ]
   },
   {
     "username": "Fox News Channel",
-    "rssfeed": "feeds.foxnews.com/foxnews/national",
-    "name": "U.S."
+    "feeds": [
+        {
+          "rssfeed": "http://feeds.foxnews.com/foxnews/world",
+          "name": "World"
+        },
+        {
+          "rssfeed": "http://feeds.foxnews.com/foxnews/national",
+          "name": "U.S."
+        },
+        {
+          "rssfeed": "http://feeds.foxnews.com/foxnews/health",
+          "name": "Health"
+        },
+        {
+          "rssfeed": "http://feeds.foxnews.com/foxnews/science",
+          "name": "Science"
+        },
+        {
+          "rssfeed": "http://feeds.foxnews.com/foxnews/politics",
+          "name": "Politics"
+        }
+    ]
   },
-  {
-    "username": "Fox News Channel",
-    "rssfeed": "feeds.foxnews.com/foxnews/health",
-    "name": "Health"
-  },
-  {
-    "username": "Fox News Channel",
-    "rssfeed": "feeds.foxnews.com/foxnews/science",
-    "name": "Science"
-  },
-  {
-    "username": "Fox News",
-    "rssfeed": "feeds.foxnews.com/foxnews/politics",
-    "name": "Politics"
-  },
-  {
-    "username": "The New York Times",
-    "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-    "name": "World"
-  },
-  {
-    "username": "The New York Times",
-    "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/US.xml",
-    "name": "U.S."
-  },
-  {
-    "username": "The New York Times",
-    "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Health.xml",
-    "name": "Health"
-  },
-  {
-    "username": "The New York Times",
-    "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
-    "name": "Science"
-  }
 
+  {
+    "username": "The New York Times",
+    "feeds": [
+        {
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+          "name": "World"
+        },
+        {
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/US.xml",
+          "name": "U.S."
+        },
+        {
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Health.xml",
+          "name": "Health"
+        },
+        {
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
+          "name": "Science"
+        }
+    ]
+
+  }
+  
 ]

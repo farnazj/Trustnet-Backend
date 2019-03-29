@@ -13,9 +13,9 @@ allow for firstname and lastname of sources made by the system to be null (ex: C
 */
 function allowNullforSystemMade(value, systemMade, field) {
 
-    if (systemMade != 1 && !value) {
-      throw new Error( field, ' should be defined!');
-      }
+  if (systemMade != 1 && !value) {
+    throw new Error( field, ' should be defined!');
+  }
 }
 
 module.exports = (sequelize, DataTypes) => {
@@ -43,7 +43,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     userName: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      unique: true
     },
     passwordHash: {
       type: DataTypes.STRING,
