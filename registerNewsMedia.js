@@ -1,37 +1,36 @@
 var db = require('./models');
 var bCrypt = require('bcrypt');
+var fs = require("fs");
+
+var media = JSON.parse(fs.readFileSync("./jsons/media.json"));
 
 var generateHash = function(password) {
-    return bCrypt.hash(password, bCrypt.genSaltSync(8), null); // a promise
+  return bCrypt.hash(password, bCrypt.genSaltSync(8), null); // a promise
 };
-
-var media = [
-  {userName: 'NY Times',
-  rssfeed: 'http://rss.nytimes.com/services/xml/rss/nyt/World.xml'},
-  {userName: 'WashingtonPost',
-  rssfeed: 'http://feeds.washingtonpost.com/rss/rss_arts-post'},
-  {userName: 'CNN',
-  rssfeed: 'http://rss.cnn.com/rss/cnn_allpolitics.rss'},
-  {userName: 'FOX News',
-  rssfeed: 'http://feeds.foxnews.com/foxnews/sports.rss'},
-]
 
 module.exports =  function(){
 
   return generateHash(process.env.ADMIN_KEY).then((entityPassword) => {
 
-    let media_sources = media.map(el => db.Feed.findOne({where:{
+    let media_sources = media.map(el => db.Feed.findOne({ where: {
       rssfeed: el.rssfeed,
+      name: el.name
     }}).then(async feed => {
       if (!feed){
-        let rss_feed = await db.Feed.create({rssfeed: el.rssfeed});
-        let source = await db.Source.create({
-          systemMade: true,
-          userName: el.userName,
-          passwordHash: entityPassword,
-          email: null
+        let rss_feed = await db.Feed.create({
+          rssfeed: el.rssfeed,
+          name: el.name
         });
-        return source.addSourceFeed(rss_feed);
+        let source = await db.Source.findOrCreate(
+          {
+            where: {
+              systemMade: true,
+              userName: el.username,
+              passwordHash: entityPassword,
+              email: null
+              }
+          });
+        return source[0].addSourceFeed(rss_feed);
       }
     }));
 

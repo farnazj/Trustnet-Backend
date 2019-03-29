@@ -11,6 +11,8 @@ var models = require("../models");
 var registerMedia = require('../registerNewsMedia');
 var constants = require('../lib/constants')
 var feedHelpers = require('../lib/feedHelpers');
+var FeedQueue = require('../lib/feedQueue');
+const CronJob = require('cron').CronJob;
 
 /**
  * Get port from environment and store in Express.
@@ -29,17 +31,20 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
+ models.sequelize.sync().then(async function () {
 
- models.sequelize.sync().then(function () {
+  await registerMedia();
+  feedQueue = await FeedQueue.build();
 
-   registerMedia().then(proms => {
-      feedHelpers.updateFeeds();
-   });
-   setInterval(feedHelpers.updateFeeds, constants.FEED_UPDATE_INT);
+  const job = new CronJob('0 */3 * * * *', function() {
+    feedHelpers.updateFeeds();
+  });
 
-   server.listen(port);
-   server.on('error', onError);
-   server.on('listening', onListening);
+  job.start();
+
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
  });
 
 

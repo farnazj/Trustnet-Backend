@@ -16,10 +16,10 @@ module.exports = (sequelize, DataTypes) => {
        }
      },
      image: {
-        type: DataTypes.STRING,
-        validate:{
-           isUrl: true
-        }
+        type: DataTypes.TEXT('long'),
+        // validate:{
+        //    isUrl: true
+        // }
       }
   }, {
     charset: 'utf8mb4',

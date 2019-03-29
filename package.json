@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "set UV_THREADPOOL_SIZE=10 & node ./bin/www"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -12,6 +12,7 @@
     "connect-redis": "^3.3.3",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.4",
+    "cron": "^1.7.0",
     "debug": "~2.6.9",
     "dotenv": "^5.0.1",
     "express": "^4.16.4",

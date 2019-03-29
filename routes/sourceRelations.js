@@ -2,9 +2,10 @@ var express = require('express');
 var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
+var wrapAsync = require('../lib/wrappers').wrapAsync;
+const Op = db.sequelize.Op;
 
-
-//Those sources that a specific user
+//Those sources that the auth user follows
 router.route('/follows')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
@@ -22,7 +23,7 @@ router.route('/follows')
     res.send(err);
   });
 
-  })
+})
 
 .post(routeHelpers.isLoggedIn, function(req, res) {
 
@@ -214,5 +215,36 @@ router.route('/trusts')
     res.send(err)
   });
 });
+
+router.route('/followers/:username')
+
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+
+  let user = await db.Source.findOne({
+    where: {
+      userName: req.params.username
+    }
+  });
+
+  let followers = await db.Source.findAll({
+    subQuery: false,
+    include: [{
+      model: db.Source,
+      as: 'Follows',
+      attributes: [],
+      where: {
+        id: {
+          [Op.in]: [user.id]
+        }
+      }
+    }],
+
+    group: ['Source.id']
+    //limit: req.query.limit ? parseInt(req.query.limit) : 15,
+    //offset: req.query.offset ? parseInt(req.query.offset) : 0
+  })
+
+  res.send(followers);
+}))
 
 module.exports = router;
