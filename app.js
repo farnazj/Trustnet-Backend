@@ -9,7 +9,6 @@ var passport = require('passport');
 var session = require('express-session');
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('./models');
-//var flash = require('connect-flash');
 var cors = require('cors');
 require('dotenv').config(); //for loading environment variables into process.env
 
@@ -17,10 +16,6 @@ const { AssertionError } = require('assert');
 const { DatabaseError } = require('sequelize');
 
 var app = express();
-
-// view engine setup
-//app.set('views', path.join(__dirname, 'views'));
-//app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -46,14 +41,13 @@ if (app.get('env') === 'production') {
 app.use(passport.initialize())
 app.use(passport.session());
 
-
 //bootstrap routes
- var routesPath = path.join(__dirname, 'routes');
- fs.readdirSync(routesPath).forEach(function(file){
-   app.use('/', require(routesPath + '/' + file));
- });
+var routesPath = path.join(__dirname, 'routes');
+fs.readdirSync(routesPath).forEach(function(file){
+ app.use('/', require(routesPath + '/' + file));
+});
 
- require('./config/passport/passport.js')(passport);
+require('./config/passport/passport.js')(passport);
 
 
 // catch 404 and forward to error handler
@@ -75,17 +69,17 @@ app.use(function handleAssertionError(error, req, res, next) {
   next(error);
 });
 
-app.use(function handleDatabaseError(error, req, res, next) {
-
-  if (error instanceof DatabaseError) {
-    console.log(error.message);
-    return res.status(503).json({
-      type: 'DatabaseError',
-      message: 'Error in connceting to the database'
-    });
-  }
-  next(error);
-});
+// app.use(function handleDatabaseError(error, req, res, next) {
+//
+//   if (error instanceof DatabaseError) {
+//     console.log(error.message);
+//     return res.status(503).json({
+//       type: 'DatabaseError',
+//       message: 'Error in connceting to the database'
+//     });
+//   }
+//   next(error);
+// });
 
 // error handler
 app.use(function(err, req, res, next) {

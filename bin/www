@@ -35,8 +35,9 @@ var server = http.createServer(app);
 
   await registerMedia();
   feedQueue = await FeedQueue.build();
+  console.log('past await')
 
-  const job = new CronJob('0 */10 * * * *', function() {
+  const job = new CronJob('0 */5 * * * *', function() {
     feedHelpers.updateFeeds();
   });
 

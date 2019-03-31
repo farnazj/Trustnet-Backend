@@ -51,13 +51,14 @@ module.exports = function(passport) {
                           userName: username,
                           passwordHash: userPassword,
                           email: req.body.email,
-                          systemMade: false
+                          systemMade: false,
+                          photoUrl: null
                         };
 
                         let data_complete = true;
                         Object.entries(data).forEach(([key, value]) => {
 
-                          if (typeof data[key] === 'undefined') {
+                          if (typeof data[key] === 'undefined' && key != "photoUrl") {
                             data_complete = false;
                           }
                         });
@@ -66,6 +67,7 @@ module.exports = function(passport) {
                           return done(null, false, {message: 'Request incomplete'});
                         }
                         else {
+
                           User.create(data).then(function(newUser, created) {
 
                             if (!newUser) {

@@ -17,7 +17,7 @@ module.exports = function(){
           where: {
             userName: el.username,
             },
-          defaults:{
+          defaults: {
             systemMade: true,
             passwordHash: entityPassword,
             email: null
