@@ -7,7 +7,7 @@ var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const upload = require('../lib/uploadMiddleware');
 
-router.route('/pictures')
+router.route('/profile-pictures')
 
 .post(routeHelpers.isLoggedIn, upload.single('avatar'), wrapAsync(async function(req, res) {
 
@@ -17,10 +17,11 @@ router.route('/pictures')
   else {
     // let host = req.hostname;
     // let filePath = req.protocol + "://" + host + '/' + req.file.path;
+    let filePath = req.file.path.replace('public/', '');
     let user = await db.Source.findById(req.user.id);
 
     if (user.photoUrl) {
-      fs.unlink(user.photoUrl, (err) => {
+      fs.unlink('public/' + user.photoUrl, (err) => {
         if (err) {
           console.error(err)
           return
@@ -28,16 +29,11 @@ router.route('/pictures')
       });
     }
 
-    await user.update({ photoUrl: req.file.path });
+    await user.update({ photoUrl: filePath });
     return res.send({ success: true });
   }
 
 }))
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let user = await db.Source.findById(req.user.id);
-  res.sendFile(user.photoUrl, { root: path.join(__dirname, '..') });
-}));
 
 module.exports = router;

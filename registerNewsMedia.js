@@ -8,38 +8,45 @@ var generateHash = function(password) {
   return bCrypt.hash(password, bCrypt.genSaltSync(8), null); // a promise
 };
 
-module.exports = function(){
+module.exports = async function(){
 
-  return generateHash(process.env.ADMIN_KEY).then( (entityPassword) => {
+  let entityPassword = await generateHash(process.env.ADMIN_KEY);
 
-    let media_sources = media.map(async (el) => {
-      let source = await db.Source.findOrCreate({
-          where: {
-            userName: el.username,
-            },
-          defaults: {
-            systemMade: true,
-            passwordHash: entityPassword,
-            email: null
-          }
-        });
+  let media_proms = media.map((el) => {
+    return db.Source.findOrCreate({
+      where: {
+        userName: el.username,
+        },
+      defaults: {
+        systemMade: true,
+        passwordHash: entityPassword,
+        email: null
+      }
+    })
+    .then(source => {
 
-        return el.feeds.map(feed => db.Feed.findOne({
-          where: {
-            rssfeed: feed.rssfeed
-          }
-        })
-        .then(async feed_inst => {
-          if (!feed_inst){
-            let rss_feed = await db.Feed.create({
-              rssfeed: feed.rssfeed,
-              name: feed.name
-            });
-            return source[0].addSourceFeed(rss_feed);
-         }
-       }));
+      let feed_proms = el.feeds.map( feed => {
+        return db.Feed.findOne({
+        where: {
+          rssfeed: feed.rssfeed
+        }
+      })
+      .then( feed_inst => {
+        if (!feed_inst){
+          return db.Feed.create({
+            rssfeed: feed.rssfeed,
+            name: feed.name
+          }).then( rss_feed => {
+              return source[0].addSourceFeed(rss_feed);
+          })
+        }
+      })
 
       })
-      return Promise.all(media_sources);
-  });
+      return Promise.all(feed_proms);
+    });
+
+  })
+  return Promise.all(media_proms);
+
 }
