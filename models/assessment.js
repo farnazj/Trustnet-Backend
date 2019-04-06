@@ -17,6 +17,9 @@ module.exports = (sequelize, DataTypes) => {
     version: {
       type: DataTypes.INTEGER,
       defaultValue: 1
+    },
+    isTransitive: {
+      type: DataTypes.BOOLEAN
     }
 
   }, {

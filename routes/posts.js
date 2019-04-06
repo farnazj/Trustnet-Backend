@@ -94,7 +94,9 @@ router.route('/posts/import')
   let auth_user = await db.Source.findById(req.user.id);
   let assessment_obj = {
     postCredibility: req.body.postCredibility,
-    body: req.body.assessmentBody };
+    body: req.body.assessmentBody,
+    isTransitive: false
+   };
 
   await routeHelpers.importPost(auth_user, req.body.postUrl,
      assessment_obj, req.body.target_usernames);

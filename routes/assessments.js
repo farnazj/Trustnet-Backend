@@ -36,7 +36,7 @@ router.route('/posts/:post_id/assessments')
     let auth_user_prom = db.Source.findById(req.user.id);
     let post_prom = db.Post.findById(req.params.post_id);
 
-    let assessment_prom = db.Assessment.create(req.body);
+    let assessment_prom = db.Assessment.create({...req.body, isTransitive: false});
 
     let [post, auth_user, assessment] = await Promise.all([post_prom, auth_user_prom, assessment_prom]);
 
