@@ -1,7 +1,8 @@
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
-var logger = require('morgan');
+var morgan = require('morgan');
+const logger = require('./lib/logger');
 //var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var fs = require('fs');
@@ -10,6 +11,10 @@ var session = require('express-session');
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('./models');
 var cors = require('cors');
+var compression = require('compression')
+var helmet = require('helmet');
+const uuidv4 = require('uuid/v4');
+var rfs = require('rotating-file-stream')
 require('dotenv').config(); //for loading environment variables into process.env
 
 const { AssertionError } = require('assert');
@@ -20,17 +25,51 @@ var app = express();
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(cors({credentials: true, origin: true}));
-app.use(logger('dev'));
+app.use(helmet());
+
+
+//a rotating write stream
+var accessErrLogStream = rfs('access_err.log', {
+ interval: '1d', // rotate daily
+ path: path.join(__dirname, 'log')
+})
+
+var accessOkLogStream = rfs('access_ok.log', {
+ interval: '1d', // rotate daily
+ path: path.join(__dirname, 'log')
+})
+
+app.use(morgan('dev', {
+    skip: function (req, res) {
+        return res.statusCode >= 400
+    }, stream: accessOkLogStream
+}));
+
+app.use(morgan('dev', {
+    skip: function (req, res) {
+        return res.statusCode < 400
+    }, stream: accessErrLogStream
+}));
+
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 //app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(compression()); //Compress all routes
 
 app.use(session({
+  genid: function(req) {
+   return uuidv4() // use UUIDs for session IDs
+  },
     secret: process.env.SESSION_KEY,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false, maxAge: 14400000 }
+    cookie: {
+      httpOnly: false,
+      secure: false
+    },
+    rolling: true
 }));
 
 if (app.get('env') === 'production') {
@@ -89,7 +128,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  console.log(err, "*******")
+  logger.error(err)
   res.send({message: 'Server error'});
 });
 
