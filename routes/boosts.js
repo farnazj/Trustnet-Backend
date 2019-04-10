@@ -39,7 +39,8 @@ router.route('/boosts')
   });
 
   if (!assessment)
-      throw "Cannot boost the post before assessing its credibility";
+      throw "Cannot boost the post before assessing its credibility post: "
+        + req.body.post_id + " user: " + req.user.id;
 
   await routeHelpers.boostPost(auth_user, req.body.post_id, req.body.target_usernames);
   res.send({}); //TODO: change
