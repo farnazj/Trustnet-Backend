@@ -11,7 +11,7 @@ router.route('/sources')
 .get(function(req, res){
 
   let pagination_req = routeHelpers.getLimitOffset(req);
-  let searchTerm = req.headers.search_term ? req.headers.search_term : '';
+  let searchTerm = req.headers.searchterm ? req.headers.searchterm : '';
 
   db.Source.findAll({
     where: {
