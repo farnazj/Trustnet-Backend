@@ -72,10 +72,12 @@ app.use(session({
     rolling: true
 }));
 
+/*
 if (app.get('env') === 'production') {
     app.set('trust proxy', 1)
     sess.cookie.secure = true //TODO: serve secure cookies
 }
+*/
 
 app.use(passport.initialize())
 app.use(passport.session());
