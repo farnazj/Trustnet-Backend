@@ -6,3 +6,4 @@
 /config/config.json
 .env
 *.log
+dump.rdb
