@@ -7,7 +7,9 @@ const logger = require('./lib/logger');
 var bodyParser = require('body-parser');
 var fs = require('fs');
 var passport = require('passport');
+var redis   = require("redis");
 var session = require('express-session');
+var redisStore = require('connect-redis')(session);
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('./models');
 var cors = require('cors');
@@ -17,6 +19,7 @@ const uuidv4 = require('uuid/v4');
 var rfs = require('rotating-file-stream')
 require('dotenv').config(); //for loading environment variables into process.env
 
+var client  = redis.createClient();
 const { AssertionError } = require('assert');
 const { DatabaseError } = require('sequelize');
 
@@ -62,14 +65,15 @@ app.use(session({
   genid: function(req) {
    return uuidv4() // use UUIDs for session IDs
   },
-    secret: process.env.SESSION_KEY,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      httpOnly: false,
-      secure: false
-    },
-    rolling: true
+  secret: process.env.SESSION_KEY,
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    httpOnly: false,
+    secure: false
+  },
+  rolling: true,
+  store: new redisStore({ host: 'localhost', port: 6379, client: client,ttl :  260}),
 }));
 
 /*
@@ -110,17 +114,17 @@ app.use(function handleAssertionError(error, req, res, next) {
   next(error);
 });
 
-// app.use(function handleDatabaseError(error, req, res, next) {
-//
-//   if (error instanceof DatabaseError) {
-//     console.log(error.message);
-//     return res.status(503).json({
-//       type: 'DatabaseError',
-//       message: 'Error in connceting to the database'
-//     });
-//   }
-//   next(error);
-// });
+app.use(function handleDatabaseError(error, req, res, next) {
+
+  if (error instanceof DatabaseError) {
+    console.log(error.message);
+    return res.status(503).json({
+      type: 'DatabaseError',
+      message: 'Error in connceting to the database'
+    });
+  }
+  next(error);
+});
 
 // error handler
 app.use(function(err, req, res, next) {
