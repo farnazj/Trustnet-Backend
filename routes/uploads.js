@@ -18,7 +18,7 @@ router.route('/profile-pictures')
     // let host = req.hostname;
     // let filePath = req.protocol + "://" + host + '/' + req.file.path;
     let filePath = req.file.path.replace('public/', '');
-    let user = await db.Source.findById(req.user.id);
+    let user = await db.Source.findByPk(req.user.id);
 
     if (user.photoUrl) {
       fs.unlink('public/' + user.photoUrl, (err) => {

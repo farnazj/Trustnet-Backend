@@ -29,7 +29,7 @@ router.route('/boosts')
 
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-  let auth_user = await db.Source.findById(req.user.id);
+  let auth_user = await db.Source.findByPk(req.user.id);
 
   let assessment = await db.Assessment.findOne({
     where: {

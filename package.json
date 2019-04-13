@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "bcrypt": "^3.0.3",
+    "bcrypt": "^3.0.5",
     "body-parser": "~1.18.2",
     "compression": "^1.7.4",
     "connect-redis": "^3.3.3",
@@ -28,7 +28,7 @@
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
     "rotating-file-stream": "^1.4.0",
-    "sequelize": "^4.43.0",
+    "sequelize": "^5.3.5",
     "sequelize-cli": "^4.0.0",
     "serve-favicon": "~2.4.5",
     "winston": "^3.2.1"

@@ -27,14 +27,14 @@ router.route('/posts/:post_id/assessments')
 //post or update assessment
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let assessment = await db.Assessment.find({where: {
+  let assessment = await db.Assessment.findOne({where: {
     SourceId: req.user.id,
     PostId: req.params.post_id
   }});
 
   if (!assessment) {
-    let auth_user_prom = db.Source.findById(req.user.id);
-    let post_prom = db.Post.findById(req.params.post_id);
+    let auth_user_prom = db.Source.findByPk(req.user.id);
+    let post_prom = db.Post.findByPk(req.params.post_id);
 
     let assessment_prom = db.Assessment.create({...req.body, isTransitive: false});
 
@@ -82,7 +82,7 @@ router.route('/posts/:post_id/:user_id/assessment')
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
     let assessmentSpecs = routeHelpers = req.body;
-    let assessment = await db.Assessment.findById(req.params.assessment_id);
+    let assessment = await db.Assessment.findByPk(req.params.assessment_id);
     assessmentSpecs.version = assessment.version + 1;
     await assessment.update(assessmentSpecs);
 

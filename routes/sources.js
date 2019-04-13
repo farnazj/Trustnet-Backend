@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
+var Sequelize = require('sequelize');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
-const Op = db.sequelize.Op;
+const Op = Sequelize.Op;
 
 
 router.route('/sources')
@@ -46,7 +47,7 @@ router.route('/sources')
 router.route('/sources/ids/:id')
 .get(function(req, res) {
 
-  db.Source.findById(req.params.id
+  db.Source.findByPk(req.params.id
   ).then(result =>{
     res.send(result);
   }).catch(err => res.send(err));

@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
+var Sequelize = require('sequelize');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
-const Op = db.sequelize.Op;
+const Op = Sequelize.Op;
 
 
 router.route('/posts') //initiated posts
@@ -11,7 +12,7 @@ router.route('/posts') //initiated posts
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
   let pagination_req = routeHelpers.getLimitOffset(req);
-  let auth_user = await db.Source.findById(req.user.id);
+  let auth_user = await db.Source.findByPk(req.user.id);
   let posts = await auth_user.getInitiatedPosts(pagination_req);
   res.send(posts);
 }))
@@ -19,7 +20,7 @@ router.route('/posts') //initiated posts
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let post_prom = db.Post.create(req.body);
-  let auth_user_prom = db.Source.findById(req.user.id);
+  let auth_user_prom = db.Source.findByPk(req.user.id);
 
   //when a source initiates a post, a credibility assessment is automatically generated
   //for post, with the source as the sourceId and a value of "valid"
@@ -36,7 +37,7 @@ router.route('/posts/:post_id')
 //TODO: need to change this if some posts become private
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let post = await db.Post.findById(req.params.post_id)
+  let post = await db.Post.findByPk(req.params.post_id)
   res.send(post);
 }))
 
@@ -56,7 +57,7 @@ router.route('/posts/:post_id')
 
     let postSpecs = req.body;
 
-    db.Post.findById(req.params.post_id)
+    db.Post.findByPk(req.params.post_id)
     .then(post => {
       postSpecs.version = post.version + 1;
       return post.update(postSpecs);
@@ -91,7 +92,7 @@ router.route('/posts/:username')
 router.route('/posts/import')
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let auth_user = await db.Source.findById(req.user.id);
+  let auth_user = await db.Source.findByPk(req.user.id);
   let assessment_obj = {
     postCredibility: req.body.postCredibility,
     body: req.body.assessmentBody,
