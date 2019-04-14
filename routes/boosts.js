@@ -23,7 +23,7 @@ router.route('/boosts')
   })
 
   //temporarily
-  let filterd_posts = filterValidity(post_boosts, req);
+  let filtered_posts = filterValidity(post_boosts, req);
   let results = boostHelpers.sliceResults(req, filtered_posts);
 
   res.send(JSON.stringify(results));
