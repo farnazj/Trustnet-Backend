@@ -4,6 +4,7 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
+var filterValidity = require('../lib/boostPatch');
 
 router.route('/boosts')
 
@@ -18,11 +19,12 @@ router.route('/boosts')
       [ 'PostAssessments', 'updatedAt', 'DESC'],
     ],
     group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
+    //group: ['Post.id', 'PostAssessments.id']
   })
+
   //temporarily
-  let results = boostHelpers.sliceResults(req, post_boosts);
-  //let post_ids = results.map(el => el.id);
-  //let results = await boostHelpers.getPostBoosts(post_ids);
+  let filterd_posts = filterValidity(post_boosts, req);
+  let results = boostHelpers.sliceResults(req, filtered_posts);
 
   res.send(JSON.stringify(results));
 }))
