@@ -61,7 +61,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(compression()); //Compress all routes
 
-app.use(session({
+var sess = {
   genid: function(req) {
    return uuidv4() // use UUIDs for session IDs
   },
@@ -70,18 +70,20 @@ app.use(session({
   saveUninitialized: true,
   cookie: {
     httpOnly: false,
-    secure: false
+    secure: false,
+    maxAge: 7 * 24 * 60 * 60 * 1000
   },
   rolling: true,
-  store: new redisStore({ host: 'localhost', port: 6379, client: client,ttl :  260}),
-}));
+  store: new redisStore({ host: 'localhost', port: 6379, client: client}),
+};
 
-/*
 if (app.get('env') === 'production') {
-    app.set('trust proxy', 1)
-    sess.cookie.secure = true //TODO: serve secure cookies
+  app.set('trust proxy', 1)
+  sess.cookie.secure = true //TODO: serve secure cookies
 }
-*/
+
+app.use(session(sess));
+
 
 app.use(passport.initialize())
 app.use(passport.session());
@@ -114,17 +116,17 @@ app.use(function handleAssertionError(error, req, res, next) {
   next(error);
 });
 
-app.use(function handleDatabaseError(error, req, res, next) {
-
-  if (error instanceof DatabaseError) {
-    console.log(error.message);
-    return res.status(503).json({
-      type: 'DatabaseError',
-      message: 'Error in connceting to the database'
-    });
-  }
-  next(error);
-});
+// app.use(function handleDatabaseError(error, req, res, next) {
+//
+//   if (error instanceof DatabaseError) {
+//     console.log(error.message);
+//     return res.status(503).json({
+//       type: 'DatabaseError',
+//       message: 'Error in connceting to the database'
+//     });
+//   }
+//   next(error);
+// });
 
 // error handler
 app.use(function(err, req, res, next) {
