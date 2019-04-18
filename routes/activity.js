@@ -11,7 +11,7 @@ router.route('/activity/:username/:post_id')
 
   let post_boosts = await db.Post.findAll({
     ...query,
-    group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id']
+    group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id']
   });
 
   let results = boostHelpers.sliceResults(req, post_boosts);
@@ -29,7 +29,7 @@ router.route('/activity/:username')
       [ 'updatedAt', 'DESC'],
       [ 'PostAssessments', 'updatedAt', 'DESC'],
     ],
-    group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id']
+    group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id']
   });
 
   let results = boostHelpers.sliceResults(req, post_boosts);
