@@ -18,8 +18,7 @@ router.route('/boosts')
       [ 'updatedAt', 'DESC'],
       [ 'PostAssessments', 'updatedAt', 'DESC'],
     ],
-    group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
-    //group: ['Post.id', 'PostAssessments.id']
+    group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id']
   })
 
   //temporarily
@@ -56,7 +55,7 @@ router.route('/boosts/:post_id')
 
   let post_boost = await db.Post.findAll({
     ...query,
-    group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Boosters.id', 'Boosteds->Targets.id']
+    group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id']
   });
 
   res.send(post_boost[0]);

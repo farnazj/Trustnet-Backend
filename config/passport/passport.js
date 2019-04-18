@@ -107,7 +107,7 @@ module.exports = function(passport) {
               done(null, user.get());
           }
           else {
-              done(user.errors, null);
+              done("sth went wrong", null);
           }
 
       });
