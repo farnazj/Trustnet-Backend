@@ -29,12 +29,13 @@ module.exports = (sequelize, DataTypes) => {
     var values = Object.assign({}, this.get());
 
     delete values.PostBoosts;
+    delete values.PostSeers;
     return values;
   }
 
   Post.associate = function (models) {
-    models.Post.belongsToMany(models.Boost, {as: 'Boosteds',  through: 'PostBoosts'});
-
+    models.Post.belongsToMany(models.Boost, {as: 'Boosteds', through: 'PostBoosts'});
+    models.Post.belongsToMany(models.Source, {as: 'Seers', through: 'PostSeers'});
     models.Post.hasMany(models.Assessment, {as: 'PostAssessments'});
   };
 

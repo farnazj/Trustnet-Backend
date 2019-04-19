@@ -103,12 +103,12 @@ module.exports = function(passport) {
     passport.deserializeUser(function(id, done) {
       User.findByPk(id).then(function(user) {
 
-          if (user) {
-              done(null, user.get());
-          }
-          else {
-              done("sth went wrong", null);
-          }
+        if (user) {
+            done(null, user.get());
+        }
+        else {
+            done("sth went wrong", null);
+        }
 
       });
 
@@ -119,7 +119,6 @@ module.exports = function(passport) {
         passReqToCallback : true
     },
     function(req, username, password, done) {
-
         User.findOne({where: {userName: username}}).then(function(user){
 
           // if no user is found, return the message

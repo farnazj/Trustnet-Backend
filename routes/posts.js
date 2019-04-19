@@ -3,6 +3,7 @@ var router = express.Router();
 var Sequelize = require('sequelize');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
+var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
 
@@ -72,9 +73,10 @@ router.route('/posts/:post_id')
 router.route('/posts/:username')
 
 .get(routeHelpers.isLoggedIn, function(req, res){
+  let pagination_req = routeHelpers.getLimitOffset(req);
 
-  db.Source.findOne( {where: {userName: req.params.username }}
-  ).then(source => {
+  db.Source.findOne({where: {userName: req.params.username }})
+  .then(source => {
      return db.Post.findAndCountAll({
        where: {
          SourceId: source.id
@@ -105,5 +107,20 @@ router.route('/posts/import')
   res.send({message: 'Post has been imported'});
 }));
 
+
+router.route('/posts/:post_id/seen-status')
+
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+
+  let auth_user_prom = db.Source.findByPk(req.user.id);
+  let post_prom = db.Post.findByPk(req.params.post_id);
+  let [post, auth_user] = await Promise.all([post_prom, auth_user_prom]);
+  if (req.body.seen_status == constants.SEEN_STATUS.SEEN)
+    post.addSeer(auth_user);
+  else
+    post.removeSeer(auth_user);
+
+  res.sendStatus(200);
+}))
 
 module.exports = router;

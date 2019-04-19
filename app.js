@@ -71,15 +71,15 @@ var sess = {
   cookie: {
     httpOnly: false,
     secure: false,
-    maxAge: 7 * 24 * 60 * 60 * 1000
+    maxAge: 4 * 24 * 60 * 60 * 1000
   },
   rolling: true,
   store: new redisStore({ host: 'localhost', port: 6379, client: client}),
 };
 
 if (app.get('env') === 'production') {
-  app.set('trust proxy', 1)
-  sess.cookie.secure = true //TODO: serve secure cookies
+  //app.set('trust proxy', 1)
+  //sess.cookie.secure = true //TODO: serve secure cookies
 }
 
 app.use(session(sess));
