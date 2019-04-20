@@ -117,10 +117,28 @@ router.route('/posts/:post_id/seen-status')
   let [post, auth_user] = await Promise.all([post_prom, auth_user_prom]);
   if (req.body.seen_status == constants.SEEN_STATUS.SEEN)
     post.addSeer(auth_user);
-  else
+  else if (req.body.seen_status == constants.SEEN_STATUS.NOTSEEN)
     post.removeSeer(auth_user);
 
   res.sendStatus(200);
+}))
+
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+  let post = await db.Post.findByPk(req.params.post_id);
+
+  if (post) {
+    let seers = await post.getSeers({where: {
+      id: req.user.id
+    }});
+    if (seers.length)
+      res.send({seen: true});
+    else
+      res.send({seen: false});
+  }
+  else {
+    res.send({message: 'Post not found'});
+  }
+
 }))
 
 module.exports = router;

@@ -16,9 +16,9 @@ router.route('/boosts')
     ...query,
     order: [
       [ 'updatedAt', 'DESC'],
-      [ 'PostAssessments', 'updatedAt', 'DESC'],
-    ],
-    group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id', 'Seers.id']
+      [ 'PostAssessments', 'updatedAt', 'DESC']
+    ]
+    //group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id', 'Seers.id']
   })
 
   //temporarily
@@ -54,8 +54,8 @@ router.route('/boosts/:post_id')
   let query = await boostHelpers.buildQuery(req, req.params.post_id);
 
   let post_boost = await db.Post.findAll({
-    ...query,
-    group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id', 'Seers.id']
+    ...query
+    //group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id', 'Seers.id']
   });
 
   res.send(post_boost[0]);
