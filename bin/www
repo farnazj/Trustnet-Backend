@@ -6,7 +6,7 @@ process.env.UV_THREADPOOL_SIZE = 10;
 
 var app = require('../app');
 var debug = require('debug')('express-example:server');
-var http = require('http');
+var https = require('https');
 var models = require("../models");
 var registerMedia = require('../registerNewsMedia');
 var constants = require('../lib/constants')
@@ -14,7 +14,12 @@ var feedHelpers = require('../lib/feedHelpers');
 const logger = require('../lib/logger');
 var FeedQueue = require('../lib/feedQueue');
 const CronJob = require('cron').CronJob;
+var fs = require('fs');
 
+const options = {
+  key: fs.readFileSync("../config/keys/developer.trustnet.csail.mit.edu.key"),
+  cert: fs.readFileSync("../config/keys/developer_trustnet_csail_mit_edu_interm.cer")
+};
 /**
  * Get port from environment and store in Express.
  */
@@ -26,7 +31,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+var server = https.createServer(options, app);
 
 /**
  * Listen on provided port, on all network interfaces.
