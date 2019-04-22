@@ -16,6 +16,7 @@ module.exports = async function(){
     return db.Source.findOrCreate({
       where: {
         userName: el.username,
+        photoUrl: el.photoUrl
         },
       defaults: {
         systemMade: true,
