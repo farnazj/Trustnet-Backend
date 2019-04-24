@@ -5,7 +5,8 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
-
+var kue = require('kue')
+ , queue = kue.createQueue();
 
 router.route('/sources')
 
@@ -27,7 +28,7 @@ router.route('/sources')
     },
     ...pagination_req
   })
-  .then( result => {
+  .then(result => {
     res.send(result);
   }).catch(err => {
     res.send(err);
@@ -36,8 +37,9 @@ router.route('/sources')
 
 .post(function(req, res) {
 
-  db.Source.create(req.body).then(function() {
-    res.redirect('/');
+  db.Source.create(req.body).then(source => {
+    queue.create('addNode', {sourceId: source.id}).priority('high').save();
+    res.send({message: 'Source created'});
   }).catch(err => {
     res.send(err);
   });
@@ -72,7 +74,7 @@ router.route('/sources/:username')
     }
   })
 
-  res.redirect('/');
+  res.send({message: 'Source deleted'});
 }))
 
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {

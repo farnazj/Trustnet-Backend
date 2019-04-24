@@ -5,6 +5,8 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
+var kue = require('kue')
+ , queue = kue.createQueue();
 
 //Those sources that the auth user follows
 router.route('/follows')
@@ -183,39 +185,34 @@ router.route('/trusts')
 
 })
 
-.post(routeHelpers.isLoggedIn, function(req, res) {
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let source_user = db.Source.findByPk(req.user.id);
   let trusted_user = db.Source.findOne(
     {where: {userName: req.body.username}});
 
-  Promise.all([source_user, trusted_user])
-  .then(sources => {
-    return Promise.all([sources[0].addTrusted(sources[1]),
-    sources[0].addFollow(sources[1])]);
-  }).then(result =>{
-    res.send({message: 'Source added to trusteds'});
-  }).catch(err => {
-    res.send(err);
-  });
-})
+  let [source, target] = await Promise.all([source_user, trusted_user])
+  await source.addTrusted(target);
+  queue.create('addEdge', {sourceId: source.id, targetId: target.id })
+  .priority('high').save();
+
+  res.send({ message: 'Source added to trusteds'});
+}))
 
 
-.delete(routeHelpers.isLoggedIn, function(req, res) {
+.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let source_user = db.Source.findByPk(req.user.id);
   let trusted_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
+    { where: {userName: req.body.username}});
 
-  Promise.all([source_user, trusted_user])
-  .then(sources => {
-    return sources[0].removeTrusted(sources[1]);
-  }).then(result => {
-    res.send({message: result + ' source removed from trusteds'});
-  }).catch(err => {
-    res.send(err)
-  });
-});
+  let [source, target] = await Promise.all([source_user, trusted_user])
+  await source.removeTrusted(target);
+  queue.create('removeEdge', {sourceId: source.id, targetId: target.id })
+  .priority('high').save();
+  res.send({ message: 'source removed from trusteds'});
+
+}));
 
 router.route('/followers/:username')
 
