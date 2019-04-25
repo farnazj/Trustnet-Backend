@@ -3,7 +3,8 @@ var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
-
+var kue = require('kue')
+ , queue = kue.createQueue();
 
 router.route('/posts/:post_id/assessments')
 //TODO: need to change this if some posts become private
@@ -48,11 +49,14 @@ router.route('/posts/:post_id/assessments')
   else {
     let assessmentSpecs = req.body;
     assessmentSpecs.version = assessment.version + 1;
+    assessmentSpecs.isTransitive = false;
     await assessment.update(assessmentSpecs);
   }
 
-  res.send({message: 'Assessment posted'});
+  queue.create('calcTransitiveAssessments', {postId: req.params.post_id})
+  .priority('medium').save();
 
+  res.send({message: 'Assessment posted'});
 }))
 
 
@@ -84,7 +88,11 @@ router.route('/posts/:post_id/:user_id/assessment')
     let assessmentSpecs = routeHelpers = req.body;
     let assessment = await db.Assessment.findByPk(req.params.assessment_id);
     assessmentSpecs.version = assessment.version + 1;
+    assessmentSpecs.isTransitive = false;
     await assessment.update(assessmentSpecs);
+
+    queue.create('calcTransitiveAssessments', {postId: req.params.post_id })
+    .priority('medium').save();
 
     res.send({message: 'Assessment updated'});
 

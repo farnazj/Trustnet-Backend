@@ -1,6 +1,8 @@
 var db = require('./models');
 var bCrypt = require('bcrypt');
 var fs = require("fs");
+var kue = require('kue')
+ , queue = kue.createQueue();
 
 var media = JSON.parse(fs.readFileSync("./jsons/media.json"));
 
@@ -16,6 +18,7 @@ module.exports = async function(){
     return db.Source.findOrCreate({
       where: {
         userName: el.username,
+        photoUrl: el.photoUrl
         },
       defaults: {
         systemMade: true,
@@ -23,7 +26,10 @@ module.exports = async function(){
         email: null
       }
     })
-    .then(source => {
+    .spread((source, created) => {
+
+      if (created)
+        queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
       let feed_proms = el.feeds.map( feed => {
         return db.Feed.findOne({
@@ -37,7 +43,7 @@ module.exports = async function(){
             rssfeed: feed.rssfeed,
             name: feed.name
           }).then( rss_feed => {
-              return source[0].addSourceFeed(rss_feed);
+              return source.addSourceFeed(rss_feed);
           })
         }
       })

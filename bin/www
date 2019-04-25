@@ -7,19 +7,27 @@ process.env.UV_THREADPOOL_SIZE = 10;
 var app = require('../app');
 var debug = require('debug')('express-example:server');
 var https = require('https');
-var models = require("../models");
+var db = require("../models");
 var registerMedia = require('../registerNewsMedia');
 var constants = require('../lib/constants')
 var feedHelpers = require('../lib/feedHelpers');
 const logger = require('../lib/logger');
+var db = require('../models');
 var FeedQueue = require('../lib/feedQueue');
 const CronJob = require('cron').CronJob;
 var fs = require('fs');
 
 const options = {
   key: fs.readFileSync("../config/keys/developer.trustnet.csail.mit.edu.key"),
-  cert: fs.readFileSync("../config/keys/developer_trustnet_csail_mit_edu_interm.cer")
+  cert: fs.readFileSync("../config/keys/developer_trustnet_csail_mit_edu_cert.cer")
 };
+
+const { fork } = require('child_process');
+
+forked = fork('./lib/graphJobsHandler.js');
+var kue = require('kue')
+  , queue = kue.createQueue();
+
 /**
  * Get port from environment and store in Express.
  */
@@ -37,11 +45,13 @@ var server = https.createServer(options, app);
  * Listen on provided port, on all network interfaces.
  */
 
- models.sequelize.sync().then(async function () {
+ db.sequelize.sync().then(async function () {
 
   await registerMedia();
   feedQueue = await FeedQueue.build();
-  logger.info('past await')
+  logger.info('past registering media');
+
+  forked.send({ message: 'child process is working' });
 
   const job = new CronJob('0 */5 * * * *', function() {
     feedHelpers.updateFeeds();

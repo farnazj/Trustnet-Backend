@@ -2,6 +2,7 @@
 [
   {
     "username": "Cable News Network",
+    "photoUrl": "logos/cnn.png",
     "feeds": [
         {
           "rssfeed": "http://rss.cnn.com/rss/cnn_world.rss",
@@ -23,6 +24,7 @@
   },
   {
     "username": "Fox News Channel",
+    "photoUrl": "logos/fnc.png",
     "feeds": [
         {
           "rssfeed": "http://feeds.foxnews.com/foxnews/world",
@@ -49,6 +51,7 @@
 
   {
     "username": "The New York Times",
+    "photoUrl": "logos/nyt.png",
     "feeds": [
         {
           "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/World.xml",
@@ -69,5 +72,5 @@
     ]
 
   }
-  
+
 ]

@@ -1,7 +1,8 @@
 var bCrypt = require('bcrypt');
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('../../models');
-
+var kue = require('kue')
+ , queue = kue.createQueue();
 
 module.exports = function(passport) {
 
@@ -75,6 +76,7 @@ module.exports = function(passport) {
                             }
 
                             else {
+                              queue.create('addNode', {sourceId: newUser.id}).priority('high').save();
                               return done(null, newUser, {message: 'New user created'});
                             }
 

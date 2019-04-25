@@ -36,6 +36,11 @@ The server uses dotenv to load environment variables from a .env file into proce
 
     + ADMIN_KEY=secret (ADMIN_KEY is used for registering RSS feeds of news publishing entities)
     + SESSION_KEY=secret
+    + NODE_ENV (one of 'development', 'test', or 'production'. The default is set to 'development')
+    + LOG_LEVEL (refer to [Winston's](https://www.npmjs.com/package/winston) documentation)
+
+#### Redis Server
+This server stores session ids in a Redis store. You should have [Redis](https://redis.io/download) installed and running on your machine before launching the server.
 
 #### Run TrustNetBackend Server
 cd to the root directory of the project. Run:
