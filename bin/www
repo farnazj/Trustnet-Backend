@@ -18,8 +18,8 @@ const CronJob = require('cron').CronJob;
 var fs = require('fs');
 
 const options = {
-  key: fs.readFileSync("../config/keys/developer.trustnet.csail.mit.edu.key"),
-  cert: fs.readFileSync("../config/keys/developer_trustnet_csail_mit_edu_cert.cer")
+  key: fs.readFileSync("./config/keys/developer.trustnet.csail.mit.edu.key"),
+  cert: fs.readFileSync("./config/keys/developer_trustnet_csail_mit_edu_cert.cer")
 };
 
 const { fork } = require('child_process');
