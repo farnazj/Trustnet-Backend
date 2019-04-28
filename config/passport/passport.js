@@ -1,6 +1,6 @@
-var bCrypt = require('bcrypt');
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('../../models');
+var routeHelpers = require('../../lib/routeHelpers');
 var kue = require('kue')
  , queue = kue.createQueue();
 
@@ -12,10 +12,6 @@ module.exports = function(passport) {
       },
 
         function(req, username, password, done) {
-
-            var generateHash = function(password) {
-                return bCrypt.hash(password, bCrypt.genSaltSync(8), null); // a promise
-            };
 
             User.findOne({
               where: {
@@ -44,7 +40,7 @@ module.exports = function(passport) {
                          });
                       }
                       else {
-                        generateHash(password).then((userPassword) => {
+                        routeHelpers.generateHash(password).then((userPassword) => {
 
                         var data = {
                           firstName: req.body.firstName,
