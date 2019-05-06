@@ -15,9 +15,9 @@ var db = require('../models');
 var FeedQueue = require('../lib/feedQueue');
 const CronJob = require('cron').CronJob;
 
-const { fork } = require('child_process');
+//const { fork } = require('child_process');
 
-forked = fork('./lib/graphJobsHandler.js');
+//forked = fork('./lib/graphJobsHandler.js');
 var kue = require('kue')
   , queue = kue.createQueue();
 /**
@@ -43,7 +43,7 @@ var server = http.createServer(app);
   feedQueue = await FeedQueue.build();
   logger.info('past registering media');
 
-  forked.send({ message: 'child process is working' });
+  //forked.send({ message: 'child process is working' });
 
   const job = new CronJob('0 */5 * * * *', function() {
     feedHelpers.updateFeeds();
