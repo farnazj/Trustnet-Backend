@@ -51,7 +51,6 @@ router.route('/posts/:post_id/assessments')
     assessmentSpecs.version = assessment.version + 1;
     assessmentSpecs.isTransitive = false;
     await assessment.update(assessmentSpecs);
-    console.log('<<<<<<<updated assessements', assessment)
   }
 
   queue.create('calcTransitiveAssessments', {postId: req.params.post_id})

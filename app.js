@@ -122,7 +122,7 @@ app.use(function handleAssertionError(error, req, res, next) {
 //     console.log(error.message);
 //     return res.status(503).json({
 //       type: 'DatabaseError',
-//       message: 'Error in connceting to the database'
+//       message: 'Error in connecting to the database'
 //     });
 //   }
 //   next(error);
@@ -137,6 +137,7 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   logger.error(err)
+  console.log('inja', err)
   res.send({message: 'Server error'});
 });
 

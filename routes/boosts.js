@@ -5,27 +5,34 @@ var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 var filterValidity = require('../lib/boostPatch');
+var Sequelize = require('sequelize');
+var db  = require('../models');
+
+//get a boost from the auth_user's perspective
+router.route('/boosts/:post_id')
+
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+
+  let [boosters_ids, cred_sources] = await boostHelpers.getBoostersandCredSources(req);
+  let post_boosts = await boostHelpers.getPostBoosts([req.params.post_id], req, boosters_ids, cred_sources);
+
+  res.send(post_boosts[0]);
+}));
+
 
 router.route('/boosts')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let query = await boostHelpers.buildQuery(req, false);
+  let [boosters_ids, cred_sources] = await boostHelpers.getBoostersandCredSources(req);
+  let [query_str, replacements] = boostHelpers.buildBoostQuery(req, boosters_ids, cred_sources);
 
-  let post_boosts = await db.Post.findAll({
-    ...query,
-    order: [
-      [ 'updatedAt', 'DESC'],
-      [ 'PostAssessments', 'updatedAt', 'DESC']
-    ]
-    //group: ['Post.id', 'Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id', 'Seers.id']
-  })
+  let post_id_objs = await db.sequelize.query(query_str,
+  { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
+  let post_ids = post_id_objs.map(el => el.id);
+  let post_boosts = await boostHelpers.getPostBoosts(post_ids, req, boosters_ids, cred_sources);
 
-  //temporarily
-  let filtered_posts = filterValidity(post_boosts, req);
-  let results = boostHelpers.sliceResults(req, filtered_posts);
-
-  res.send(JSON.stringify(results));
+  res.send(post_boosts);
 }))
 
 
@@ -47,19 +54,6 @@ router.route('/boosts')
   res.send({}); //TODO: change
 }));
 
-//get a boost from the auth_user's perspective
-router.route('/boosts/:post_id')
-
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
-  let query = await boostHelpers.buildQuery(req, req.params.post_id);
-
-  let post_boost = await db.Post.findAll({
-    ...query
-    //group: ['Boosteds.id', 'PostAssessments.id', 'Boosteds->Targets.id', 'Seers.id']
-  });
-
-  res.send(post_boost[0]);
-}));
 
 
 module.exports = router;
