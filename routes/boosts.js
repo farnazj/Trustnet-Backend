@@ -25,14 +25,20 @@ router.route('/boosts')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
   let [boosters_ids, cred_sources] = await boostHelpers.getBoostersandCredSources(req);
-  let [query_str, replacements] = boostHelpers.buildBoostQuery(req, boosters_ids, cred_sources);
 
-  let post_id_objs = await db.sequelize.query(query_str,
-  { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
-  let post_ids = post_id_objs.map(el => el.id);
-  let post_boosts = await boostHelpers.getPostBoosts(post_ids, req, boosters_ids, cred_sources);
+  if (boosters_ids.length && cred_sources.length) {
+    
+    let [query_str, replacements] = boostHelpers.buildBoostQuery(req, boosters_ids, cred_sources);
 
-  res.send(post_boosts);
+    let post_id_objs = await db.sequelize.query(query_str,
+    { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
+    let post_ids = post_id_objs.map(el => el.id);
+    let post_boosts = await boostHelpers.getPostBoosts(post_ids, req, boosters_ids, cred_sources);
+    res.send(post_boosts);
+  }
+  else
+    res.send([])
+
 }))
 
 

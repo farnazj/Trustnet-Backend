@@ -9,6 +9,7 @@ var db  = require('../models');
 
 router.route('/activity/:username/:post_id')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+  
   let user = await db.Source.findOne(
     {where: {userName: req.params.username}
   });
@@ -23,7 +24,7 @@ router.route('/activity/:username/:post_id')
 
 router.route('/activity/:username')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
-  
+
   let user = await db.Source.findOne(
     {where: {userName: req.params.username}
   });
