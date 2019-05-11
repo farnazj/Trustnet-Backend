@@ -6,13 +6,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: { //specified in constants.VALIDITY_CODES
-        min: 0,
-        max: 2,
+        min: -1,
+        max: 1,
       }
     },
     body: {
       type: DataTypes.TEXT('long')
-      // allowNull: false
     },
     version: {
       type: DataTypes.INTEGER,

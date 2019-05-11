@@ -70,7 +70,6 @@ module.exports = (sequelize, DataTypes) => {
     var values = Object.assign({}, this.get());
 
     delete values.passwordHash;
-    //delete values.photoUrl;
     delete values.SourceTrusteds;
     delete values.SourceFollows;
     delete values.SourceMutes;
