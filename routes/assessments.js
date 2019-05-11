@@ -28,30 +28,36 @@ router.route('/posts/:post_id/assessments')
 //post or update assessment
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let assessment = await db.Assessment.findOne({where: {
-    SourceId: req.user.id,
-    PostId: req.params.post_id
-  }});
+  let assessments = await db.Assessment.findAll({
+    where: {
+      SourceId: req.user.id,
+      PostId: req.params.post_id
+    },
+    order: [
+      [ 'version', 'DESC'],
+    ]
+  });
 
-  if (!assessment) {
-    let auth_user_prom = db.Source.findByPk(req.user.id);
-    let post_prom = db.Post.findByPk(req.params.post_id);
+  let assessmentSpecs = req.body;
+  assessmentSpecs.isTransitive = false;
 
-    let assessment_prom = db.Assessment.create({...req.body, isTransitive: false});
+  if (assessments.length) {
 
-    let [post, auth_user, assessment] = await Promise.all([post_prom, auth_user_prom, assessment_prom]);
-
-    let source_assessment = auth_user.addSourceAssessment(assessment);
-    let post_assessment = post.addPostAssessment(assessment);
-
-    await Promise.all([source_assessment, post_assessment]);
+    for (let assessment of assessments)
+      assessment.update({ version: assessment.version - 1});
   }
-  else {
-    let assessmentSpecs = req.body;
-    assessmentSpecs.version = assessment.version + 1;
-    assessmentSpecs.isTransitive = false;
-    await assessment.update(assessmentSpecs);
-  }
+
+  let auth_user_prom = db.Source.findByPk(req.user.id);
+  let post_prom = db.Post.findByPk(req.params.post_id);
+
+  let assessment_prom = db.Assessment.create(assessmentSpecs);
+
+  let [post, auth_user, assessment] = await Promise.all([post_prom, auth_user_prom, assessment_prom]);
+
+  let source_assessment = auth_user.addSourceAssessment(assessment);
+  let post_assessment = post.addPostAssessment(assessment);
+
+  await Promise.all([source_assessment, post_assessment]);
 
   queue.create('calcTransitiveAssessments', {postId: req.params.post_id})
   .priority('medium').save();
@@ -64,38 +70,17 @@ router.route('/posts/:post_id/:user_id/assessment')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let source = await db.Source.findOne({
+  let assessments = await db.Assessment.findAll({
     where: {
-      id: req.params.user_id
+      SourceId: req.user.id,
+      PostId: req.params.post_id
     },
-    include: [{
-      model: db.Assessment,
-      as: 'SourceAssessments',
-      where: {PostId: req.params.post_id}
-    }]
+    order: [
+      [ 'version', 'DESC'],
+    ]
   });
 
-  if (source)
-    result = source.SourceAssessments[0];
-  else
-    result = {}
-
-  res.send(result);
+  res.send(assessments);
 }))
-
-.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
-
-    let assessmentSpecs = routeHelpers = req.body;
-    let assessment = await db.Assessment.findByPk(req.params.assessment_id);
-    assessmentSpecs.version = assessment.version + 1;
-    assessmentSpecs.isTransitive = false;
-    await assessment.update(assessmentSpecs);
-
-    queue.create('calcTransitiveAssessments', {postId: req.params.post_id })
-    .priority('medium').save();
-
-    res.send({message: 'Assessment updated'});
-
-}));
 
 module.exports = router;
