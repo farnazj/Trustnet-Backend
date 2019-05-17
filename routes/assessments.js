@@ -59,8 +59,8 @@ router.route('/posts/:post_id/assessments')
 
   await Promise.all([source_assessment, post_assessment]);
 
-  queue.create('calcTransitiveAssessments', {postId: req.params.post_id})
-  .priority('medium').save();
+  queue.create('newAssessmentPosted', {postId: req.params.post_id, sourceId: req.user.id})
+  .priority('medium').removeOnComplete(true).save();
 
   res.send({message: 'Assessment posted'});
 }))

@@ -3,7 +3,7 @@
 module.exports = (sequelize, DataTypes) => {
   const Assessment = sequelize.define('Assessment', {
     postCredibility: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DOUBLE,
       allowNull: false,
       validate: { //specified in constants.VALIDITY_CODES
         min: -1,
