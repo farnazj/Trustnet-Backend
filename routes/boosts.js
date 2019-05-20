@@ -13,8 +13,8 @@ router.route('/boosts/:post_id')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let [boosters_ids, cred_sources] = await boostHelpers.getBoostersandCredSources(req);
-  let post_boosts = await boostHelpers.getPostBoosts([req.params.post_id], req, boosters_ids, cred_sources);
+  let [boosters_ids, cred_sources, followed_trusted_ids] = await boostHelpers.getBoostersandCredSources(req);
+  let post_boosts = await boostHelpers.getPostBoosts([req.params.post_id], req, boosters_ids, followed_trusted_ids);
 
   res.send(post_boosts[0]);
 }));
@@ -24,16 +24,17 @@ router.route('/boosts')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let [boosters_ids, cred_sources] = await boostHelpers.getBoostersandCredSources(req);
+  let [boosters_ids, cred_sources, followed_trusted_ids] = await boostHelpers.getBoostersandCredSources(req);
 
   if (boosters_ids.length && cred_sources.length) {
-    
+
     let [query_str, replacements] = boostHelpers.buildBoostQuery(req, boosters_ids, cred_sources);
 
     let post_id_objs = await db.sequelize.query(query_str,
     { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
     let post_ids = post_id_objs.map(el => el.id);
-    let post_boosts = await boostHelpers.getPostBoosts(post_ids, req, boosters_ids, cred_sources);
+    console.log('************************post_ids', post_ids)
+    let post_boosts = await boostHelpers.getPostBoosts(post_ids, req, boosters_ids, followed_trusted_ids);
     res.send(post_boosts);
   }
   else
