@@ -62,6 +62,10 @@ module.exports = (sequelize, DataTypes) => {
       },
     photoUrl: {
       type: DataTypes.STRING
+    },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   });
 
@@ -81,7 +85,6 @@ module.exports = (sequelize, DataTypes) => {
   Source.associate = function (models) {
 
     //models.Source.belongsToMany(models.Post, {as: 'PostBoosts', through:'SourcePostBoosts'});
-
     models.Source.hasMany(models.Post, {as: 'InitiatedPosts'});
     models.Source.hasMany(models.Assessment, {as: 'SourceAssessments'});
     models.Source.hasMany(models.Feed, {as: 'SourceFeeds'});
@@ -90,8 +93,7 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.belongsToMany(models.Source, { as: 'Follows', through: 'SourceFollows' });
     models.Source.belongsToMany(models.Source, { as: 'Mutes', through: 'SourceMutes' });
     models.Source.belongsToMany(models.Source, { as: 'Blocks', through: 'SourceBlocks' });
-};
-
+  };
 
   return Source;
 };

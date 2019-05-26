@@ -10,6 +10,7 @@ var http = require('http');
 var registerMedia = require('../registerNewsMedia');
 var constants = require('../lib/constants')
 var feedHelpers = require('../lib/feedHelpers');
+var garbageCollection = require('../lib/garbageCollection');
 const logger = require('../lib/logger');
 var db = require('../models');
 var FeedQueue = require('../lib/feedQueue');
@@ -45,11 +46,16 @@ var server = http.createServer(app);
 
   forked.send({ message: 'child process is working' });
 
-  const job = new CronJob('0 */5 * * * *', function() {
+  const feedJob = new CronJob('0 */5 * * * *', function() {
     feedHelpers.updateFeeds();
   });
 
-  job.start();
+  const garbageCollectionJob = new CronJob('00 30 04 * * *', function() {
+    garbageCollection.removeExpiredTokensAccounts();
+  });
+
+  feedJob.start();
+  garbageCollectionJob.start();
 
   server.listen(port);
   server.on('error', onError);

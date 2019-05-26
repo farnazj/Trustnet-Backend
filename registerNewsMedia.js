@@ -1,4 +1,5 @@
 var db = require('./models');
+var routeHelpers = require('./lib/routeHelpers');
 var bCrypt = require('bcrypt');
 var fs = require("fs");
 var kue = require('kue')
@@ -6,13 +7,9 @@ var kue = require('kue')
 
 var media = JSON.parse(fs.readFileSync("./jsons/media.json"));
 
-var generateHash = function(password) {
-  return bCrypt.hash(password, bCrypt.genSaltSync(8), null); // a promise
-};
-
 module.exports = async function(){
 
-  let entityPassword = await generateHash(process.env.ADMIN_KEY);
+  let entityPassword = await routeHelpers.generateHash(process.env.ADMIN_KEY);
 
   let media_proms = media.map((el) => {
     return db.Source.findOrCreate({
@@ -23,7 +20,8 @@ module.exports = async function(){
       defaults: {
         systemMade: true,
         passwordHash: entityPassword,
-        email: null
+        email: null,
+        isVerified: true
       }
     })
     .spread((source, created) => {

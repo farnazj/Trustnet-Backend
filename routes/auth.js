@@ -2,6 +2,24 @@ var express = require('express');
 var router = express.Router();
 const passport = require('passport');
 var routeHelpers = require('../lib/routeHelpers');
+var wrapAsync = require('../lib/wrappers').wrapAsync;
+var db  = require('../models');
+var constants = require('../lib/constants');
+const logger = require('../lib/logger');
+var Sequelize = require('sequelize');
+const Op = Sequelize.Op;
+var crypto = require('crypto');
+var nodemailer = require('nodemailer');
+require('dotenv').config();
+
+var transporter = nodemailer.createTransport({
+ service: 'gmail',
+ auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+});
+
 
 router.route('/login')
 .post(function(req, res, next){
@@ -21,16 +39,7 @@ router.route('/login')
       });
     }
   })(req, res, next)
-})
-
-// .post(passport.authenticate('local-login'), function(req, res){
-//   const user = req.user;
-//   req.session.save(() => {
-//   //     //res.redirect('/');
-//   //     res.send({'msg': 'login successful'});
-//     res.send({'user': user});
-//       })
-// });
+});
 
 router.route('/logout')
 .post( function(req, res){
@@ -39,7 +48,6 @@ router.route('/logout')
 });
 
 router.route('/signup')
-
 .post(function(req, res, next){
   passport.authenticate('local-signup', function(err, user, info) {
 
@@ -49,12 +57,117 @@ router.route('/signup')
 
     if (user) {
       res.status(200).send({message: info.message });
+
+      // transporter.sendMail(mailOptions, function (err, info) {
+      //    if(err)
+      //      logger.err(err);
+      //    else
+      //      logger.info(info);
+      // });
     }
     else {
       res.status(400).send({message: info.message });
     }
 
  })(req, res, next);
-})
+});
+
+
+router.route('/verification/:token')
+.post(wrapAsync(async function(req, res){
+  let v_token = await db.Token({
+    where: {
+      tokenStr: req.params.token
+    },
+    include: [{
+      model: db.Source
+    }]
+  });
+
+  if (!v_token) {
+    res.status(403).send({message: 'Token not found'});
+  }
+  else if ( (v_token.createdAt - Date.now())/(3600*1000) > constants.VERIFICATION_TOKEN_EXP ) {
+    v_token.destory();
+    res.status(403).send({message: 'Token expired'});
+  }
+  else {
+    if (!v_token.Source.isVerified) {
+      v_token.Source.update({isVerified: true});
+      v_token.destroy();
+      res.send({message: 'User is now verified'});
+    }
+    else
+      console.log('What the hell');
+  }
+
+}));
+
+router.route('/forgot-password')
+.post(wrapAsync(async function(req, res){
+  let source = await db.Source.findOne({ where: {email: req.body.email} });
+   if (source) {
+     crypto.randomBytes(20, async function(err, buf) {
+        let token_str = buf.toString('hex');
+        let token = await db.Token.create({
+          tokenStr: token_str,
+          tokenType: constants.TOKEN_TYPES.RECOVERY,
+          expires: Date.now() + constants.TOKEN_EXP.RECOVERY
+        });
+        token.setSource(source);
+
+        let signupLink = constants.CLIENT_BASE_URL + '/reset-password/' + token_str;
+
+        const passResetMailOptions = {
+          from: process.env.EMAIL_USER,
+          to: source.email,
+          subject: 'Password Reset for Trustnet',
+          html: `<p>Hi ${source.firstName}!</p>
+          <p>Forgot your password? Click on the link below or copy and paste it into your browser within the next 4 hours.</p>
+          <p>If you don't want to reset your password, just ignore this email.</p>
+          <p>${signupLink}</p>
+          <p>Your username, in case you have forgotten it is: ${source.userName}</p>
+          <br>
+          <p>-The Trustnet team</p>`
+        };
+
+        transporter.sendMail(passResetMailOptions, function (err, info) {
+           if(err)
+             logger.error(err);
+           else
+             logger.info(info);
+        });
+      });
+   }
+
+   res.status(202).send({message: `If an account with that email address exists,
+     you should soon receive an email with instructions on how to reset your password.`})
+}));
+
+router.route('/reset-password/:token')
+.post(wrapAsync(async function(req, res){
+  let token = await db.Token.findOne({
+    where: {
+      tokenStr: req.params.token,
+      tokenType: constants.TOKEN_TYPES.RECOVERY,
+      expires: { [Op.gt]: Date.now() }
+    },
+    include: [{
+      model: db.Source
+    }]
+  });
+
+  if (!token) {
+    res.status(403).send({message: 'Password reset token is invalid or has expired.' })
+  }
+  else {
+    let password_hash = await routeHelpers.generateHash(req.body.password)
+    await Promise.all([ token.Source.update({
+      passwordHash: password_hash,
+    }), token.destroy()]);
+    res.send({message: 'Password updated'});
+  }
+
+}))
 
 module.exports = router;
