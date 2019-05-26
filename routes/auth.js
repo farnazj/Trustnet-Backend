@@ -15,9 +15,9 @@ require('dotenv').config();
 var transporter = nodemailer.createTransport({
  service: 'gmail',
  auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
 });
 
 
@@ -56,14 +56,40 @@ router.route('/signup')
     }
 
     if (user) {
-      res.status(200).send({message: info.message });
 
-      // transporter.sendMail(mailOptions, function (err, info) {
-      //    if(err)
-      //      logger.err(err);
-      //    else
-      //      logger.info(info);
-      // });
+      crypto.randomBytes(20, async function(err, buf) {
+         let token_str = buf.toString('hex');
+         let token = await db.Token.create({
+           tokenStr: token_str,
+           tokenType: constants.TOKEN_TYPES.VERIFICATION,
+           expires: Date.now() + constants.TOKEN_EXP.VERIFICATION
+         });
+         token.setSource(user);
+         let verificationLink = constants.CLIENT_BASE_URL + '/verify-account/' + token_str;
+
+         const passResetMailOptions = {
+           from: process.env.EMAIL_USER,
+           to: user.email,
+           subject: 'Account Verification for Trustnet',
+           html: `<p>Hi ${user.firstName}!</p>
+           <p>Thanks for signing up for Trustent. If this wasn't you, please ignore this email and
+           we will remove your address from our records.</p>
+           <p>To activate your account, please click on the following link within the next 6 hours:</p>
+           <p>${verificationLink}</p>
+           <br>
+           <p>-The Trustnet team</p>`
+         };
+
+         transporter.sendMail(passResetMailOptions, function (err, info) {
+            if(err)
+              logger.error(err);
+            else
+              logger.info(info);
+         });
+      })
+
+      res.status(202).send({message: `Thanks for signing up! You should soon receive an email containing information
+        on how to activate your account.`})
     }
     else {
       res.status(400).send({message: info.message });
@@ -73,11 +99,13 @@ router.route('/signup')
 });
 
 
-router.route('/verification/:token')
+router.route('/verify-account/:token')
 .post(wrapAsync(async function(req, res){
-  let v_token = await db.Token({
+  let v_token = await db.Token.findOne({
     where: {
-      tokenStr: req.params.token
+      tokenStr: req.params.token,
+      tokenType: constants.TOKEN_TYPES.VERIFICATION,
+      expires: { [Op.gt]: Date.now() }
     },
     include: [{
       model: db.Source
@@ -85,11 +113,7 @@ router.route('/verification/:token')
   });
 
   if (!v_token) {
-    res.status(403).send({message: 'Token not found'});
-  }
-  else if ( (v_token.createdAt - Date.now())/(3600*1000) > constants.VERIFICATION_TOKEN_EXP ) {
-    v_token.destory();
-    res.status(403).send({message: 'Token expired'});
+    res.status(403).send({message: 'Verification token is invalid or has expired.'});
   }
   else {
     if (!v_token.Source.isVerified) {

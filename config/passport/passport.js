@@ -95,14 +95,13 @@ module.exports = function(passport) {
 
     passport.serializeUser(function(user, done) {
       done(null, user.id);
-
     });
 
     passport.deserializeUser(function(id, done) {
       User.findByPk(id).then(function(user) {
 
         if (user) {
-            done(null, user.get());
+          done(null, user.get());
         }
         else {
             done("sth went wrong", null);
@@ -122,6 +121,8 @@ module.exports = function(passport) {
           // if no user is found, return the message
           if (!user)
               return done(null, false, { message: 'No user found' });
+          if (!user.isVerified)
+              return done(null, false, {message: 'user not activated'});
 
           bCrypt.compare(password, user.passwordHash, (err, isValid) => {
 
