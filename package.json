@@ -22,7 +22,6 @@
     "express-session": "^1.15.6",
     "feedparser": "^2.2.9",
     "helmet": "^3.16.0",
-    "js-priority-queue": "^0.1.5",
     "kue": "^0.11.6",
     "moment": "^2.22.1",
     "morgan": "^1.9.1",
@@ -35,7 +34,7 @@
     "redis": "^2.8.0",
     "rotating-file-stream": "^1.4.0",
     "sequelize": "^5.8.5",
-    "sequelize-cli": "^4.0.0",
+    "sequelize-cli": "^5.5.0",
     "serve-favicon": "~2.4.5",
     "winston": "^3.2.1"
   }
