@@ -1,6 +1,6 @@
 var db = require('./models');
 var routeHelpers = require('./lib/routeHelpers');
-var bCrypt = require('bcrypt');
+var feedHelpers = require('./lib/feedHelpers');
 var fs = require("fs");
 var kue = require('kue')
  , queue = kue.createQueue();
@@ -16,7 +16,7 @@ module.exports = async function(){
       where: {
         userName: el.username,
         photoUrl: el.photoUrl
-        },
+      },
       defaults: {
         systemMade: true,
         passwordHash: entityPassword,
@@ -37,11 +37,17 @@ module.exports = async function(){
       })
       .then( feed_inst => {
         if (!feed_inst){
-          return db.Feed.create({
-            rssfeed: feed.rssfeed,
-            name: feed.name
-          }).then( rss_feed => {
-              return source.addSourceFeed(rss_feed);
+          return feedHelpers.getFeed(feed.rssfeed)
+          .then(feedHelpers.getFeedMeta)
+          .then(meta => {
+            return db.Feed.create({
+              rssfeed: feed.rssfeed,
+              name: meta.title,
+              description: meta.description,
+              frequency: 1
+            }).then(rss_feed => {
+              return Promise.all([source.addSourceFeed(rss_feed), rss_feed.setFeedSource(source)]);
+            })
           })
         }
       })

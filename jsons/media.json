@@ -5,20 +5,16 @@
     "photoUrl": "logos/cnn.png",
     "feeds": [
         {
-          "rssfeed": "http://rss.cnn.com/rss/cnn_world.rss",
-          "name": "World"
+          "rssfeed": "http://rss.cnn.com/rss/cnn_world.rss"
         },
         {
-          "rssfeed": "http://rss.cnn.com/rss/cnn_us.rss",
-          "name": "U.S."
+          "rssfeed": "http://rss.cnn.com/rss/cnn_us.rss"
         },
         {
-          "rssfeed": "http://rss.cnn.com/rss/cnn_health.rss",
-          "name": "Health"
+          "rssfeed": "http://rss.cnn.com/rss/cnn_health.rss"
         },
         {
-          "rssfeed": "http://rss.cnn.com/rss/cnn_allpolitics.rss",
-          "name": "Politics"
+          "rssfeed": "http://rss.cnn.com/rss/cnn_allpolitics.rss"
         }
     ]
   },
@@ -27,24 +23,19 @@
     "photoUrl": "logos/fnc.png",
     "feeds": [
         {
-          "rssfeed": "http://feeds.foxnews.com/foxnews/world",
-          "name": "World"
+          "rssfeed": "http://feeds.foxnews.com/foxnews/world"
         },
         {
-          "rssfeed": "http://feeds.foxnews.com/foxnews/national",
-          "name": "U.S."
+          "rssfeed": "http://feeds.foxnews.com/foxnews/national"
         },
         {
-          "rssfeed": "http://feeds.foxnews.com/foxnews/health",
-          "name": "Health"
+          "rssfeed": "http://feeds.foxnews.com/foxnews/health"
         },
         {
-          "rssfeed": "http://feeds.foxnews.com/foxnews/science",
-          "name": "Science"
+          "rssfeed": "http://feeds.foxnews.com/foxnews/science"
         },
         {
-          "rssfeed": "http://feeds.foxnews.com/foxnews/politics",
-          "name": "Politics"
+          "rssfeed": "http://feeds.foxnews.com/foxnews/politics"
         }
     ]
   },
@@ -54,20 +45,16 @@
     "photoUrl": "logos/nyt.png",
     "feeds": [
         {
-          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-          "name": "World"
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/World.xml"
         },
         {
-          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/US.xml",
-          "name": "U.S."
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/US.xml"
         },
         {
-          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Health.xml",
-          "name": "Health"
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Health.xml"
         },
         {
-          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
-          "name": "Science"
+          "rssfeed": "http://rss.nytimes.com/services/xml/rss/nyt/Science.xml"
         }
     ]
 

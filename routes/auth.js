@@ -75,7 +75,7 @@ router.route('/signup')
            <p>Thanks for signing up for Trustent. If this wasn't you, please ignore this email and
            we will remove your address from our records.</p>
            <p>To activate your account, please click on the following link within the next 6 hours:</p>
-           <p>${verificationLink}</p>
+           <p> <a href="${verificationLink}">${verificationLink}</a></p>
            <br>
            <p>-The Trustnet team</p>`
          };
@@ -149,7 +149,7 @@ router.route('/forgot-password')
           html: `<p>Hi ${source.firstName}!</p>
           <p>Forgot your password? Click on the link below or copy and paste it into your browser within the next 4 hours.</p>
           <p>If you don't want to reset your password, just ignore this email.</p>
-          <p>${signupLink}</p>
+          <p><a href="${signupLink}">${signupLink}</a></p>
           <p>Your username, in case you have forgotten it is: ${source.userName}</p>
           <br>
           <p>-The Trustnet team</p>`

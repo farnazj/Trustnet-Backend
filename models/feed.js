@@ -9,10 +9,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       isUrl: true
     },
-     lastUpdated:{
-       type: DataTypes.DATE
-     }
+    lastUpdated: {
+      type: DataTypes.DATE
+    },
+    frequency: {
+      type: DataTypes.INTEGER
+    }
   });
+
+  Feed.associate = function (models) {
+    models.Feed.belongsTo(models.Source, {as: 'FeedSource'});
+  };
 
   return Feed;
 };

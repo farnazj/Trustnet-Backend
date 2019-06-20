@@ -46,15 +46,12 @@ var server = http.createServer(app);
 
   forked.send({ message: 'child process is working' });
 
-  const feedJob = new CronJob('0 */5 * * * *', function() {
-    feedHelpers.updateFeeds();
-  });
+  feedQueue.initFeedUpdateJobs();
 
-  const garbageCollectionJob = new CronJob('00 30 04 * * *', function() {
+  const garbageCollectionJob = new CronJob('00 */5 * * * *', function() {
     garbageCollection.removeExpiredTokensAccounts();
   });
 
-  feedJob.start();
   garbageCollectionJob.start();
 
   server.listen(port);
