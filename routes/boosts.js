@@ -33,7 +33,6 @@ router.route('/boosts')
     let post_id_objs = await db.sequelize.query(query_str,
     { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
     let post_ids = post_id_objs.map(el => el.id);
-    console.log('************************post_ids', post_ids)
     let post_boosts = await boostHelpers.getPostBoosts(post_ids, req, boosters_ids, followed_trusted_ids);
     res.send(post_boosts);
   }
@@ -60,7 +59,6 @@ router.route('/boosts')
   await routeHelpers.boostPost(auth_user, req.body.post_id, req.body.target_usernames);
   res.send({}); //TODO: change
 }));
-
 
 
 module.exports = router;

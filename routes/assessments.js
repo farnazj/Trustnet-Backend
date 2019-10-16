@@ -42,7 +42,6 @@ router.route('/posts/:post_id/assessments')
   assessmentSpecs.isTransitive = false;
 
   if (assessments.length) {
-
     for (let assessment of assessments)
       assessment.update({ version: assessment.version - 1});
   }
@@ -72,7 +71,7 @@ router.route('/posts/:post_id/:user_id/assessment')
 
   let assessments = await db.Assessment.findAll({
     where: {
-      SourceId: req.user.id,
+      SourceId: req.params.user_id,
       PostId: req.params.post_id
     },
     order: [
