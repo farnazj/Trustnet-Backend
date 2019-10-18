@@ -11,7 +11,7 @@ module.exports = async function(){
 
   let entityPassword = await routeHelpers.generateHash(process.env.ADMIN_KEY);
 
-  let media_proms = media.map((el) => {
+  let mediaProms = media.map((el) => {
     return db.Source.findOrCreate({
       where: {
         userName: el.username,
@@ -29,14 +29,14 @@ module.exports = async function(){
       if (created)
         queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
-      let feed_proms = el.feeds.map( feed => {
+      let feedProms = el.feeds.map( feed => {
         return db.Feed.findOne({
         where: {
           rssfeed: feed.rssfeed
         }
       })
-      .then( feed_inst => {
-        if (!feed_inst){
+      .then( feedInstance => {
+        if (!feedInstance){
           return feedHelpers.getFeed(feed.rssfeed)
           .then(feedHelpers.getFeedMeta)
           .then(meta => {
@@ -45,18 +45,18 @@ module.exports = async function(){
               name: meta.title,
               description: meta.description,
               frequency: 1
-            }).then(rss_feed => {
-              return Promise.all([source.addSourceFeed(rss_feed), rss_feed.setFeedSource(source)]);
+            }).then(rssFeed => {
+              return Promise.all([source.addSourceFeed(rssFeed), rssFeed.setFeedSource(source)]);
             })
           })
         }
       })
 
       })
-      return Promise.all(feed_proms);
+      return Promise.all(feedProms);
     });
 
   })
-  return Promise.all(media_proms);
+  return Promise.all(mediaProms);
 
 }

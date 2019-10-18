@@ -11,39 +11,41 @@ const uuidv4 = require('uuid/v4');
 
 router.route('/posts') //initiated posts
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let pagination_req = routeHelpers.getLimitOffset(req);
-  let auth_user = await db.Source.findByPk(req.user.id);
-  let posts = await auth_user.getInitiatedPosts(pagination_req);
+  let paginationReq = routeHelpers.getLimitOffset(req);
+  let authUser = await db.Source.findByPk(req.user.id);
+  let posts = await authUser.getInitiatedPosts(paginationReq);
+
   res.send(posts);
 }))
 
+/*
+when a source initiates a post, a credibility assessment is automatically generated
+for the post, with the source as the sourceId and a value of "valid"
+*/
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let post_prom = db.Post.create(req.body);
-  let auth_user_prom = db.Source.findByPk(req.user.id);
+  let postProm = db.Post.create(req.body);
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let [authUser, post] = await Promise.all([authUserProm, postProm]);
+  await routeHelpers.initiatePost(authUser, post, req.body.target_usernames);
 
-  //when a source initiates a post, a credibility assessment is automatically generated
-  //for post, with the source as the sourceId and a value of "valid"
-
-  let [auth_user, post] = await Promise.all([auth_user_prom, post_prom]);
-  await routeHelpers.initiatePost(auth_user, post, req.body.target_usernames);
-
-  res.send({message: 'Post has been added'});
+  res.send({ message: 'Post has been added' });
 }));
 
 
 router.route('/posts/:post_id')
 
 //TODO: need to change this if some posts become private
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let post = await db.Post.findByPk(req.params.post_id)
   res.send(post);
 }))
 
 .delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
   await db.Post.destroy({
     where: {
       id: req.params.post_id,
@@ -51,103 +53,100 @@ router.route('/posts/:post_id')
     }
   })
 
-  res.send({message: 'Post deleted'});
+  res.send({ message: 'Post deleted' });
 }))
 
+.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-.put(routeHelpers.isLoggedIn, function(req, res){
+  let postSpecs = req.body;
+  let post = await db.Post.findByPk(req.params.post_id);
+  postSpecs.version = post.version + 1;
+  await post.update(postSpecs);
 
-    let postSpecs = req.body;
-
-    db.Post.findByPk(req.params.post_id)
-    .then(post => {
-      postSpecs.version = post.version + 1;
-      return post.update(postSpecs);
-    })
-    .then(result => {
-      res.send({message: 'Post updated'});
-    })
-    .catch(err => res.send(err));
-});
+  res.send({ message: 'Post updated' });
+}));
 
 
 router.route('/posts/:username')
 
-.get(routeHelpers.isLoggedIn, function(req, res){
-  let pagination_req = routeHelpers.getLimitOffset(req);
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  db.Source.findOne({where: {userName: req.params.username }})
-  .then(source => {
-     return db.Post.findAndCountAll({
-       where: {
-         SourceId: source.id
-       },
-       ...pagination_req
-     })
-  }).then( result => {
-    res.send(result); //result.count, result.rows
-  }).catch(err => {
-    res.send(err);
+  let paginationReq = routeHelpers.getLimitOffset(req);
+  let source = await db.Source.findOne({where: {userName: req.params.username }});
+  let results = await db.Post.findAndCountAll({
+    where: {
+      SourceId: source.id
+    },
+    ...paginationReq
   });
-})
+
+  res.send(results); //results.count, results.rows
+}));
 
 
 router.route('/posts/import')
+
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let auth_user = await db.Source.findByPk(req.user.id);
-  let assessment_obj = {
+  let authUser = await db.Source.findByPk(req.user.id);
+  let assessmentObj = {
     postCredibility: req.body.postCredibility,
     body: req.body.assessmentBody,
     isTransitive: false
    };
 
-  await routeHelpers.importPost(auth_user, req.body.postUrl,
-     assessment_obj, req.body.target_usernames);
+  await routeHelpers.importPost(authUser, req.body.postUrl,
+     assessmentObj, req.body.target_usernames);
 
-  res.send({message: 'Post has been imported'});
+  res.send({ message: 'Post has been imported' });
 }));
 
 
 router.route('/posts/:post_id/seen-status')
 
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let auth_user_prom = db.Source.findByPk(req.user.id);
-  let post_prom = db.Post.findByPk(req.params.post_id);
-  let [post, auth_user] = await Promise.all([post_prom, auth_user_prom]);
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let postProm = db.Post.findByPk(req.params.post_id);
+  let [post, authUser] = await Promise.all([postProm, authUserProm]);
+
   if (req.body.seen_status == constants.SEEN_STATUS.SEEN)
-    post.addSeer(auth_user);
+    post.addSeer(authUser);
   else if (req.body.seen_status == constants.SEEN_STATUS.NOTSEEN)
-    post.removeSeer(auth_user);
+    post.removeSeer(authUser);
 
   res.sendStatus(200);
 }))
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
   let post = await db.Post.findByPk(req.params.post_id);
 
   if (post) {
-    let seers = await post.getSeers({where: {
-      id: req.user.id
-    }});
+    let seers = await post.getSeers({
+      where: {
+        id: req.user.id
+      }
+    });
     if (seers.length)
-      res.send({seen: true});
+      res.send({ seen: true });
     else
-      res.send({seen: false});
+      res.send({ seen: false });
   }
   else {
-    res.send({message: 'Post not found'});
+    res.send({ message: 'Post not found' });
   }
 
 }))
 
+
 //edit a title by posting a new version of it
 router.route('/posts/:post_id/custom-titles/:set_id')
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   console.log(req.params.set_id, req.params.post_id)
-  let custom_titles = await db.CustomTitle.findAll({
+  let customTitles = await db.CustomTitle.findAll({
     where: {
       setId: req.params.set_id,
       sourceId: req.user.id
@@ -157,25 +156,27 @@ router.route('/posts/:post_id/custom-titles/:set_id')
     ]
   });
 
-  console.log(custom_titles)
+  console.log(customTitles)
 
-  if (custom_titles.length) {
-    let update_proms = [];
-    for (let title of custom_titles)
-      update_proms.push(title.update({ version: title.version - 1}));
+  if (customTitles.length) {
 
-    let auth_user_prom = db.Source.findByPk(req.user.id);
-    let post_prom = db.Post.findByPk(req.params.post_id);
+    let updateProms = [];
+    for (let title of customTitles)
+      updateProms.push(title.update({ version: title.version - 1}));
+
+    let authUserProm = db.Source.findByPk(req.user.id);
+    let postProm = db.Post.findByPk(req.params.post_id);
     let titleSpecs = req.body;
     titleSpecs.setId = req.params.set_id;
-    let title_prom = db.CustomTitle.create(titleSpecs);
+    let titleProm = db.CustomTitle.create(titleSpecs);
 
-    let [post, auth_user, title] = await Promise.all([post_prom, auth_user_prom, title_prom]);
+    let [post, authUser, title] = await Promise.all([postProm, authUserProm, titleProm]);
 
-    let source_title = auth_user.addSourceCustomTitles(title);
-    let post_title = post.addPostCustomTitle(title);
+    let sourceTitle = authUser.addSourceCustomTitles(title);
+    let postTitle = post.addPostCustomTitle(title);
 
-    await Promise.all([source_title, post_title, ...update_proms]);
+    await Promise.all([sourceTitle, postTitle, ...updateProms]);
+
     res.send({ message: 'Title updated' });
   }
   else {
@@ -184,49 +185,50 @@ router.route('/posts/:post_id/custom-titles/:set_id')
 
 }))
 
-.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let delete_proms = db.CustomTitle.destroy({
+  let deleteProms = db.CustomTitle.destroy({
     where: {
       setId: req.params.set_id,
       sourceId: req.user.id
     }
   });
 
-  console.log('delete proms', delete_proms)
-  if (delete_proms.length) {
-    await Promise.all(delete_proms);
+  if (deleteProms.length) {
+    await Promise.all(deleteProms);
     res.send({ message: 'Title deleted' });
   }
   else {
     res.send({ message: 'Title does not exist' })
   }
 
-}))
+}));
+
 
 router.route('/posts/:post_id/custom-titles')
 
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let auth_user_prom = db.Source.findByPk(req.user.id);
-  let post_prom = db.Post.findByPk(req.params.post_id);
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let postProm = db.Post.findByPk(req.params.post_id);
   let titleSpecs = req.body;
   titleSpecs.setId = uuidv4();
-  let title_prom = db.CustomTitle.create(titleSpecs);
+  let titleProm = db.CustomTitle.create(titleSpecs);
 
-  let [post, auth_user, title] = await Promise.all([post_prom, auth_user_prom, title_prom]);
+  let [post, authUser, title] = await Promise.all([postProm, authUserProm, titleProm]);
 
-  let source_title = auth_user.addSourceCustomTitles(title);
-  let post_title = post.addPostCustomTitle(title);
+  let sourceTitle = authUser.addSourceCustomTitles(title);
+  let postTitle = post.addPostCustomTitle(title);
 
-  await Promise.all([source_title, post_title]);
-  res.send({message: 'Title posted'});
+  await Promise.all([sourceTitle, postTitle]);
+  res.send({ message: 'Title posted' });
 
 }))
 
+
 router.route('/posts/:post_id/:user_id/custom-titles')
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let titles = await db.CustomTitle.findAll({
     where: {
@@ -245,10 +247,10 @@ router.route('/posts/:post_id/:user_id/custom-titles')
 //get custom titles from the auth_user's perspective
 router.route('/posts/:post_id/custom-titles')
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let post = await db.Post.findByPk(req.params.post_id);
-  let [boosters_ids, cred_sources, followed_trusted_ids] = await boostHelpers.getBoostersandCredSources(req);
+  let [boostersIds, credSources, followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
 
   let titles = await db.CustomTitle.findAll({
     include: [{
@@ -257,10 +259,13 @@ router.route('/posts/:post_id/custom-titles')
     }],
     where: {
       SourceId: {
+        [Op.in]: followedTrustedIds.concat(post.SourceId)
+        /*
         [Op.or]: {
           [Op.eq]: Sequelize.col('CustomTitle.SourceId'),
-          [Op.in]: followed_trusted_ids.concat(post.SourceId)
+          [Op.in]: followedTrustedIds.concat(post.SourceId)
         }
+        */
       },
       PostId: req.params.post_id
     },
@@ -273,10 +278,11 @@ router.route('/posts/:post_id/custom-titles')
   res.send(titles);
 }));
 
+
 //if auth user has endorsed a custom title
 router.route('/posts/:set_id/is-custom-title-endorsed')
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let title = await db.CustomTitle.findOne({
     include: [{
@@ -291,17 +297,17 @@ router.route('/posts/:set_id/is-custom-title-endorsed')
     }
   });
 
-  console.log("^^^^^^^^^^",title)
   let result = title ? true : false;
-  console.log("^^^^^^^^^^",result)
+
   res.send({ message: result });
-}))
+}));
+
 
 router.route('/posts/:set_id/custom-title-endorsers')
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let [boosters_ids, cred_sources, followed_trusted_ids] = await boostHelpers.getBoostersandCredSources(req);
+  let [boostersIds, credSources, followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
 
   let title = await db.CustomTitle.findOne({
     include: [{
@@ -309,7 +315,7 @@ router.route('/posts/:set_id/custom-title-endorsers')
       as: 'Endorsers',
       where: {
         SourceId: {
-          [Op.in]: followed_trusted_ids
+          [Op.in]: followedTrustedIds
         }
       }
     }],
@@ -320,7 +326,7 @@ router.route('/posts/:set_id/custom-title-endorsers')
 
   console.log(title.Endorsers)
   res.send(title.Endorsers);
-}))
+}));
 
 
 module.exports = router;

@@ -13,8 +13,9 @@ var kue = require('kue')
  , queue = kue.createQueue();
 
 router.route('/feeds')
+
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-  console.log(req.body)
+
   let feed = await db.Feed.findOne({
     where: {
       rssfeed: req.body.rssfeed

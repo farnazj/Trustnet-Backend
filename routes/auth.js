@@ -22,7 +22,9 @@ var transporter = nodemailer.createTransport({
 
 
 router.route('/login')
-.post(function(req, res, next){
+
+.post(function(req, res, next) {
+
   passport.authenticate('local-login', function(err, user, info) {
     if (err) {
       return next(err)
@@ -41,14 +43,20 @@ router.route('/login')
   })(req, res, next)
 });
 
+
 router.route('/logout')
-.post( function(req, res){
+
+.post( function(req, res) {
+  
   req.logout();
   res.sendStatus(200);
 });
 
+
 router.route('/signup')
-.post(function(req, res, next){
+
+.post(function(req, res, next) {
+
   passport.authenticate('local-signup', function(err, user, info) {
 
     if (err) {
@@ -88,11 +96,11 @@ router.route('/signup')
          });
       })
 
-      res.status(202).send({message: `Thanks for signing up! You should soon receive an email containing information
-        on how to activate your account.`})
+      res.status(202).send({ message: `Thanks for signing up! You should soon receive an email containing information
+        on how to activate your account.` })
     }
     else {
-      res.status(400).send({message: info.message });
+      res.status(400).send({ message: info.message });
     }
 
  })(req, res, next);
@@ -100,7 +108,9 @@ router.route('/signup')
 
 
 router.route('/verify-account/:token')
-.post(wrapAsync(async function(req, res){
+
+.post(wrapAsync(async function(req, res) {
+
   let v_token = await db.Token.findOne({
     where: {
       tokenStr: req.params.token,
@@ -113,13 +123,13 @@ router.route('/verify-account/:token')
   });
 
   if (!v_token) {
-    res.status(403).send({message: 'Verification token is invalid or has expired.'});
+    res.status(403).send({ message: 'Verification token is invalid or has expired.' });
   }
   else {
     if (!v_token.Source.isVerified) {
       v_token.Source.update({isVerified: true});
       v_token.destroy();
-      res.send({message: 'User is now verified'});
+      res.send({ message: 'User is now verified' });
     }
     else
       console.log('What the hell');
@@ -127,8 +137,11 @@ router.route('/verify-account/:token')
 
 }));
 
+
 router.route('/forgot-password')
-.post(wrapAsync(async function(req, res){
+
+.post(wrapAsync(async function(req, res) {
+
   let source = await db.Source.findOne({ where: {email: req.body.email} });
    if (source) {
      crypto.randomBytes(20, async function(err, buf) {
@@ -168,8 +181,11 @@ router.route('/forgot-password')
      you should soon receive an email with instructions on how to reset your password.`})
 }));
 
+
 router.route('/reset-password/:token')
-.post(wrapAsync(async function(req, res){
+
+.post(wrapAsync(async function(req, res) {
+
   let token = await db.Token.findOne({
     where: {
       tokenStr: req.params.token,
@@ -185,10 +201,11 @@ router.route('/reset-password/:token')
     res.status(403).send({message: 'Password reset token is invalid or has expired.' })
   }
   else {
-    let password_hash = await routeHelpers.generateHash(req.body.password)
+    let password_hash = await routeHelpers.generateHash(req.body.password);
     await Promise.all([ token.Source.update({
       passwordHash: password_hash,
     }), token.destroy()]);
+
     res.send({message: 'Password updated'});
   }
 

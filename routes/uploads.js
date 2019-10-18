@@ -33,7 +33,7 @@ router.route('/profile-pictures')
     return res.send({ success: true });
   }
 
-}))
+}));
 
 
 module.exports = router;

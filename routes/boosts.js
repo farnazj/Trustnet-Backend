@@ -13,10 +13,10 @@ router.route('/boosts/:post_id')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let [boosters_ids, cred_sources, followed_trusted_ids] = await boostHelpers.getBoostersandCredSources(req);
-  let post_boosts = await boostHelpers.getPostBoosts([req.params.post_id], req, boosters_ids, followed_trusted_ids);
+  let [boostersIds, _ , followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
+  let postBoosts = await boostHelpers.getPostBoosts([req.params.post_id], req, boostersIds, followedTrustedIds);
 
-  res.send(post_boosts[0]);
+  res.send(postBoosts[0]);
 }));
 
 
@@ -24,27 +24,26 @@ router.route('/boosts')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let [boosters_ids, cred_sources, followed_trusted_ids] = await boostHelpers.getBoostersandCredSources(req);
+  let [boostersIds, credSources, followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
 
-  if (boosters_ids.length && cred_sources.length) {
+  if (boostersIds.length && credSources.length) {
 
-    let [query_str, replacements] = boostHelpers.buildBoostQuery(req, boosters_ids, cred_sources);
-
-    let post_id_objs = await db.sequelize.query(query_str,
+    let [queryStr, replacements] = boostHelpers.buildBoostQuery(req, boostersIds, credSources);
+    let postIdObjs = await db.sequelize.query(queryStr,
     { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
-    let post_ids = post_id_objs.map(el => el.id);
-    let post_boosts = await boostHelpers.getPostBoosts(post_ids, req, boosters_ids, followed_trusted_ids);
-    res.send(post_boosts);
+
+    let postIds = postIdObjs.map(el => el.id);
+    let postBoosts = await boostHelpers.getPostBoosts(postIds, req, boostersIds, followedTrustedIds);
+
+    res.send(postBoosts);
   }
   else
-    res.send([])
-
+    res.send([]);
 }))
 
-
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-  let auth_user = await db.Source.findByPk(req.user.id);
 
+  let authUserProm = db.Source.findByPk(req.user.id);
   let assessment = await db.Assessment.findOne({
     where: {
         SourceId: req.user.id,
@@ -56,7 +55,9 @@ router.route('/boosts')
       throw "Cannot boost the post before assessing its credibility post: "
         + req.body.post_id + " user: " + req.user.id;
 
-  await routeHelpers.boostPost(auth_user, req.body.post_id, req.body.target_usernames);
+  let authUser = await authUserProm;
+  await routeHelpers.boostPost(authUser, req.body.post_id, req.body.target_usernames);
+
   res.send({}); //TODO: change
 }));
 

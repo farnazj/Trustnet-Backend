@@ -11,212 +11,190 @@ var kue = require('kue')
 //Those sources that the auth user follows
 router.route('/follows')
 
-.get(routeHelpers.isLoggedIn, function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let pagination_req = routeHelpers.getLimitOffset(req);
+  let paginationReq = routeHelpers.getLimitOffset(req);
 
-  db.Source.findByPk(req.user.id)
-  .then(user => {
-    return user.getFollows(
-      pagination_req
-    );
-  }).then( result => {
-    res.send(result);
-  }).catch(err => {
-    res.send(err);
+  let authUser = await db.Source.findByPk(req.user.id);
+  let followeds = await authUser.getFollows(paginationReq);
+
+  res.send(followeds);
+}))
+
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let followedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
   });
 
-})
+  let [authUser, followedUser] = await Promise.all([authUserProm, followedUserProm]);
+  await authUser.addFollow(followedUser);
 
-.post(routeHelpers.isLoggedIn, function(req, res) {
+  res.send({ message: 'Source added to follows' });
+}))
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let followed_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
+.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  Promise.all([source_user, followed_user])
-  .then(sources => {
-    return sources[0].addFollow(sources[1]);
-  }).then(result => {
-    res.send({message: 'Source added to follows'});
-  }).catch(err => {
-    res.send(err);
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let followedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
   });
-})
 
-.delete(routeHelpers.isLoggedIn, function(req, res) {
+  let [authUser, followedUser] = await Promise.all([authUserProm, followedUserProm]);
+  await authUser.removeFollow(followedUser);
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let followee_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
-
-  Promise.all([source_user, followee_user])
-  .then(sources => {
-    return sources[0].removeFollow(sources[1]);
-  }).then(result => {
-    res.send({message: result + ' source removed from follows'});
-  }).catch(err => {
-    res.send(err)
-  });
-});
+  res.send({ message: 'Source removed from follows' });
+}));
 
 
 //Those sources that the auth user blocks
 router.route('/blocks')
 
-.get(routeHelpers.isLoggedIn, function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let pagination_req = routeHelpers.getLimitOffset(req);
+  let paginationReq = routeHelpers.getLimitOffset(req);
+  let authUser = await db.Source.findByPk(req.user.id);
+  let blockeds = await authUser.getBlocks(
+    paginationReq
+  );
 
-  db.Source.findByPk(req.user.id)
-  .then(user => {
-    return user.getBlocks(
-      pagination_req
-    );
-  }).then( result => {
-    res.send(result);
-  }).catch(err => {
-    res.send(err);
+  res.send(blockeds);
+}))
+
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let blockedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
   });
-})
 
-.post(routeHelpers.isLoggedIn, function(req, res) {
+  let [authUser, blockedUser] = await Promise.all([authUserProm, blockedUserProm]);
+  await authUser.addBlock(blockedUser);
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let blocked_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
+  res.send({ message: 'Source added to blocks' });
+}))
 
-  Promise.all([source_user, blocked_user])
-  .then(sources => {
-    return sources[0].addBlock(sources[1]);
-  }).then(result =>{
-    res.send({message: 'Source added to blocks'});
-  }).catch(err => {
-    res.send(err);
+.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let blockedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
   });
-})
 
-.delete(routeHelpers.isLoggedIn, function(req, res) {
+  let [authUser, blockedUser] = await Promise.all([authUserProm, blockedUserProm]);
+  await authUser.removeBlock(blockedUser);
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let blocked_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
-
-  Promise.all([source_user, followee_user])
-  .then(sources => {
-    return sources[0].removeBlock(sources[1]);
-  }).then(result => {
-    res.send({message: result + ' source removed from blocks'});
-  }).catch(err => {
-    res.send(err)
-  });
-});
+  res.send({ message: 'Source removed from blocks' });
+}));
 
 
 //Those sources that a specific user mutes
 router.route('/mutes')
 
-.get(routeHelpers.isLoggedIn, function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let pagination_req = routeHelpers.getLimitOffset(req);
+  let paginationReq = routeHelpers.getLimitOffset(req);
 
-  db.Source.findByPk(req.user.id)
-  .then(user => {
-    return user.getMutes(
-      pagination_req
-    );
-  }).then(result => {
-    res.send(result)
-  }).catch(err => {
-    res.send(err);
+  let authUser = await db.Source.findByPk(req.user.id);
+  let muteds = await authUser.getMutes(
+    paginationReq
+  );
+
+  res.send(muteds);
+}))
+
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let mutedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
   });
 
-})
+  let [authUser, mutedUser] = await Promise.all([authUserProm, mutedUserProm]);
+  await authUser.addMute(mutedUser);
 
-.post(routeHelpers.isLoggedIn, function(req, res) {
+  res.send({ message: 'Source added to Mutes' });
+}))
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let muted_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
+.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  Promise.all([source_user, muted_user])
-  .then(sources => {
-    return sources[0].addMute(sources[1]);
-  }).then(result =>{
-    res.send({message: 'Source added to Mutes'});
-  }).catch(err => {
-    res.send(err);
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let mutedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
   });
-})
 
-.delete(routeHelpers.isLoggedIn, function(req, res) {
+  let [authUser, mutedUser] = await Promise.all([authUserProm, mutedUserProm]);
+  await authUser.removeMute(mutedUser);
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let muted_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
+  res.send({ message: 'Source removed from Mutes' });
+}));
 
-  Promise.all([source_user, muted_user])
-  .then(sources => {
-    return sources[0].removeMute(sources[1]);
-  }).then(result => {
-    res.send({message: result + ' source removed from Mutes'});
-  }).catch(err => {
-    res.send(err)
-  });
-});
 
 //Those sources that the auth user trusts
 router.route('/trusts')
 
-.get(routeHelpers.isLoggedIn, function(req, res) {
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let pagination_req = routeHelpers.getLimitOffset(req);
+  let paginationReq = routeHelpers.getLimitOffset(req);
+  let authUser = await db.Source.findByPk(req.user.id);
+  let trusteds = await authUser.getTrusteds(
+      paginationReq
+  );
 
-  db.Source.findByPk(req.user.id)
-  .then(user => {
-    return user.getTrusteds(
-      pagination_req
-    );
-  }).then(result => {
-    res.send(result);
-  }).catch(err => {
-    res.send(err);
-  });
-
-})
+  res.send(trusteds);
+}))
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let trusted_user = db.Source.findOne(
-    {where: {userName: req.body.username}});
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let trustedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
+  });
 
-  let [source, target] = await Promise.all([source_user, trusted_user])
-  await source.addTrusted(target);
-  queue.create('addEdge', {sourceId: source.id, targetId: target.id })
+  let [authUser, trustedUser] = await Promise.all([authUserProm, trustedUserProm]);
+  await authUser.addTrusted(trustedUser);
+  queue.create('addEdge', {sourceId: authUser.id, targetId: trustedUser.id })
   .priority('high').save();
 
-  res.send({ message: 'Source added to trusteds'});
+  res.send({ message: 'Source added to trusteds' });
 }))
-
 
 .delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let source_user = db.Source.findByPk(req.user.id);
-  let trusted_user = db.Source.findOne(
-    { where: {userName: req.body.username}});
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let trustedUserProm = db.Source.findOne({
+    where: {
+      userName: req.body.username
+    }
+  });
 
-  let [source, target] = await Promise.all([source_user, trusted_user])
-  await source.removeTrusted(target);
-  queue.create('removeEdge', {sourceId: source.id, targetId: target.id })
+  let [authUser, trustedUser] = await Promise.all([authUserProm, trustedUserProm]);
+  await authUser.removeTrusted(trustedUser);
+  queue.create('removeEdge', {sourceId: authUser.id, targetId: trustedUser.id })
   .priority('high').save();
-  res.send({ message: 'source removed from trusteds'});
 
+  res.send({ message: 'Source removed from trusteds' });
 }));
+
 
 router.route('/followers/:username')
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let user = await db.Source.findOne({
     where: {

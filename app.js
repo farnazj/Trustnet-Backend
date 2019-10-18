@@ -137,7 +137,7 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   logger.error(err)
-  console.log('inja', err)
+  console.log('universal error handler', err)
   res.send({message: 'Server error'});
 });
 

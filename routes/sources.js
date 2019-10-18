@@ -10,12 +10,12 @@ var kue = require('kue')
 
 router.route('/sources')
 
-.get(function(req, res){
+.get(wrapAsync(async function(req, res) {
 
-  let pagination_req = routeHelpers.getLimitOffset(req);
+  let paginationReq = routeHelpers.getLimitOffset(req);
   let searchTerm = req.headers.searchterm ? req.headers.searchterm : '';
 
-  db.Source.findAll({
+  let sources = await db.Source.findAll({
     where: {
       [Op.or]: [
         db.sequelize.where(db.sequelize.fn('concat', db.sequelize.col('firstName'), ' ', db.sequelize.col('lastName')), {
@@ -26,45 +26,41 @@ router.route('/sources')
           }
       ]
     },
-    ...pagination_req
-  })
-  .then(result => {
-    res.send(result);
-  }).catch(err => {
-    res.send(err);
+    ...paginationReq
   });
-})
 
-.post(function(req, res) {
+  res.send(sources);
+}))
 
-  db.Source.create(req.body).then(source => {
-    queue.create('addNode', {sourceId: source.id}).priority('high').save();
-    res.send({message: 'Source created'});
-  }).catch(err => {
-    res.send(err);
-  });
-});
+.post(wrapAsync(async function(req, res) {
+
+  let source = await db.Source.create(req.body);
+  queue.create('addNode', {sourceId: source.id}).priority('high').save();
+
+  res.send({ message: 'Source created' });
+}));
 
 
 router.route('/sources/ids/:id')
-.get(function(req, res) {
+.get(wrapAsync(async function(req, res) {
 
-  db.Source.findByPk(req.params.id
-  ).then(result =>{
-    res.send(result);
-  }).catch(err => res.send(err));
-})
+  let source = await db.Source.findByPk(req.params.id);
+  res.send(source);
+}));
 
 
 router.route('/sources/:username')
 
-.get(function(req, res) {
+.get(wrapAsync(async function(req, res) {
 
-  db.Source.findOne({where: {userName: req.params.username}}
-  ).then(result =>{
-    res.send(result);
-  }).catch(err => res.send(err));
-})
+  let source = await db.Source.findOne({
+    where: {
+      userName: req.params.username
+    }
+  });
+
+  res.send(source);
+}))
 
 .delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
@@ -74,15 +70,20 @@ router.route('/sources/:username')
     }
   })
 
-  res.send({message: 'Source deleted'});
+  res.send({ message: 'Source deleted' });
 }))
 
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let result = await db.Source.update(
     req.body,
-    { where: {userName: req.params.username} }
+    {
+      where: {
+        userName: req.params.username
+      }
+    }
   );
+
   res.send(result);
 }));
 

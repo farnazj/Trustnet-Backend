@@ -32,7 +32,7 @@ module.exports = function(passport) {
                      where: {
                        email: req.body.email
                      }
-                   }).then(function(user){
+                   }).then(function(user) {
 
                       if (user) {
                         return done(null, false, {
@@ -52,15 +52,15 @@ module.exports = function(passport) {
                           photoUrl: null
                         };
 
-                        let data_complete = true;
+                        let dataComplete = true;
                         Object.entries(data).forEach(([key, value]) => {
 
                           if (typeof data[key] === 'undefined' && key != "photoUrl") {
-                            data_complete = false;
+                            dataComplete = false;
                           }
                         });
 
-                        if (!data_complete) {
+                        if (!dataComplete) {
                           return done(null, false, {message: 'Request incomplete'});
                         }
                         else {
@@ -85,7 +85,7 @@ module.exports = function(passport) {
                    })
                 }
 
-            }).catch(function(reason){
+            }).catch(function(reason) {
                 return done(null, false, {message: reason});
             });
 
@@ -116,7 +116,7 @@ module.exports = function(passport) {
         passReqToCallback : true
     },
     function(req, username, password, done) {
-        User.findOne({where: {userName: username}}).then(function(user){
+        User.findOne({where: {userName: username}}).then(function(user) {
 
           // if no user is found, return the message
           if (!user)
@@ -135,7 +135,7 @@ module.exports = function(passport) {
              return done(null, user);
            })
 
-        }).catch(function(err){
+        }).catch(function(err) {
           return done(err);
         });
 
