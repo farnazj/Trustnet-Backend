@@ -40,7 +40,11 @@ The server uses dotenv to load environment variables from a .env file into proce
     + LOG_LEVEL (refer to [Winston's](https://www.npmjs.com/package/winston) documentation)
 
 #### Redis Server
-This server stores session ids in a Redis store. You should have [Redis](https://redis.io/download) installed and running on your machine before launching the server.
+This Nodejs server stores session ids in a Redis store. In addition, Redis is used for message passing between the processes of the server. You should have [Redis](https://redis.io/download) installed and running on your machine before launching the server.
+
+
+#### Specify the Client
+Upon user signup and also for retrieving an account whose password the user has forgotten, this server sends an email containing the full URL of the client path that should confirm activation/password recovery. Therefore, the client base URL needs to be specified in './lib/constants'
 
 #### Run TrustNetBackend Server
 cd to the root directory of the project. Run:
