@@ -42,7 +42,7 @@ router.route('/posts/:post_id/assessments')
 
   if (assessments.length) {
     for (let assessment of assessments)
-      assessment.update({ version: assessment.version - 1 });
+        assessment.update({ version: assessment.version - 1 });
   }
 
   let authUserProm = db.Source.findByPk(req.user.id);

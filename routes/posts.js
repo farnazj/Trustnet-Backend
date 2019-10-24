@@ -145,7 +145,6 @@ router.route('/posts/:post_id/custom-titles/:set_id')
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  console.log(req.params.set_id, req.params.post_id)
   let customTitles = await db.CustomTitle.findAll({
     where: {
       setId: req.params.set_id,
@@ -156,13 +155,18 @@ router.route('/posts/:post_id/custom-titles/:set_id')
     ]
   });
 
-  console.log(customTitles)
 
   if (customTitles.length) {
 
     let updateProms = [];
-    for (let title of customTitles)
+    let endorsers = [];
+
+    for (let title of customTitles) {
+      if (title.version == 1)
+        endorsers = await title.getEndorsers();
+
       updateProms.push(title.update({ version: title.version - 1}));
+    }
 
     let authUserProm = db.Source.findByPk(req.user.id);
     let postProm = db.Post.findByPk(req.params.post_id);
@@ -174,8 +178,9 @@ router.route('/posts/:post_id/custom-titles/:set_id')
 
     let sourceTitle = authUser.addSourceCustomTitles(title);
     let postTitle = post.addPostCustomTitle(title);
+    let addEndorsers = title.addEndorsers(endorsers);
 
-    await Promise.all([sourceTitle, postTitle, ...updateProms]);
+    await Promise.all([sourceTitle, postTitle, addEndorsers, ...updateProms]);
 
     res.send({ message: 'Title updated' });
   }
@@ -279,9 +284,9 @@ router.route('/posts/:post_id/custom-titles')
 }));
 
 
-//if auth user has endorsed a custom title
-router.route('/posts/:set_id/is-custom-title-endorsed')
+router.route('/posts/:set_id/custom-title-endorsement')
 
+//if auth user has endorsed a custom title
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let title = await db.CustomTitle.findOne({
@@ -293,14 +298,36 @@ router.route('/posts/:set_id/is-custom-title-endorsed')
       }
     }],
     where: {
-      setId: req.params.set_id
+      setId: req.params.set_id,
+      version: 1
     }
   });
 
   let result = title ? true : false;
 
-  res.send({ message: result });
+  res.send(result);
+}))
+
+
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let authUserProm = db.Source.findByPk(req.user.id);
+  let titleProm = db.CustomTitle.findOne({
+    where: {
+      setId: req.params.set_id,
+      version: 1
+    }
+  });
+
+  let [authUser, title] = await Promise.all([authUserProm, titleProm]);
+  if (req.body.endorse_status == true)
+    await title.addEndorser(authUser);
+  else
+    await title.removeEndorser(authUser);
+
+  res.send({ message: 'Endorsement value changed' });
 }));
+
 
 
 router.route('/posts/:set_id/custom-title-endorsers')
