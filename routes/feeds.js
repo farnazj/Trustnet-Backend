@@ -28,7 +28,7 @@ router.route('/feeds')
   else {
     try {
       let meta = await feedHelpers.getFeed(req.body.rssfeed).then(feedHelpers.getFeedMeta);
-      let feed_prom = db.Feed.create({
+      let feedProm = db.Feed.create({
         rssfeed: req.body.rssfeed,
         name: meta.title,
         description: meta.description,
@@ -56,7 +56,7 @@ router.route('/feeds')
         if (created)
           queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
-        let feed = await feed_prom;
+        let feed = await feedProm;
         await Promise.all[source.addSourceFeed(feed), feed.setFeedSource(source)];
         feedQueue.addFeed(feed);
       })
@@ -65,7 +65,7 @@ router.route('/feeds')
     }
     catch(err) {
       logger.error('In adding feeds' + err);
-      res.status(500).send({ message: 'Something went wrong with fetching the feed'});
+      res.status(500).send({ message: 'Something went wrong with fetching the feed' });
     }
 
   }

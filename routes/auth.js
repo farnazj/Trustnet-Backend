@@ -47,7 +47,7 @@ router.route('/login')
 router.route('/logout')
 
 .post( function(req, res) {
-  
+
   req.logout();
   res.sendStatus(200);
 });
@@ -66,14 +66,14 @@ router.route('/signup')
     if (user) {
 
       crypto.randomBytes(20, async function(err, buf) {
-         let token_str = buf.toString('hex');
+         let tokenStr = buf.toString('hex');
          let token = await db.Token.create({
-           tokenStr: token_str,
+           tokenStr,
            tokenType: constants.TOKEN_TYPES.VERIFICATION,
            expires: Date.now() + constants.TOKEN_EXP.VERIFICATION
          });
          token.setSource(user);
-         let verificationLink = constants.CLIENT_BASE_URL + '/verify-account/' + token_str;
+         let verificationLink = constants.CLIENT_BASE_URL + '/verify-account/' + tokenStr;
 
          const passResetMailOptions = {
            from: process.env.EMAIL_USER,
@@ -111,7 +111,7 @@ router.route('/verify-account/:token')
 
 .post(wrapAsync(async function(req, res) {
 
-  let v_token = await db.Token.findOne({
+  let verificationToken = await db.Token.findOne({
     where: {
       tokenStr: req.params.token,
       tokenType: constants.TOKEN_TYPES.VERIFICATION,
@@ -122,13 +122,13 @@ router.route('/verify-account/:token')
     }]
   });
 
-  if (!v_token) {
+  if (!verificationToken) {
     res.status(403).send({ message: 'Verification token is invalid or has expired.' });
   }
   else {
-    if (!v_token.Source.isVerified) {
-      v_token.Source.update({isVerified: true});
-      v_token.destroy();
+    if (!verificationToken.Source.isVerified) {
+      verificationToken.Source.update({isVerified: true});
+      verificationToken.destroy();
       res.send({ message: 'User is now verified' });
     }
     else
@@ -142,18 +142,18 @@ router.route('/forgot-password')
 
 .post(wrapAsync(async function(req, res) {
 
-  let source = await db.Source.findOne({ where: {email: req.body.email} });
+  let source = await db.Source.findOne({ where: { email: req.body.email } });
    if (source) {
      crypto.randomBytes(20, async function(err, buf) {
-        let token_str = buf.toString('hex');
+        let tokenStr = buf.toString('hex');
         let token = await db.Token.create({
-          tokenStr: token_str,
+          tokenStr,
           tokenType: constants.TOKEN_TYPES.RECOVERY,
           expires: Date.now() + constants.TOKEN_EXP.RECOVERY
         });
         token.setSource(source);
 
-        let signupLink = constants.CLIENT_BASE_URL + '/reset-password/' + token_str;
+        let signupLink = constants.CLIENT_BASE_URL + '/reset-password/' + tokenStr;
 
         const passResetMailOptions = {
           from: process.env.EMAIL_USER,
@@ -201,12 +201,12 @@ router.route('/reset-password/:token')
     res.status(403).send({message: 'Password reset token is invalid or has expired.' })
   }
   else {
-    let password_hash = await routeHelpers.generateHash(req.body.password);
+    let passwordHash = await routeHelpers.generateHash(req.body.password);
     await Promise.all([ token.Source.update({
-      passwordHash: password_hash,
+      passwordHash,
     }), token.destroy()]);
 
-    res.send({message: 'Password updated'});
+    res.send({ message: 'Password updated' });
   }
 
 }))
