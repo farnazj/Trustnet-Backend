@@ -61,7 +61,7 @@ router.route('/feeds')
         feedQueue.addFeed(feed);
       })
 
-      res.send({ message: 'Feed has been added'});
+      res.send({ message: 'Feed has been added' });
     }
     catch(err) {
       logger.error('In adding feeds' + err);

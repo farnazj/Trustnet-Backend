@@ -40,6 +40,12 @@ module.exports = async function(){
           return feedHelpers.getFeed(feed.rssfeed)
           .then(feedHelpers.getFeedMeta)
           .then(meta => {
+
+            // if (source.photoUrl == null) {
+            //   let image = Object.entries(meta.image).length === 0 ? null : meta.image.url;
+            //   source.update({ photoUrl: image});
+            // }
+
             return db.Feed.create({
               rssfeed: feed.rssfeed,
               name: meta.title,
