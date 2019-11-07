@@ -38,6 +38,8 @@ The server uses dotenv to load environment variables from a .env file into proce
     + SESSION_KEY=secret
     + NODE_ENV (one of 'development', 'test', or 'production'. The default is set to 'development')
     + LOG_LEVEL (refer to [Winston's](https://www.npmjs.com/package/winston) documentation)
+    + EMAIL_USER (the email address from which to send account verification and password recovery instructions)
+    + EMAIL_PASS (password of the above email address)
 
 #### Redis Server
 This Nodejs server stores session ids in a Redis store. In addition, Redis is used for message passing between the processes of the server. You should have [Redis](https://redis.io/download) installed and running on your machine before launching the server.
