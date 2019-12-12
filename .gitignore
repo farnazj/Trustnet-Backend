@@ -3,7 +3,7 @@
 
 # misc
 .DS_Store
-/config/config.json
+/config/database.json
 .env
 *.log
 dump.rdb
