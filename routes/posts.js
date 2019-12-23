@@ -59,7 +59,12 @@ router.route('/posts/:post_id')
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let postSpecs = req.body;
-  let post = await db.Post.findByPk(req.params.post_id);
+  let post = await db.Post.findOne({
+    where: {
+      id: req.params.post_id,
+      SourceId: req.user.id
+      }
+    });
   postSpecs.version = post.version + 1;
   await post.update(postSpecs);
 
@@ -195,7 +200,7 @@ router.route('/posts/:post_id/custom-titles/:set_id')
   let deleteProms = db.CustomTitle.destroy({
     where: {
       setId: req.params.set_id,
-      sourceId: req.user.id
+      SourceId: req.user.id
     }
   });
 
