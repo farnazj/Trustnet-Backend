@@ -12,9 +12,18 @@ router.route('/lists')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let paginationReq = routeHelpers.getLimitOffset(req);
-
-  let authUser = await db.Source.findByPk(req.user.id);
-  let lists = await authUser.getSourceLists(paginationReq);
+  let lists = await db.SourceList.findAll({
+    where: {
+      SourceId: req.user.id
+    },
+    include: [{
+      model: db.Source,
+      as: 'ListEntities',
+      attributes: ['id']
+    }],
+    order: [['name', 'ASC']],
+    ...paginationReq
+  })
 
   res.send(lists);
 }))
@@ -25,18 +34,51 @@ router.route('/lists')
   let authUserProm = db.Source.findByPk(req.user.id);
   let sourceListProm = db.SourceList.create({ name: req.body.name });
 
-
   let [authUser, sourceList] = await Promise.all([authUserProm, sourceListProm]);
-  await authUser.addSourceList(sourceList);
+  await sourceList.setListOwner(authUser);
 
   res.send({ message: 'Source list created' });
+}));
+
+
+router.route('/lists/:list_id')
+
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let paginationReq = routeHelpers.getLimitOffset(req);
+  let sources = await db.Source.findAll({
+    include: [{
+      model: db.SourceList,
+      as: 'EntityLists',
+      where: {
+        id: req.params.list_id,
+        SourceId: req.user.id
+      }
+    }],
+    ...paginationReq
+  })
+
+  res.send(sources);
+}))
+
+.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  await db.SourceList.update({
+    name: req.body.name,
+    where: {
+      id: req.params.list_id,
+      SourceId: req.user.id
+      }
+    });
+
+  res.send({ message: 'List updated' });
 }))
 
 .delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   await db.SourceList.destroy({
     where: {
-      name: req.body.name,
+      id: req.params.list_id,
       SourceId: req.user.id
     }
   });
@@ -50,31 +92,30 @@ router.route('/lists/:list_id/add-source')
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let listedSourceProm = db.Source.findOne({
+  let listedSourceProm = db.Source.findAll({
     where: {
       userName: req.body.username,
-      SourceId: req.user.id
     }
   });
   let listProm = db.SourceList.findByPk(req.params.list_id);
   let [list, listedSource] = await Promise.all([listProm, listedSourceProm]);
-  list.addListEntity(listedSource);
 
-  res.send({ message: 'Source added to the list' });
+  list.addListEntities(listedSource);
+
+  res.send({ message: 'Sources added to the list' });
 }));
 
 router.route('/lists/:list_id/remove-source')
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let listedSourceProm = db.Source.findOne({
+  let listedSourceProm = db.Source.findAll({
     where: {
       userName: req.body.username,
-      SourceId: req.user.id
     }
   });
   let listProm = db.SourceList.findByPk(req.params.list_id);
   let [list, listedSource] = await Promise.all([listProm, listedSourceProm]);
-  list.removeListEntity(listedSource);
+  list.removeListEntities(listedSource);
 
   res.send({ message: 'Source removed from the list' });
 }));

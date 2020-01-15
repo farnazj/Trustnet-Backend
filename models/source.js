@@ -78,6 +78,7 @@ module.exports = (sequelize, DataTypes) => {
     delete values.SourceFollows;
     delete values.SourceMutes;
     delete values.SourceBlocks;
+    delete values.ListSourceEntities;
 
     return values;
   }
@@ -88,14 +89,14 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.hasMany(models.Assessment, { as: 'SourceAssessments' });
     models.Source.hasMany(models.CustomTitle, { as: 'SourceCustomTitles' });
     models.Source.hasMany(models.Feed, { as: 'SourceFeeds' });
-    models.Source.hasMany(models.SourceList, { as: 'SourceOwnedLists' });
+    //models.Source.hasMany(models.SourceList, { as: 'SourceOwnedLists' });
 
     models.Source.belongsToMany(models.Source, { as: 'Trusteds', through: 'SourceTrusteds' });
     models.Source.belongsToMany(models.Source, { as: 'Follows', through: 'SourceFollows' });
     models.Source.belongsToMany(models.Source, { as: 'Mutes', through: 'SourceMutes' });
     models.Source.belongsToMany(models.Source, { as: 'Blocks', through: 'SourceBlocks' });
 
-    models.Source.belongsToMany(models.SourceList, { as: { singular: 'ListEntity', plural: 'ListEntities' }, through: 'ListSourceEntities' });
+    models.Source.belongsToMany(models.SourceList, { as: { singular: 'EntityList', plural: 'EntityLists' }, through: 'ListSourceEntities' });
   };
 
   return Source;
