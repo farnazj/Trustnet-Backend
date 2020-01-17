@@ -19,7 +19,10 @@ router.route('/lists')
     include: [{
       model: db.Source,
       as: 'ListEntities',
-      attributes: ['id']
+      attributes: ['id'],
+      through: {
+        attributes: []
+      }
     }],
     order: [['name', 'ASC']],
     ...paginationReq
@@ -63,12 +66,14 @@ router.route('/lists/:list_id')
 
 .put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  await db.SourceList.update({
-    name: req.body.name,
-    where: {
-      id: req.params.list_id,
-      SourceId: req.user.id
-      }
+  console.log(req.params.list_id, req.body.name)
+  await db.SourceList.update(
+    req.body,
+    {
+      where: {
+        id: req.params.list_id,
+        SourceId: req.user.id
+        }
     });
 
   res.send({ message: 'List updated' });
