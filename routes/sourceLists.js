@@ -59,7 +59,7 @@ router.route('/lists/:list_id')
       }
     }],
     ...paginationReq
-  })
+  });
 
   res.send(sources);
 }))

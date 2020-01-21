@@ -29,7 +29,7 @@ for the post, with the source as the sourceId and a value of "valid"
   let postProm = db.Post.create(req.body);
   let authUserProm = db.Source.findByPk(req.user.id);
   let [authUser, post] = await Promise.all([authUserProm, postProm]);
-  await routeHelpers.initiatePost(authUser, post, req.body.target_usernames);
+  await routeHelpers.initiatePost(authUser, post, req.body.target_usernames, req.body.target_lists);
 
   res.send({ message: 'Post has been added' });
 }));

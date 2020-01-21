@@ -56,7 +56,7 @@ router.route('/boosts')
         + req.body.post_id + " user: " + req.user.id;
 
   let authUser = await authUserProm;
-  await routeHelpers.boostPost(authUser, req.body.post_id, req.body.target_usernames);
+  await routeHelpers.boostPost(authUser, req.body.post_id, req.body.target_usernames, req.body.target_lists);
 
   res.send({}); //TODO: change
 }));
