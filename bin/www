@@ -18,9 +18,9 @@ const CronJob = require('cron').CronJob;
 
 const { fork } = require('child_process');
 
-forked = fork('./lib/graphJobsHandler.js');
-var kue = require('kue')
-  , queue = kue.createQueue();
+//forked = fork('./lib/graphJobsHandler.js');
+// var kue = require('kue')
+//   , queue = kue.createQueue();
 /**
  * Get port from environment and store in Express.
  */
@@ -44,7 +44,7 @@ var server = http.createServer(app);
   feedQueue = await FeedQueue.build();
   logger.info('past registering media');
 
-  forked.send({ message: 'child process is working' });
+  //forked.send({ message: 'child process is working' });
 
   feedQueue.initFeedUpdateJobs();
 

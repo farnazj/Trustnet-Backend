@@ -5,8 +5,8 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
-var kue = require('kue')
- , queue = kue.createQueue();
+// var kue = require('kue')
+//  , queue = kue.createQueue();
 
 //Those sources that the auth user follows
 router.route('/follows')
@@ -168,8 +168,8 @@ router.route('/trusts')
 
   let [authUser, trustedUser] = await Promise.all([authUserProm, trustedUserProm]);
   await authUser.addTrusted(trustedUser);
-  queue.create('addEdge', {sourceId: authUser.id, targetId: trustedUser.id })
-  .priority('high').save();
+  // queue.create('addEdge', {sourceId: authUser.id, targetId: trustedUser.id })
+  // .priority('high').save();
 
   res.send({ message: 'Source added to trusteds' });
 }))
@@ -185,8 +185,8 @@ router.route('/trusts')
 
   let [authUser, trustedUser] = await Promise.all([authUserProm, trustedUserProm]);
   await authUser.removeTrusted(trustedUser);
-  queue.create('removeEdge', {sourceId: authUser.id, targetId: trustedUser.id })
-  .priority('high').save();
+  // queue.create('removeEdge', {sourceId: authUser.id, targetId: trustedUser.id })
+  // .priority('high').save();
 
   res.send({ message: 'Source removed from trusteds' });
 }));

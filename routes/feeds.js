@@ -9,8 +9,8 @@ var wrapAsync = require('../lib/wrappers').wrapAsync;
 const logger = require('../lib/logger');
 
 const Op = Sequelize.Op;
-var kue = require('kue')
- , queue = kue.createQueue();
+// var kue = require('kue')
+//  , queue = kue.createQueue();
 
 router.route('/feeds')
 
@@ -53,8 +53,8 @@ router.route('/feeds')
       })
       .spread( async (source, created) => {
 
-        if (created)
-          queue.create('addNode', {sourceId: source.id}).priority('high').save();
+        // if (created)
+        //   queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
         let feed = await feedProm;
         await Promise.all[source.addSourceFeed(feed), feed.setFeedSource(source)];

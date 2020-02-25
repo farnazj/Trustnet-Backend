@@ -35,7 +35,7 @@ router.route('/sources')
 .post(wrapAsync(async function(req, res) {
 
   let source = await db.Source.create(req.body);
-  queue.create('addNode', {sourceId: source.id}).priority('high').save();
+  //queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
   res.send({ message: 'Source created' });
 }));

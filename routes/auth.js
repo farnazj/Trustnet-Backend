@@ -6,19 +6,11 @@ var wrapAsync = require('../lib/wrappers').wrapAsync;
 var db  = require('../models');
 var constants = require('../lib/constants');
 const logger = require('../lib/logger');
+var transporter = require('../lib/transporter');
 var Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 var crypto = require('crypto');
-var nodemailer = require('nodemailer');
 require('dotenv').config();
-
-var transporter = nodemailer.createTransport({
- service: 'gmail',
- auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 
 router.route('/login')
@@ -80,8 +72,8 @@ router.route('/signup')
            to: user.email,
            subject: 'Account Verification for Trustnet',
            html: `<p>Hi ${user.firstName}!</p>
-           <p>Thanks for signing up for Trustent. If this wasn't you, please ignore this email and
-           we will remove your address from our records.</p>
+           <p>Thanks for signing up for Trustent. If this wasn't you, please ignore
+           this email and we will remove your address from our records.</p>
            <p>To activate your account, please click on the following link within the next 6 hours:</p>
            <p> <a href="${verificationLink}">${verificationLink}</a></p>
            <br>
@@ -96,8 +88,8 @@ router.route('/signup')
          });
       })
 
-      res.status(202).send({ message: `Thanks for signing up! You should soon receive an email containing information
-        on how to activate your account.` })
+      res.status(202).send({ message: `Thanks for signing up! You should soon receive
+        an email containing information on how to activate your account.` })
     }
     else {
       res.status(400).send({ message: info.message });
@@ -160,7 +152,8 @@ router.route('/forgot-password')
           to: source.email,
           subject: 'Password Reset for Trustnet',
           html: `<p>Hi ${source.firstName}!</p>
-          <p>Forgot your password? Click on the link below or copy and paste it into your browser within the next 4 hours.</p>
+          <p>Forgot your password? Click on the link below or copy and paste it into
+           your browser within the next 4 hours.</p>
           <p>If you don't want to reset your password, just ignore this email.</p>
           <p><a href="${signupLink}">${signupLink}</a></p>
           <p>Your username, in case you have forgotten it is: ${source.userName}</p>

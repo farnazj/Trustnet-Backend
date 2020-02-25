@@ -3,8 +3,8 @@ var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
-var kue = require('kue')
- , queue = kue.createQueue();
+// var kue = require('kue')
+//  , queue = kue.createQueue();
 
 router.route('/posts/:post_id/assessments')
 //TODO: need to change this if some posts become private
@@ -55,8 +55,8 @@ router.route('/posts/:post_id/assessments')
   let postAssessment = post.addPostAssessment(assessment);
   await Promise.all([sourceAssessment, postAssessment]);
 
-  queue.create('newAssessmentPosted', {postId: req.params.post_id, sourceId: req.user.id})
-  .priority('medium').removeOnComplete(true).save();
+  // queue.create('newAssessmentPosted', {postId: req.params.post_id, sourceId: req.user.id})
+  // .priority('medium').removeOnComplete(true).save();
 
   res.send({ message: 'Assessment posted' });
 }))
