@@ -19,11 +19,15 @@ router.route('/feeds')
   let feed = await db.Feed.findOne({
     where: {
       rssfeed: req.body.rssfeed
-    }
+    },
+    include: [{
+      model: db.Source,
+      as: 'FeedSource'
+    }]
   })
 
   if (feed) {
-    res.send({ message: 'Feed already exists'});
+    res.send({ message: 'Feed already exists', source: feed.FeedSource });
   }
   else {
     try {
@@ -59,9 +63,9 @@ router.route('/feeds')
         let feed = await feedProm;
         await Promise.all[source.addSourceFeed(feed), feed.setFeedSource(source)];
         feedQueue.addFeed(feed);
+        res.send({ message: 'Feed is added', source: source });
       })
 
-      res.send({ message: 'Feed has been added' });
     }
     catch(err) {
       logger.error('In adding feeds' + err);
