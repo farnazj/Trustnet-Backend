@@ -25,7 +25,7 @@ module.exports = {
         )]);
 
         await queryInterface.bulkUpdate('Feeds', {
-            updateRate: 0,
+            updateRate: 1,
             priority: Number.MAX_SAFE_INTEGER,
             lastFetched: Sequelize.col('lastUpdated')
           }
