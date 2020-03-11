@@ -22,9 +22,6 @@ module.exports = {
           'Feeds',
           'updateRate',
           Sequelize.DOUBLE
-        ), queryInterface.removeColumn(
-          'Feeds',
-          'lastUpdated'
         )]);
 
         await queryInterface.bulkUpdate('Feeds', {
@@ -33,11 +30,18 @@ module.exports = {
             lastFetched: Sequelize.col('lastUpdated')
           }
         );
-
-        await queryInterface.removeColumn(
+        
+        await Promise.all([
+          queryInterface.removeColumn(
+           'Feeds',
+           'lastUpdated'
+         ),
+         queryInterface.removeColumn(
           'Feeds',
           'frequency'
         )
+        ])
+
 
       }
       catch (err) {
