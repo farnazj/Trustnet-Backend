@@ -2,8 +2,8 @@ var db = require('./models');
 var routeHelpers = require('./lib/routeHelpers');
 var feedHelpers = require('./lib/feedHelpers');
 var fs = require("fs");
-var kue = require('kue')
- , queue = kue.createQueue();
+// var kue = require('kue')
+//  , queue = kue.createQueue();
 
 var media = JSON.parse(fs.readFileSync("./jsons/media.json"));
 
@@ -26,8 +26,8 @@ module.exports = async function(){
     })
     .spread((source, created) => {
 
-      if (created)
-        queue.create('addNode', {sourceId: source.id}).priority('high').save();
+      // if (created)
+      //   queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
       let feedProms = el.feeds.map( feed => {
         return db.Feed.findOne({
@@ -50,7 +50,9 @@ module.exports = async function(){
               rssfeed: feed.rssfeed,
               name: meta.title,
               description: meta.description,
-              frequency: 1
+              updateRate: 0,
+              lastFetched: null,
+              priority: Number.MAX_SAFE_INTEGER
             }).then(rssFeed => {
               return Promise.all([source.addSourceFeed(rssFeed), rssFeed.setFeedSource(source)]);
             })

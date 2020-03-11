@@ -9,11 +9,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       isUrl: true
     },
-    lastUpdated: {
+    lastFetched: {
       type: DataTypes.DATE
     },
-    frequency: {
-      type: DataTypes.INTEGER
+    updateRate: {
+      type: DataTypes.DOUBLE
+    },
+    priority: {
+      type: DataTypes.DOUBLE
     }
   });
 

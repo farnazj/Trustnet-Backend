@@ -9,7 +9,7 @@
   "dependencies": {
     "@dagrejs/graphlib": "^2.1.4",
     "axios": "^0.19.0",
-    "bcrypt": "^3.0.6",
+    "bcrypt": "^4.0.0",
     "body-parser": "~1.18.2",
     "cheerio": "^1.0.0-rc.3",
     "compression": "^1.7.4",
@@ -21,6 +21,7 @@
     "dotenv": "^5.0.1",
     "express": "^4.16.4",
     "express-session": "^1.15.6",
+    "fastpriorityqueue": "^0.6.3",
     "feedparser": "^2.2.9",
     "helmet": "^3.21.1",
     "kue": "^0.11.6",
