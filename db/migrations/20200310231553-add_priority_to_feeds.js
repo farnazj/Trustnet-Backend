@@ -1,6 +1,5 @@
-var db = require('../../models');
-
 'use strict';
+var db = require('../../models');
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
@@ -15,12 +14,16 @@ module.exports = {
           Sequelize.DATE
         );
 
-        let feeds = await db.Feeds.findAll();
+        let feeds = await db.Feed.findAll();
+        let updateProms = []
+
         feeds.forEach(feed => {
-          feed.update({
+          updateProms.push(feed.update({
             lastFetched: feed.lastUpdated
-          })
+          }))
         });
+
+        await Promise.all(updateProms);
 
         await Promise.all([queryInterface.addColumn(
           'Feeds',
