@@ -14,17 +14,6 @@ module.exports = {
           Sequelize.DATE
         );
 
-        let feeds = await db.Feed.findAll();
-        let updateProms = []
-
-        feeds.forEach(feed => {
-          updateProms.push(feed.update({
-            lastFetched: feed.lastUpdated
-          }))
-        });
-
-        await Promise.all(updateProms);
-
         await Promise.all([queryInterface.addColumn(
           'Feeds',
           'priority',
@@ -36,16 +25,19 @@ module.exports = {
         ), queryInterface.removeColumn(
           'Feeds',
           'lastUpdated'
-        ), queryInterface.removeColumn(
-          'Feeds',
-          'frequency'
         )]);
 
         await queryInterface.bulkUpdate('Feeds', {
             updateRate: 0,
-            priority: Number.MAX_SAFE_INTEGER
+            priority: Number.MAX_SAFE_INTEGER,
+            lastFetched: Sequelize.col('lastUpdated')
           }
         );
+
+        await queryInterface.removeColumn(
+          'Feeds',
+          'frequency'
+        )
 
       }
       catch (err) {
