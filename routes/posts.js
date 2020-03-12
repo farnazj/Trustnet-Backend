@@ -356,7 +356,6 @@ router.route('/posts/:set_id/custom-title-endorsers')
     }
   });
 
-  console.log(title.Endorsers)
   res.send(title.Endorsers);
 }));
 

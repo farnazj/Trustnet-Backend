@@ -20,7 +20,9 @@ module.exports = (sequelize, DataTypes) => {
         // validate:{
         //    isUrl: true
         // }
-      }
+      },
+      author: DataTypes.STRING,
+      publishedDate: DataTypes.DATE
   }, {
     charset: 'utf8mb4',
   });
