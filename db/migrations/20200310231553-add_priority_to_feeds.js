@@ -41,11 +41,12 @@ module.exports = {
           'frequency'
         )
         ])
-
+        resolve();
 
       }
       catch (err) {
         console.log(err);
+        reject();
       }
     })
   },
@@ -87,10 +88,12 @@ module.exports = {
             frequency: 1
           }
         );
+        resolve();
 
       }
       catch (err) {
         console.log(err);
+        reject();
       }
     })
   }
