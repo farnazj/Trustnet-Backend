@@ -22,7 +22,8 @@ module.exports = (sequelize, DataTypes) => {
         // }
       },
       author: DataTypes.STRING,
-      publishedDate: DataTypes.DATE
+      publishedDate: DataTypes.DATE,
+      opinion: DataTypes.BOOLEAN
   }, {
     charset: 'utf8mb4',
   });
@@ -39,6 +40,8 @@ module.exports = (sequelize, DataTypes) => {
     models.Post.belongsToMany(models.Source, {as: 'Seers', through: 'PostSeers'});
     models.Post.hasMany(models.Assessment, {as: 'PostAssessments'});
     models.Post.hasMany(models.CustomTitle, {as: 'PostCustomTitles'});
+    models.Post.belongsToMany(models.Tag, {through: 'PostTags'});
+
   };
 
   return Post;
