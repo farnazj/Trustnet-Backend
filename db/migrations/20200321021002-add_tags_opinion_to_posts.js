@@ -9,68 +9,69 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
 
       try {
-        await queryInterface.createTable(
-          'Tags', {
-            id: {
-              type: Sequelize.INTEGER,
-              primaryKey: true,
-              autoIncrement: true
-            },
-            text: {
-              type: Sequelize.TEXT('medium')
-            },
-            createdAt: {
-              type: Sequelize.DATE
-            },
-            updatedAt: {
-              type: Sequelize.DATE
-            }
-          },
-          {
-            charset: 'utf8mb4',
-          }
-        );
+        // await queryInterface.createTable(
+        //   'Tags', {
+        //     id: {
+        //       type: Sequelize.INTEGER,
+        //       primaryKey: true,
+        //       autoIncrement: true
+        //     },
+        //     text: {
+        //       type: Sequelize.TEXT('medium')
+        //     },
+        //     createdAt: {
+        //       type: Sequelize.DATE
+        //     },
+        //     updatedAt: {
+        //       type: Sequelize.DATE
+        //     }
+        //   },
+        //   {
+        //     charset: 'utf8mb4',
+        //   }
+        // );
+        //
+        // await queryInterface.createTable(
+        //   'PostTags', {
+        //     createdAt: {
+        //       type: Sequelize.DATE
+        //     },
+        //     updatedAt: {
+        //       type: Sequelize.DATE
+        //     },
+        //     PostId: {
+        //        type: Sequelize.INTEGER,
+        //        references: {
+        //          model: 'Posts',
+        //          key: 'id'
+        //        },
+        //        onUpdate: 'cascade',
+        //        onDelete: 'cascade'
+        //     },
+        //     TagId: {
+        //        type: Sequelize.INTEGER,
+        //        references: {
+        //          model: 'Tags',
+        //          key: 'id'
+        //        },
+        //        onUpdate: 'cascade',
+        //        onDelete: 'cascade'
+        //     }
+        //   }
+        // );
+        //
+        // await queryInterface.addColumn(
+        //   'Posts',
+        //   'opinion',
+        //   Sequelize.BOOLEAN
+        // );
 
-        await queryInterface.createTable(
-          'PostTags', {
-            createdAt: {
-              type: Sequelize.DATE
-            },
-            updatedAt: {
-              type: Sequelize.DATE
-            },
-            PostId: {
-               type: Sequelize.INTEGER,
-               references: {
-                 model: 'Posts',
-                 key: 'id'
-               },
-               onUpdate: 'cascade',
-               onDelete: 'cascade'
-            },
-            TagId: {
-               type: Sequelize.INTEGER,
-               references: {
-                 model: 'Tags',
-                 key: 'id'
-               },
-               onUpdate: 'cascade',
-               onDelete: 'cascade'
-            }
-          }
-        );
 
-        await queryInterface.addColumn(
-          'Posts',
-          'opinion',
-          Sequelize.BOOLEAN
-        );
-        
-
-        const posts = await db.Post.findAll();
+        const posts = await db.Post.findAll({});
 
         let offset = 0;
-        let limit = 3000;
+        let limit = 200;
+        logger.info('fetched posts ' + posts.length)
 
         while(offset < posts.length) {
 
@@ -110,7 +111,10 @@ module.exports = {
 
           })
 
-          await Promise.all([].concat.apply([], postProms));
+          await Promise.all([].concat.apply([], postProms).map(p => p.catch(e => {
+            logger.error('inja tu promise ' + e);
+            return e;
+          })));
           offset += limit;
         }
 
