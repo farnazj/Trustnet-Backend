@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var Sequelize = require('sequelize');
+var moment = require('moment');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
@@ -26,9 +27,14 @@ for the post, with the source as the sourceId and a value of "valid"
 */
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let postProm = db.Post.create(req.body);
-  let authUserProm = db.Source.findByPk(req.user.id);
-  let [authUser, post] = await Promise.all([authUserProm, postProm]);
+  let authUser = await db.Source.findByPk(req.user.id);
+  let postSpecs = {
+    ...req.body,
+    author: authUser.firstName + ' ' + authUser.lastName,
+    publishedDate: moment()
+  }
+
+  let post = await db.Post.create(postSpecs);
   await routeHelpers.initiatePost(authUser, post, req.body.target_usernames, req.body.target_lists);
 
   res.send({ message: 'Post has been added' });

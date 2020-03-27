@@ -19,7 +19,7 @@ router.route('/activity/:username/:post_id')
 
   let [boostersIds, _, followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
   let postBoosts = await boostHelpers.getPostBoosts([req.params.post_id], req,
-    boostersIds.concat(user.id), followedTrustedIds.concat(user.id));
+    boostersIds.concat(user.id), followedTrustedIds.concat(user.id), false);
 
   res.send(postBoosts[0]);
 }));
@@ -43,7 +43,7 @@ router.route('/activity/:username')
   let postIds = postIdObjs.map(el => el.id);
 
   let postBoosts = await boostHelpers.getPostBoosts(postIds, req,
-    boostersIds.concat(user.id), followedTrustedIds.concat(user.id));
+    boostersIds.concat(user.id), followedTrustedIds.concat(user.id), false);
 
   res.send(postBoosts);
 }));
