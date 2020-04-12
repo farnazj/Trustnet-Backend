@@ -31,7 +31,7 @@ for the post, with the source as the sourceId and a value of "valid"
   let postSpecs = {
     ...req.body,
     author: authUser.firstName + ' ' + authUser.lastName,
-    publishedDate: moment()
+    publishedDate: moment.utc()
   }
 
   let post = await db.Post.create(postSpecs);
