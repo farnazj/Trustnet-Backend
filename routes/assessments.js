@@ -37,8 +37,11 @@ router.route('/posts/:post_id/assessments')
     ]
   });
 
-  let assessmentSpecs = req.body;
-  assessmentSpecs.isTransitive = false;
+  let assessmentSpecs = {
+    postCredibility: req.body.postCredibility,
+    body: req.body.body,
+    isTransitive: false
+  };
 
   if (assessments.length) {
     for (let assessment of assessments)
@@ -53,7 +56,22 @@ router.route('/posts/:post_id/assessments')
 
   let sourceAssessment = authUser.addSourceAssessment(assessment);
   let postAssessment = post.addPostAssessment(assessment);
-  await Promise.all([sourceAssessment, postAssessment]);
+
+  let assessmentArbiters;
+
+  if (req.body.arbiters) {
+    let arbiters = await db.Source.findAll({
+      where: {
+        id: {
+          [Op.in]: req.body.arbiters
+        }
+      }
+    });
+
+    assessmentArbiters = assessment.addArbiters(arbiters)
+  }
+
+  await Promise.all([sourceAssessment, postAssessment, assessmentArbiters]);
 
   // queue.create('newAssessmentPosted', {postId: req.params.post_id, sourceId: req.user.id})
   // .priority('medium').removeOnComplete(true).save();

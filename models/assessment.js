@@ -25,5 +25,17 @@ module.exports = (sequelize, DataTypes) => {
     charset: 'utf8mb4',
   });
 
+
+  Assessment.prototype.toJSON =  function () {
+    var values = Object.assign({}, this.get());
+
+    delete values.AssessmentTargets;
+    return values;
+  }
+
+  Assessment.associate = function (models) {
+    models.Assessment.belongsToMany(models.Source, {as: 'Arbiters', through: 'AssessmentArbiters' });
+  };
+
   return Assessment;
 };

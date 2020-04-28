@@ -89,7 +89,6 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.hasMany(models.Assessment, { as: 'SourceAssessments' });
     models.Source.hasMany(models.CustomTitle, { as: 'SourceCustomTitles' });
     models.Source.hasMany(models.Feed, { as: 'SourceFeeds' });
-    //models.Source.hasMany(models.SourceList, { as: 'SourceOwnedLists' });
 
     models.Source.belongsToMany(models.Source, { as: 'Trusteds', through: 'SourceTrusteds' });
     models.Source.belongsToMany(models.Source, { as: 'Follows', through: 'SourceFollows' });
@@ -97,6 +96,8 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.belongsToMany(models.Source, { as: 'Blocks', through: 'SourceBlocks' });
 
     models.Source.belongsToMany(models.SourceList, { as: { singular: 'EntityList', plural: 'EntityLists' }, through: 'ListSourceEntities' });
+
+    models.Source.belongsToMany(models.Assessment, { through: 'AssessmentArbiters' });
   };
 
   return Source;

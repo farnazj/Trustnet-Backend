@@ -15,9 +15,9 @@ router.route('/boosts/:post_id')
 
   let exploreMode = req.headers.explore ? req.headers.explore == 'true' : false;
 
-  let [boostersIds, _ , followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
+  let relations = await boostHelpers.getBoostersandCredSources(req);
   let postBoosts = await boostHelpers.getPostBoosts([req.params.post_id], req,
-    boostersIds, !exploreMode ? followedTrustedIds : undefined, exploreMode);
+    relations, exploreMode, false);
 
   res.send(postBoosts[0]);
 }));
@@ -27,20 +27,18 @@ router.route('/boosts')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
-  let [boostersIds, credSources, followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
+  let relations = await boostHelpers.getBoostersandCredSources(req);
   let exploreMode = req.headers.explore ? req.headers.explore == 'true' : false;
 
-  if (exploreMode || (boostersIds.length && credSources.length)) {
+  if (exploreMode || (relations.boosters.length && relations.credSources.length)) {
 
-    let [queryStr, replacements] = boostHelpers.buildBoostQuery(req, boostersIds,
-      credSources, exploreMode);
+    let [queryStr, replacements] = boostHelpers.buildBoostQuery(req, relations, exploreMode);
 
     let postIdObjs = await db.sequelize.query(queryStr,
     { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
 
     let postIds = postIdObjs.map(el => el.id);
-    let postBoosts = await boostHelpers.getPostBoosts(postIds, req, boostersIds,
-      !exploreMode ? followedTrustedIds : undefined, exploreMode);
+    let postBoosts = await boostHelpers.getPostBoosts(postIds, req, relations, exploreMode, false);
 
     res.send(postBoosts);
   }
