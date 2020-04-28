@@ -3,6 +3,9 @@ var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
+var Sequelize = require('sequelize');
+const Op = Sequelize.Op;
+
 // var kue = require('kue')
 //  , queue = kue.createQueue();
 
