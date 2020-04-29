@@ -60,7 +60,6 @@ module.exports = {
         });
 
         resolve();
-
       }
       catch (err) {
         console.log(err)
