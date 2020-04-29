@@ -40,10 +40,14 @@ router.route('/posts/:post_id/assessments')
     ]
   });
 
+  console.log(req.body.sourceIsAnonymous)
+
   let assessmentSpecs = {
     postCredibility: req.body.postCredibility,
     body: req.body.body,
-    isTransitive: false
+    isTransitive: false,
+    sourceIsAnonymous: typeof req.body.sourceIsAnonymous !== 'undefined' ?
+      req.body.sourceIsAnonymous : true
   };
 
   if (assessments.length) {
@@ -65,7 +69,7 @@ router.route('/posts/:post_id/assessments')
   if (req.body.arbiters) {
     let arbiters = await db.Source.findAll({
       where: {
-        id: {
+        userName: {
           [Op.in]: req.body.arbiters
         }
       }

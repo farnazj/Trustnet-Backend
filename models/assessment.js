@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     isTransitive: {
       type: DataTypes.BOOLEAN
+    },
+    sourceIsAnonymous: {
+      type: DataTypes.BOOLEAN,
+      default: true
     }
 
   }, {
