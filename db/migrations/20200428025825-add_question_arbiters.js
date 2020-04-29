@@ -35,7 +35,7 @@ module.exports = {
             }
           }
         );
-
+        resolve();
       }
       catch(err) {
         console.log(err);
@@ -50,7 +50,6 @@ module.exports = {
 
       try {
         await queryInterface.dropTable('AssessmentArbiters');
-
         resolve();
       }
       catch (err) {
