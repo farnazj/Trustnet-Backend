@@ -40,8 +40,6 @@ router.route('/posts/:post_id/assessments')
     ]
   });
 
-  console.log(req.body.sourceIsAnonymous)
-
   let assessmentSpecs = {
     postCredibility: req.body.postCredibility,
     body: req.body.body,
