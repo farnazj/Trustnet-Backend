@@ -2,8 +2,10 @@ var express = require('express');
 var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
+var notificationHelpers = require('../lib/notificationHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 var Sequelize = require('sequelize');
+const constants = require('../lib/constants');
 const Op = Sequelize.Op;
 
 // var kue = require('kue')
@@ -62,10 +64,10 @@ router.route('/posts/:post_id/assessments')
   let sourceAssessment = authUser.addSourceAssessment(assessment);
   let postAssessment = post.addPostAssessment(assessment);
 
-  let assessmentArbiters;
+  let assessmentArbitersProm, arbiters;
 
   if (req.body.arbiters) {
-    let arbiters = await db.Source.findAll({
+    arbiters = await db.Source.findAll({
       where: {
         userName: {
           [Op.in]: req.body.arbiters
@@ -73,10 +75,13 @@ router.route('/posts/:post_id/assessments')
       }
     });
 
-    assessmentArbiters = assessment.addArbiters(arbiters)
+    assessmentArbitersProm = assessment.addArbiters(arbiters);
   }
 
-  await Promise.all([sourceAssessment, postAssessment, assessmentArbiters]);
+  if (assessment.postCredibility == 0)
+    notificationHelpers.notifyAboutQuestion(assessment, authUser, post, arbiters);
+
+  await Promise.all([sourceAssessment, postAssessment, assessmentArbitersProm]);
 
   // queue.create('newAssessmentPosted', {postId: req.params.post_id, sourceId: req.user.id})
   // .priority('medium').removeOnComplete(true).save();

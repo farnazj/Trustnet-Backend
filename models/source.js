@@ -70,7 +70,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
 
-  Source.prototype.toJSON =  function () {
+  Source.prototype.toJSON = function() {
     var values = Object.assign({}, this.get());
 
     delete values.passwordHash;
@@ -81,6 +81,13 @@ module.exports = (sequelize, DataTypes) => {
     delete values.ListSourceEntities;
 
     return values;
+  }
+
+  Source.prototype.getFullName = function() {
+    if (this.firstName.length)
+      return `${this.firstName} ${this.lastName}`;
+    else
+      return this.userName;
   }
 
   Source.associate = function (models) {
