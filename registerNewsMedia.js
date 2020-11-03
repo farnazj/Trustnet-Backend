@@ -24,7 +24,7 @@ module.exports = async function(){
         isVerified: true
       }
     })
-    .spread((source, created) => {
+    .then(([source, created]) => {
 
       // if (created)
       //   queue.create('addNode', {sourceId: source.id}).priority('high').save();

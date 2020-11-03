@@ -8,7 +8,7 @@ var boostHelpers = require('../lib/boostHelpers');
 var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 router.route('/posts') //initiated posts
 

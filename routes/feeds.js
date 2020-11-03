@@ -55,7 +55,7 @@ router.route('/feeds')
           isVerified: true
         }
       })
-      .spread( async (source, created) => {
+      .then( async ([source, created]) => {
 
         // if (created)
         //   queue.create('addNode', {sourceId: source.id}).priority('high').save();

@@ -41,7 +41,7 @@ module.exports = {
                     text: splitTag
                   }
                 })
-                .spread( (dbTag, created) => {
+                .then( ([dbTag, created]) => {
                     return Promise.all(
                       posts.map(post => {
                         return post.addTag(dbTag);

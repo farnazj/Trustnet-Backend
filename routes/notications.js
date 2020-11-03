@@ -35,7 +35,6 @@ router.route('/notifications')
     });
 
     let [notifications, notSeenNotifs] = await Promise.all([notificationsProm, notSeenNotifsProms]);
-    console.log('not seen', notSeenNotifs, '\n')
 
     res.send({ notifications: notifications, notSeenCount: notSeenNotifs.count });
 

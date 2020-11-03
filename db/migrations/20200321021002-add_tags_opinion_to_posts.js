@@ -95,7 +95,7 @@ module.exports = {
                           text: tag
                         }
                       })
-                      .spread( (dbTag, created) => {
+                      .then( ([dbTag, created]) => {
                         return post.addTags(dbTag);
                       })
                     )

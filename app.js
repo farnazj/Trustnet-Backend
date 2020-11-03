@@ -15,7 +15,7 @@ var models = require('./models');
 var cors = require('cors');
 var compression = require('compression')
 var helmet = require('helmet');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 var rfs = require('rotating-file-stream')
 require('dotenv').config(); //for loading environment variables into process.env
 
@@ -32,12 +32,12 @@ app.use(helmet());
 
 
 //a rotating write stream
-var accessErrLogStream = rfs('access_err.log', {
+var accessErrLogStream = rfs.createStream('access_err.log', {
  interval: '1d', // rotate daily
  path: path.join(__dirname, 'log')
 })
 
-var accessOkLogStream = rfs('access_ok.log', {
+var accessOkLogStream = rfs.createStream('access_ok.log', {
  interval: '1d', // rotate daily
  path: path.join(__dirname, 'log')
 })
