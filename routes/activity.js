@@ -36,7 +36,7 @@ router.route('/activity/:username')
   });
 
   let relations = await boostHelpers.getBoostersandCredSources(req);
-  let [queryStr, replacements] = await boostHelpers.buildActivityQuery(req, user);
+  let [queryStr, replacements] = await boostHelpers.buildActivityQuery(req, user, req.user.id);
 
   let postIdObjs = await db.sequelize.query(queryStr,
   { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
