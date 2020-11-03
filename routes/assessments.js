@@ -79,7 +79,34 @@ router.route('/posts/:post_id/assessments')
   }
 
   if (assessment.postCredibility == 0)
-    notificationHelpers.notifyAboutQuestion(assessment, authUser, post, arbiters);
+      notificationHelpers.notifyAboutQuestion(assessment, authUser, post, arbiters);
+  else {
+      db.Source.findAll({
+        where: {
+          '$Trusteds.id$': {
+            [Op.in]: [req.user.id]
+          }
+        },
+        include: [{
+          model: db.Source,
+          as: 'Trusteds'
+        }]
+      })
+      .then(trusters => {
+        db.Assessment.findAll({
+          where: {
+            PostId: req.params.post_id,
+            SourceId: {
+              [Op.in]: trusters.map(el => el.id)
+            },
+            postCredibility: 0
+          }
+        }).then(prevPosedQuestions => {
+          if (prevPosedQuestions.length)
+            notificationHelpers.notifyAboutAnswer(assessment, authUser, post, trusters);
+        })
+      })
+  }
 
   await Promise.all([sourceAssessment, postAssessment, assessmentArbitersProm]);
 
