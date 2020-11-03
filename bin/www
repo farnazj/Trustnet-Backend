@@ -9,8 +9,8 @@ var debug = require('debug')('express-example:server');
 var http = require('http');
 var registerMedia = require('../registerNewsMedia');
 var constants = require('../lib/constants')
-var feedHelpers = require('../lib/feedHelpers');
 var garbageCollection = require('../lib/garbageCollection');
+const oldPostsRemoval = require('../lib/oldPostsRemoval');
 const logger = require('../lib/logger');
 var db = require('../models');
 var FeedQueue = require('../lib/feedQueue');
@@ -53,6 +53,12 @@ var server = http.createServer(app);
   });
 
   garbageCollectionJob.start();
+
+  const oldPostRemoverJob = new CronJob('00 1 2 * * *', function() {
+    oldPostsRemoval.removeOldPosts();
+  });
+
+  oldPostRemoverJob.start();
 
   server.listen(port);
   server.on('error', onError);
