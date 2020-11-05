@@ -46,7 +46,7 @@ router.route('/feeds')
       db.Source.findOrCreate({
         where: {
           userName: meta.title,
-          photoUrl: image
+          //photoUrl: image
         },
         defaults: {
           systemMade: true,
@@ -56,6 +56,10 @@ router.route('/feeds')
         }
       })
       .then( async ([source, created]) => {
+
+        if (!source.photoUrl && image) {
+          source.update({ photoUrl: image});
+        }
 
         // if (created)
         //   queue.create('addNode', {sourceId: source.id}).priority('high').save();
