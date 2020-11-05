@@ -5,6 +5,7 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
+var moment = require('moment');
 var kue = require('kue')
  , queue = kue.createQueue();
 
@@ -118,6 +119,43 @@ router.route('/sources/:username')
   );
 
   res.send(result);
+}));
+
+
+/*
+for the user study
+*/
+router.route('/recent-user-stats')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
+
+  let recentBoostsProm = db.Boost.findAndCountAll({
+    where: {
+      [Op.and]: [{
+        SourceId: req.user.id
+      }, {
+        createdAt: {
+          [Op.gte]: moment().subtract(24, 'hours')
+        }
+      }]
+    }
+  });
+
+  let recentAssessmentsProm = db.Assessment.findAndCountAll({
+    where: {
+      [Op.and]: [{
+        SourceId: req.user.id
+      }, {
+        createdAt: {
+          [Op.gte]: moment().subtract(24, 'hours')
+        }
+      }]
+    }
+  });
+
+  let [recentBoosts, recentAssessments] = await Promise.all([recentBoostsProm, recentAssessmentsProm]);
+
+  res.send({ recentBoostCount: recentBoosts.count, recentAssessmentCount: recentAssessments.count });
+
 }));
 
 

@@ -37,6 +37,8 @@ router.route('/boosts')
     let postIdObjs = await db.sequelize.query(queryStr,
     { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
 
+    console.log(postIdObjs)
+
     let postIds = postIdObjs.map(el => el.id);
     let postBoosts = await boostHelpers.getPostBoosts(postIds, req, relations, exploreMode, false);
 
