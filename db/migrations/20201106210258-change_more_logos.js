@@ -31,8 +31,6 @@ module.exports = {
           }
         });
 
-        console.log(sources, 'injaaaaaa')
-
         let photoProms = [];
 
         sources.forEach( source => {
