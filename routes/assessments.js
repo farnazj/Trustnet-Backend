@@ -34,8 +34,12 @@ router.route('/posts/:post_id/assessments')
 
   let assessments = await db.Assessment.findAll({
     where: {
-      SourceId: req.user.id,
-      PostId: req.params.post_id
+      [Op.and]: [{
+        SourceId: req.user.id
+      },  {
+        PostId: req.params.post_id
+      }]
+      
     },
     order: [
       [ 'version', 'DESC'],
@@ -95,11 +99,18 @@ router.route('/posts/:post_id/assessments')
       .then(trusters => {
         db.Assessment.findAll({
           where: {
-            PostId: req.params.post_id,
-            SourceId: {
-              [Op.in]: trusters.map(el => el.id)
-            },
-            postCredibility: 0
+            [Op.and]: [{
+              PostId: req.params.post_id
+            }, {
+              SourceId: {
+                [Op.in]: trusters.map(el => el.id)
+              }
+            }, {
+              postCredibility: 0
+            }, {
+              version: 1
+            }]
+              
           }
         }).then(prevPosedQuestions => {
           if (prevPosedQuestions.length)
