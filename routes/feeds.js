@@ -36,7 +36,9 @@ router.route('/feeds')
         rssfeed: req.body.rssfeed,
         name: meta.title,
         description: meta.description,
-        frequency: req.body.frequency
+        priority: Number.MAX_SAFE_INTEGER,
+        updateRate: 0,
+        lastFetched: null
       });
 
       let entityPassword = await routeHelpers.generateHash(process.env.ADMIN_KEY);
@@ -65,7 +67,7 @@ router.route('/feeds')
         //   queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
         let feed = await feedProm;
-        await Promise.all[source.addSourceFeed(feed), feed.setFeedSource(source)];
+        await Promise.all([source.addSourceFeed(feed), feed.setFeedSource(source)]);
         feedQueue.addFeed(feed);
         res.send({ message: 'Feed is added', source: source });
       })
