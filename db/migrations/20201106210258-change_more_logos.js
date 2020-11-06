@@ -10,16 +10,20 @@ module.exports = {
 
       try {
         let sourcePhotoMapping = {
-          'Hacker News: Front Page': 'logos/HackerNews.png',
-          'The Guardian': 'logos/guardian.jpg',
-          'Features – FiveThirtyEight': 'logos/FiveThirtyEight.png',
-          'Politics – FiveThirtyEight': 'logos/FiveThirtyEight.png',
-          'Slashdot': 'logos/slashdot.png',
-          'BBC': 'logos/bbc.png',
-          'Boing Boing': 'logos/boingboing.png'
+          'The Daily Beast': 'logos/Daily-Beast.jpg',
+          'CNBC': 'logos/CNBC.jpg',
+          'Fortune': 'logos/Fortune.jpeg',
+          'The Associated Press': 'logos/Associated-Press.jpg',
+          'National Geographic': 'logos/National-Geographic.jpg',
+          'POLITICO': 'logos/politico.jpeg',
+          "Infowars: There's a War on for Your Mind!": 'logos/Info-Wars.jpg',
+          'Forbes': 'logos/Forbes.jpg',
+          'Common Dreams - Breaking News & Views for the Progressive Community': 'logos/Common-Dreams.jpg',
+          'Features – FiveThirtyEight': 'logos/FiveThirtyEight.jpg',
+          'Politics – FiveThirtyEight': 'logos/FiveThirtyEight.jpg'
         };
 
-        let rssSources = await db.Source.findAll({
+        let sources = await db.Source.findAll({
           where: {
             userName: {
               [Op.in]:  Object.keys(sourcePhotoMapping)
@@ -27,9 +31,11 @@ module.exports = {
           }
         });
 
+        console.log(sources, 'injaaaaaa')
+
         let photoProms = [];
 
-        rssSources.forEach( source => {
+        sources.forEach( source => {
           photoProms.push(source.update({
             photoUrl: sourcePhotoMapping[source.userName]
           }));
