@@ -51,7 +51,7 @@ router.route('/posts/:post_id/assessments')
     body: req.body.body,
     isTransitive: false,
     sourceIsAnonymous: typeof req.body.sourceIsAnonymous !== 'undefined' ?
-      req.body.sourceIsAnonymous : true
+      req.body.sourceIsAnonymous : false
   };
 
   if (assessments.length) {
