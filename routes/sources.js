@@ -89,7 +89,11 @@ router.route('/sources/:username')
   let source = await db.Source.findOne({
     where: {
       userName: req.params.username
-    }
+    },
+    include: [{
+      model: db.Feed,
+      as: 'SourceFeeds'
+    }]
   });
 
   res.send(source);
