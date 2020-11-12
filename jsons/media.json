@@ -1,7 +1,7 @@
 
 [
   {
-    "username": "Cable News Network",
+    "username": "CNN",
     "photoUrl": "logos/cnn.png",
     "feeds": [
         {
@@ -19,7 +19,7 @@
     ]
   },
   {
-    "username": "Fox News Channel",
+    "username": "Fox News",
     "photoUrl": "logos/fnc.png",
     "feeds": [
         {
