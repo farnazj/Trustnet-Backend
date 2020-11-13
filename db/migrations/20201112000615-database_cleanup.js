@@ -11,28 +11,28 @@ module.exports = {
 
       try {
 
-        // let newMapping = {
-        //   'Cable News Network': 'CNN',
-        //   'Fox News Channel': 'Fox News'
-        // }
+        let newMapping = {
+          'Cable News Network': 'CNN',
+          'Fox News Channel': 'Fox News'
+        }
 
-        // let sources = await db.Source.findAll({
-        //   where: {
-        //     userName: {
-        //       [Op.in]: Object.keys(newMapping)
-        //     }
-        //   }
-        // });
+        let sources = await db.Source.findAll({
+          where: {
+            userName: {
+              [Op.in]: Object.keys(newMapping)
+            }
+          }
+        });
 
-        // let proms = [];
+        let proms = [];
 
-        // sources.forEach(source => {
-        //   proms.push(source.update({
-        //     userName: newMapping[source.userName]
-        //   }))
-        // })
+        sources.forEach(source => {
+          proms.push(source.update({
+            userName: newMapping[source.userName]
+          }))
+        })
       
-        // await Promise.all(proms);
+        await Promise.all(proms);
         resolve();
 
       }

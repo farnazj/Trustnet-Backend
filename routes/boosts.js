@@ -38,6 +38,7 @@ router.route('/boosts')
     { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
 
     let postIds = postIdObjs.map(el => el.id);
+    console.log(postIds)
     let postBoosts = await boostHelpers.getPostBoosts(postIds, req, relations, exploreMode, null);
 
     res.send(postBoosts);
@@ -57,7 +58,7 @@ router.route('/boosts')
   });
 
   if (!assessment)
-      throw "Cannot boost the post before assessing its credibility post: "
+      throw "Cannot boost the post before assessing its credibility: "
         + req.body.post_id + " user: " + req.user.id;
 
   let authUser = await authUserProm;
