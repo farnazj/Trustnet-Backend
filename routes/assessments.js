@@ -114,7 +114,7 @@ router.route('/posts/:post_id/assessments')
           }
         }).then(prevPosedQuestions => {
           if (prevPosedQuestions.length)
-            notificationHelpers.notifyAboutAnswer(assessment, authUser, post, trusters);
+            notificationHelpers.notifyAboutAnswer(assessment, authUser, post, trusters, prevPosedQuestions);
         })
       })
   }
