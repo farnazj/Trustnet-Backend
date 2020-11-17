@@ -9,7 +9,7 @@ var Sequelize = require('sequelize');
 var db  = require('../models');
 
 //get a boost from the auth_user's perspective
-router.route('/boosts/:post_id')
+router.route('/boosts/posts/:post_id')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res){
 
@@ -20,6 +20,19 @@ router.route('/boosts/:post_id')
     relations, exploreMode, false);
 
   res.send(postBoosts[0]);
+}));
+
+router.route('/boosts/:boost_id')
+.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  await db.Boost.destroy({
+    where: {
+      SourceId: req.user.id,
+      id: req.params.boost_id
+    }
+  });
+
+  res.send({ message: 'Boost deleted' });
 }));
 
 
@@ -70,6 +83,5 @@ router.route('/boosts')
 
   res.send({}); //TODO: change
 }));
-
 
 module.exports = router;
