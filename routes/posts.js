@@ -35,7 +35,7 @@ for the post, with the source as the sourceId and a value of "valid"
   }
 
   let post = await db.Post.create(postSpecs);
-  await routeHelpers.initiatePost(authUser, post, req.body.target_usernames, req.body.target_lists);
+  await routeHelpers.initiatePost(authUser, post, false, req.body.target_usernames, req.body.target_lists);
 
   res.send({ message: 'Post has been added' });
 }));
