@@ -6,4 +6,5 @@
 /config/database.json
 .env
 *.log
+winston/
 dump.rdb
