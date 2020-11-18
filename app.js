@@ -56,7 +56,8 @@ function morganFormat(tokens, req, res) {
     'user-' + tokens.user(req, res),
     tokens.status(req, res),
     tokens.res(req, res, 'content-length'), '-',
-    tokens['response-time'](req, res), 'ms'
+    tokens['response-time'](req, res), 'ms',
+    tokens.date(req, res, 'iso')
   ].join(' ')
 };
 
