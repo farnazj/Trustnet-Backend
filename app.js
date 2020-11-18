@@ -42,13 +42,31 @@ var accessOkLogStream = rfs.createStream('access_ok.log', {
  path: path.join(__dirname, 'log')
 })
 
-app.use(morgan('dev', {
+morgan.token('user', (req) => {
+  if (req.user) { 
+    return req.user.id;
+  }
+  return 'no user info';
+});
+
+function morganFormat(tokens, req, res) {
+  return [
+    tokens.method(req, res),
+    tokens.url(req, res),
+    'user-' + tokens.user(req, res),
+    tokens.status(req, res),
+    tokens.res(req, res, 'content-length'), '-',
+    tokens['response-time'](req, res), 'ms'
+  ].join(' ')
+};
+
+app.use(morgan(morganFormat, {
     skip: function (req, res) {
         return res.statusCode >= 400
     }, stream: accessOkLogStream
 }));
 
-app.use(morgan('dev', {
+app.use(morgan(morganFormat, {
     skip: function (req, res) {
         return res.statusCode < 400
     }, stream: accessErrLogStream
