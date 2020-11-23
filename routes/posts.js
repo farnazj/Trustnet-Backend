@@ -266,8 +266,21 @@ router.route('/posts/:post_id/custom-titles')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let post = await db.Post.findByPk(req.params.post_id);
-  let [boostersIds, credSources, followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
+  let relations = await boostHelpers.getBoostersandCredSources(req);
 
+  let titleSources = relations.followedTrusteds.concat(post.SourceId);
+
+  if (req.headers.activityusername) {
+    let activityUser = await db.Source.findOne({
+      where: {
+        userName: req.headers.activityusername
+      }
+    });
+
+    titleSources.push(activityUser.id)
+  }
+
+  
   let titles = await db.CustomTitle.findAll({
     include: [{
       model: db.Source,
@@ -275,19 +288,13 @@ router.route('/posts/:post_id/custom-titles')
     }],
     where: {
       SourceId: {
-        [Op.in]: followedTrustedIds.concat(post.SourceId)
-        /*
-        [Op.or]: {
-          [Op.eq]: Sequelize.col('CustomTitle.SourceId'),
-          [Op.in]: followedTrustedIds.concat(post.SourceId)
-        }
-        */
+        [Op.in]: titleSources
       },
       PostId: req.params.post_id
     },
     order: [
       ['setId', 'DESC'],
-      [ 'version', 'DESC']
+      ['version', 'DESC']
     ]
   });
 
@@ -345,7 +352,8 @@ router.route('/posts/:set_id/custom-title-endorsers')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let [boostersIds, credSources, followedTrustedIds] = await boostHelpers.getBoostersandCredSources(req);
+  let relations = await boostHelpers.getBoostersandCredSources(req);
+  let titleSources = relations.followedTrusteds.concat(post.SourceId);
 
   let title = await db.CustomTitle.findOne({
     include: [{
@@ -353,7 +361,7 @@ router.route('/posts/:set_id/custom-title-endorsers')
       as: 'Endorsers',
       where: {
         SourceId: {
-          [Op.in]: followedTrustedIds
+          [Op.in]: titleSources
         }
       }
     }],
