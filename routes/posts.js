@@ -302,7 +302,7 @@ router.route('/posts/:post_id/custom-titles')
 }));
 
 
-router.route('/posts/:set_id/custom-title-endorsement')
+router.route('/posts/custom-title-endorsement/:set_id')
 
 //if auth user has endorsed a custom title
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -348,7 +348,7 @@ router.route('/posts/:set_id/custom-title-endorsement')
 
 
 
-router.route('/posts/:set_id/custom-title-endorsers')
+router.route('/posts/custom-title-endorsement/:set_id')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
