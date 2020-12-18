@@ -82,6 +82,10 @@ router.route('/posts/:post_id/assessments')
     assessmentArbitersProm = assessment.addArbiters(arbiters);
   }
 
+  routeHelpers.markPostAsUnseenAfterAssessment(post, authUser.id);
+
+
+
   if (assessment.postCredibility == 0)
       notificationHelpers.notifyAboutQuestion(assessment, authUser, post, arbiters);
   else {
