@@ -52,6 +52,7 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
 
       try {
+        resolve();
       }
       catch (err) {
         console.log(err)
