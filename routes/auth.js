@@ -70,14 +70,14 @@ router.route('/signup')
          const passResetMailOptions = {
            from: process.env.EMAIL_USER,
            to: user.email,
-           subject: 'Account Verification for Trustnet',
+           subject: `Account Verification for ${constants.SITE_NAME}`,
            html: `<p>Hi ${user.firstName}!</p>
            <p>Thanks for signing up for Trustent. If this wasn't you, please ignore
            this email and we will remove your address from our records.</p>
            <p>To activate your account, please click on the following link within the next 6 hours:</p>
            <p> <a href="${verificationLink}">${verificationLink}</a></p>
            <br>
-           <p>-The Trustnet team</p>`
+           <p>-The ${constants.SITE_NAME} team</p>`
          };
 
          transporter.sendMail(passResetMailOptions, function (err, info) {
@@ -150,7 +150,7 @@ router.route('/forgot-password')
         const passResetMailOptions = {
           from: process.env.EMAIL_USER,
           to: source.email,
-          subject: 'Password Reset for Trustnet',
+          subject: `Password Reset for ${constants.SITE_NAME}`,
           html: `<p>Hi ${source.firstName}!</p>
           <p>Forgot your password? Click on the link below or copy and paste it into
            your browser within the next 4 hours.</p>
@@ -158,7 +158,7 @@ router.route('/forgot-password')
           <p><a href="${signupLink}">${signupLink}</a></p>
           <p>Your username, in case you have forgotten it is: ${source.userName}</p>
           <br>
-          <p>-The Trustnet team</p>`
+          <p>-The ${constants.SITE_NAME} team</p>`
         };
 
         transporter.sendMail(passResetMailOptions, function (err, info) {
