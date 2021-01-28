@@ -29,7 +29,7 @@ Install MySQL Server. Connect to MySQL server using MySQL client and create a da
 * `ALTER USER user IDENTIFIED WITH MYSQL_NATIVE_PASSWORD BY 'password'`
 
 #### Sequelize Configurations
-TrustNetBackend uses Sequelize as an ORM to connect to the database. The database configurations for Sequelize should be in ./config/config.json. Copy the contents of ./config/example_config.json and change the fields username, password, database, and host for whichever environment you are running TrustNetBackend in (the default environment is development).
+TrustNetBackend uses Sequelize as an ORM to connect to the database. The database configurations for Sequelize should be in ./config/database.json. Copy the contents of ./config/example_database.json and change the fields username, password, database, and host for whichever environment you are running TrustNetBackend in (the default environment is development).
 
 #### Setup Environment Variables
 The server uses dotenv to load environment variables from a .env file into process.env.
