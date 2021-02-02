@@ -181,17 +181,19 @@ router.route('/posts/:post_id/custom-titles/:set_id')
 
     let authUserProm = db.Source.findByPk(req.user.id);
     let postProm = db.Post.findByPk(req.params.post_id);
-    let titleSpecs = req.body;
-    titleSpecs.setId = req.params.set_id;
-    let titleProm = db.CustomTitle.create(titleSpecs);
+    let customTitleSpecs = req.body;
+    customTitleSpecs.setId = req.params.set_id;
+    let customTitleProm = db.CustomTitle.create(customTitleSpecs);
 
-    let [post, authUser, title] = await Promise.all([postProm, authUserProm, titleProm]);
+    let [post, authUser, customTitle] = await Promise.all([postProm, authUserProm, customTitleProm]);
 
-    let sourceTitle = authUser.addSourceCustomTitles(title);
-    let postTitle = post.addPostCustomTitle(title);
-    let addEndorsers = title.addEndorsers(endorsers);
+    let standaloneTitle = await post.getStandaloneTitle();
 
-    await Promise.all([sourceTitle, postTitle, addEndorsers, ...updateProms]);
+    let sourceTitleProm = authUser.addSourceCustomTitles(customTitle);
+    let standaloneCustomTitleAssocProm = standaloneTitle.addStandaloneCustomTitles(customTitle);
+    let addEndorsers = customTitle.addEndorsers(endorsers);
+
+    await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, addEndorsers, ...updateProms]);
 
     res.send({ message: 'Title updated' });
   }
@@ -227,16 +229,27 @@ router.route('/posts/:post_id/custom-titles')
 
   let authUserProm = db.Source.findByPk(req.user.id);
   let postProm = db.Post.findByPk(req.params.post_id);
-  let titleSpecs = req.body;
-  titleSpecs.setId = uuidv4();
-  let titleProm = db.CustomTitle.create(titleSpecs);
+  let customTitleSpecs = req.body;
+  customTitleSpecs.setId = uuidv4();
+  let customTitleProm = db.CustomTitle.create(customTitleSpecs);
 
-  let [post, authUser, title] = await Promise.all([postProm, authUserProm, titleProm]);
+  let [post, authUser, customTitle] = await Promise.all([postProm, authUserProm, customTitleProm]);
 
-  let sourceTitle = authUser.addSourceCustomTitles(title);
-  let postTitle = post.addPostCustomTitle(title);
+  let dbResp = await db.StandaloneTitle.findOrCreate({
+    where: {
+      text: post.title,
+      hash: 'XXXX'
+    }
+  });
 
-  await Promise.all([sourceTitle, postTitle]);
+  let standaloneTitle = dbResp[0];
+
+  let standaloneCustomTitleAssocProm = standaloneTitle.addStandaloneCustomTitles(customTitle);
+  let sourceTitleProm = authUser.addSourceCustomTitles(customTitle);
+  let postTitleProm = post.setStandaloneTitle(standaloneTitle);
+
+  await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, postTitleProm
+  ]);
   res.send({ message: 'Title posted' });
 
 }))
@@ -246,18 +259,28 @@ router.route('/posts/:post_id/:user_id/custom-titles')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let titles = await db.CustomTitle.findAll({
+  let posts = await db.Post.findAll({
     where: {
-      SourceId: req.params.user_id,
-      PostId: req.params.post_id
+      [Op.and]: [{
+        id: req.params.post_id
+      }, {
+        '$StandaloneTitle->StandaloneCustomTitles.SourceId$': req.params.user_id
+      }]
     },
+    include: [{
+      model: db.StandaloneTitle,
+      include: [{
+        model: db.CustomTitle,
+        as: 'StandaloneCustomTitles'
+      }]
+    }],
     order: [
-      ['setId', 'DESC'],
-      [ 'version', 'DESC']
+      ['StandaloneTitle', 'StandaloneCustomTitles', 'setId', 'DESC'],
+      [ 'StandaloneTitle', 'StandaloneCustomTitles', 'version', 'DESC']
     ]
-  });
+  })
 
-  res.send(titles);
+  res.send(posts[0].StandaloneTitle);
 }))
 
 //get custom titles from the auth_user's perspective
@@ -280,25 +303,36 @@ router.route('/posts/:post_id/custom-titles')
     titleSources.push(activityUser.id)
   }
 
-  
-  let titles = await db.CustomTitle.findAll({
-    include: [{
-      model: db.Source,
-      as: 'Endorsers',
-    }],
+  let posts = await db.Post.findAll({
     where: {
-      SourceId: {
-        [Op.in]: titleSources
-      },
-      PostId: req.params.post_id
+      [Op.and]: [{
+        id: req.params.post_id
+      }, {
+        '$StandaloneTitle->StandaloneCustomTitles.SourceId$': {
+          [Op.in]: titleSources
+        },
+      }]
     },
+    include: [{
+      model: db.StandaloneTitle,
+      include: [{
+        model: db.CustomTitle,
+        as: 'StandaloneCustomTitles',
+        include: [{
+          model: db.Source,
+          as: 'Endorsers',
+        }]
+      }]
+    }],
     order: [
-      ['setId', 'DESC'],
-      ['version', 'DESC']
+      ['StandaloneTitle', 'StandaloneCustomTitles', 'setId', 'DESC'],
+      [ 'StandaloneTitle', 'StandaloneCustomTitles', 'version', 'DESC']
     ]
-  });
+  })
+  
+  let results = posts[0] && posts[0].StandaloneTitle ? posts[0].StandaloneTitle : {};
 
-  res.send(titles);
+  res.send(results);
 }));
 
 

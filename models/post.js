@@ -39,9 +39,9 @@ module.exports = (sequelize, DataTypes) => {
     models.Post.hasMany(models.Boost, {as: 'PostBoosts'});
     models.Post.belongsToMany(models.Source, {as: 'Seers', through: 'PostSeers'});
     models.Post.hasMany(models.Assessment, {as: 'PostAssessments'});
-    models.Post.hasMany(models.CustomTitle, {as: 'PostCustomTitles'});
+    // models.Post.hasMany(models.CustomTitle, {as: 'PostCustomTitles'});
     models.Post.belongsToMany(models.Tag, {through: 'PostTags'});
-
+    models.Post.hasOne(models.StandaloneTitle);
   };
 
   return Post;
