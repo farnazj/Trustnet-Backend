@@ -1,3 +1,6 @@
+/*
+some title routes that depend on post id are in routes/posts.js
+*/
 var express = require('express');
 var router = express.Router();
 var Sequelize = require('sequelize');
@@ -9,6 +12,7 @@ var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
+const AltTitlesRedisHandler = require('../lib/alternativeTitles');
 
 router.route('/custom-title-endorsement/user/:set_id')
 
@@ -81,5 +85,57 @@ router.route('/custom-title-endorsement/:set_id')
 }));
 
 
+router.route('/custom-titles-match')
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let titleHashes = req.body.titlehashes;
+  let customTitlesSetIds = [];
+  titleHashes.forEach(titleHash => { 
+    customTitlesSetIds.push(...altTitlesRedisHandler.getMatchingAltTitles(titleHash));
+  });
+  let majorityMode = req.headers.majoritymode == 'true' ? true : false;
+
+  let whereClause = {};
+
+  if (majorityMode) {
+    whereClause = {
+      '$StandaloneCustomTitles.setId$': {
+        [Op.in]: customTitlesSetIds
+      }
+    }
+  }
+  else {
+    let relations = await boostHelpers.getBoostersandCredSources(req);
+    let titleSources = relations.followedTrusteds.concat(post.SourceId);
+    whereClause = {
+      [Op.and]: [{
+        '$StandaloneCustomTitles.setId$': {
+          [Op.in]: customTitlesSetIds
+        }
+      }, {
+        '$StandaloneCustomTitles.SourceId$': {
+          [Op.in]: titleSources
+        }
+      }]
+    }
+  }
+
+  let standaloneTitles = await db.StandAloneTitles.findAll({
+    where: whereClause,
+    include: [{
+      model: db.CustomTitle,
+      as: 'StandaloneCustomTitles',
+      include: [{
+        model: db.Source,
+        as: 'Endorsers',
+      }]
+    }]
+  })
+
+  res.send(standaloneTitles);
+
+}))
+
 
 module.exports = router;
+

@@ -7,19 +7,18 @@ const logger = require('./lib/logger');
 var bodyParser = require('body-parser');
 var fs = require('fs');
 var passport = require('passport');
-var redis   = require("redis");
 var session = require('express-session');
 var redisStore = require('connect-redis')(session);
 var LocalStrategy = require('passport-local').Strategy;
 var models = require('./models');
 var cors = require('cors');
-var compression = require('compression')
+var compression = require('compression');
 var helmet = require('helmet');
 const { v4: uuidv4 } = require('uuid');
-var rfs = require('rotating-file-stream')
+var rfs = require('rotating-file-stream');
 require('dotenv').config(); //for loading environment variables into process.env
+var redisClient = require('./lib/redisConfigs');
 
-var client  = redis.createClient();
 const { AssertionError } = require('assert');
 const { DatabaseError } = require('sequelize');
 
@@ -93,7 +92,7 @@ var sess = {
     maxAge: 4 * 24 * 60 * 60 * 1000
   },
   rolling: true,
-  store: new redisStore({ host: 'localhost', port: 6379, client: client}),
+  store: new redisStore({ host: 'localhost', port: 6379, client: redisClient}),
 };
 
 if (app.get('env') === 'production') {

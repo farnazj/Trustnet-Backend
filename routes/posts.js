@@ -151,7 +151,12 @@ router.route('/posts/:post_id/seen-status')
 }))
 
 
-//edit a title by posting a new version of it
+/*
+edit a title by posting a new version of it
+AltTitlesRedisHandler is not used because the redis hashset of title hash ->custom titles
+has custom titles stored by setId. by editting a title, a new custom title is created that
+has the same setId as any from before within the same set.
+*/
 router.route('/posts/:post_id/custom-titles/:set_id')
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -205,15 +210,28 @@ router.route('/posts/:post_id/custom-titles/:set_id')
 
 .delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let deleteProms = db.CustomTitle.destroy({
+  let customTitlesToDeleteProm = db.CustomTitle.findAll({
     where: {
       setId: req.params.set_id,
       SourceId: req.user.id
     }
   });
 
-  if (deleteProms.length) {
-    await Promise.all(deleteProms);
+  let postProm = db.Post.findByPk(req.params.post_id);
+
+  let [customTitlesToDelete, post] = await Promise.all([customTitlesToDeleteProm, postProm]);
+  // let deleteProms = db.CustomTitle.destroy({
+  //   where: {
+  //     setId: req.params.set_id,
+  //     SourceId: req.user.id
+  //   }
+  // });
+
+  if (customTitlesToDelete.length) {
+    let standAloneTitle = await post.getStandaloneTitle();
+    await altTitlesRedisHandler.deleteAltTitles(customTitlesToDelete, standAloneTitle);
+
+    // await Promise.all(deleteProms);
     res.send({ message: 'Title deleted' });
   }
   else {
@@ -248,7 +266,9 @@ router.route('/posts/:post_id/custom-titles')
   let sourceTitleProm = authUser.addSourceCustomTitles(customTitle);
   let postTitleProm = post.setStandaloneTitle(standaloneTitle);
 
-  await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, postTitleProm
+  let redisHandlerProm = altTitlesRedisHandler.addAltTitle(customTitle, standaloneTitle);
+
+  await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, postTitleProm, redisHandlerProm
   ]);
   res.send({ message: 'Title posted' });
 
