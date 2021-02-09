@@ -7,6 +7,7 @@ var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
 var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
+var utils = require('../lib/util');
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
 
@@ -256,7 +257,7 @@ router.route('/posts/:post_id/custom-titles')
   let dbResp = await db.StandaloneTitle.findOrCreate({
     where: {
       text: post.title,
-      hash: 'XXXX'
+      hash: utils.hashCode(utils.uncurlify(post.title.substr(0, constants.LENGTH_TO_HASH)))
     }
   });
 

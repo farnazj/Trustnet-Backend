@@ -90,49 +90,65 @@ router.route('/custom-titles-match')
 
   let titleHashes = req.body.titlehashes;
   let customTitlesSetIds = [];
-  titleHashes.forEach(titleHash => { 
-    customTitlesSetIds.push(...altTitlesRedisHandler.getMatchingAltTitles(titleHash));
+  let proms = titleHashes.map(titleHash => { 
+    console.log(titleHash, altTitlesRedisHandler.getMatchingAltTitles(titleHash))
+    return altTitlesRedisHandler.getMatchingAltTitles(titleHash)
+    .then(customTitleMatches => {
+      console.log(customTitleMatches, '&&&&&&');
+      customTitlesSetIds.push(...customTitleMatches);
+    })
+    
   });
-  let majorityMode = req.headers.majoritymode == 'true' ? true : false;
+  await Promise.all(proms);
+  console.log(customTitlesSetIds, '******')
 
-  let whereClause = {};
+  if (customTitlesSetIds.length) {
 
-  if (majorityMode) {
-    whereClause = {
-      '$StandaloneCustomTitles.setId$': {
-        [Op.in]: customTitlesSetIds
-      }
-    }
-  }
-  else {
-    let relations = await boostHelpers.getBoostersandCredSources(req);
-    let titleSources = relations.followedTrusteds.concat(post.SourceId);
-    whereClause = {
-      [Op.and]: [{
+    let majorityMode = req.headers.majoritymode == 'true' ? true : false;
+
+    let whereClause = {};
+  
+    if (majorityMode) {
+      whereClause = {
         '$StandaloneCustomTitles.setId$': {
           [Op.in]: customTitlesSetIds
         }
-      }, {
-        '$StandaloneCustomTitles.SourceId$': {
-          [Op.in]: titleSources
-        }
-      }]
+      }
     }
-  }
-
-  let standaloneTitles = await db.StandAloneTitles.findAll({
-    where: whereClause,
-    include: [{
-      model: db.CustomTitle,
-      as: 'StandaloneCustomTitles',
+    else {
+      let relations = await boostHelpers.getBoostersandCredSources(req);
+      let titleSources = relations.followedTrusteds; //includes auth user id as well
+  
+      whereClause = {
+        [Op.and]: [{
+          '$StandaloneCustomTitles.setId$': {
+            [Op.in]: customTitlesSetIds
+          }
+        }, {
+          '$StandaloneCustomTitles.SourceId$': {
+            [Op.in]: titleSources
+          }
+        }]
+      }
+    }
+  
+    let standaloneTitles = await db.StandaloneTitle.findAll({
+      where: whereClause,
       include: [{
-        model: db.Source,
-        as: 'Endorsers',
+        model: db.CustomTitle,
+        as: 'StandaloneCustomTitles',
+        include: [{
+          model: db.Source,
+          as: 'Endorsers',
+        }]
       }]
-    }]
-  })
-
-  res.send(standaloneTitles);
+    })
+  
+    res.send(standaloneTitles);
+  }
+  else {
+    res.send([])
+  }
 
 }))
 

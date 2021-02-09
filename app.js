@@ -73,8 +73,8 @@ app.use(morgan(morganFormat, {
 }));
 
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({limit: '200kb'}));
+app.use(bodyParser.urlencoded({ extended: true, limit: '200kb'}));
 //app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(compression()); //Compress all routes
