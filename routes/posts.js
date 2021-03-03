@@ -4,10 +4,8 @@ var Sequelize = require('sequelize');
 var moment = require('moment');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
-var boostHelpers = require('../lib/boostHelpers');
 var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
-var utils = require('../lib/util');
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
 
@@ -107,7 +105,7 @@ router.route('/posts/import')
     isTransitive: false
    };
 
-  await routeHelpers.importPost(authUser, req.body.postUrl,
+  await routeHelpers.importPost(req.body.postUrl, authUser,
      assessmentObj, req.body.target_usernames);
 
   res.send({ message: 'Post has been imported' });
@@ -150,211 +148,6 @@ router.route('/posts/:post_id/seen-status')
   }
 
 }))
-
-
-/*
-edit a title by posting a new version of it
-AltTitlesRedisHandler is not used because the redis hashset of title hash ->custom titles
-has custom titles stored by setId. by editting a title, a new custom title is created that
-has the same setId as any from before within the same set.
-*/
-router.route('/posts/:post_id/custom-titles/:set_id')
-
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let customTitles = await db.CustomTitle.findAll({
-    where: {
-      setId: req.params.set_id,
-      sourceId: req.user.id
-    },
-    order: [
-      [ 'version', 'DESC'],
-    ]
-  });
-
-
-  if (customTitles.length) {
-
-    let updateProms = [];
-    let endorsers = [];
-
-    for (let title of customTitles) {
-      if (title.version == 1)
-        endorsers = await title.getEndorsers();
-
-      updateProms.push(title.update({ version: title.version - 1}));
-    }
-
-    let authUserProm = db.Source.findByPk(req.user.id);
-    let postProm = db.Post.findByPk(req.params.post_id);
-    let customTitleSpecs = req.body;
-    customTitleSpecs.setId = req.params.set_id;
-    let customTitleProm = db.CustomTitle.create(customTitleSpecs);
-
-    let [post, authUser, customTitle] = await Promise.all([postProm, authUserProm, customTitleProm]);
-
-    let standaloneTitle = await post.getStandaloneTitle();
-
-    let sourceTitleProm = authUser.addSourceCustomTitles(customTitle);
-    let standaloneCustomTitleAssocProm = standaloneTitle.addStandaloneCustomTitles(customTitle);
-    let addEndorsers = customTitle.addEndorsers(endorsers);
-
-    await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, addEndorsers, ...updateProms]);
-
-    res.send({ message: 'Title updated' });
-  }
-  else {
-    res.send({ message: 'Title does not exist' })
-  }
-
-}))
-
-.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let customTitlesToDeleteProm = db.CustomTitle.findAll({
-    where: {
-      setId: req.params.set_id,
-      SourceId: req.user.id
-    }
-  });
-
-  let postProm = db.Post.findByPk(req.params.post_id);
-
-  let [customTitlesToDelete, post] = await Promise.all([customTitlesToDeleteProm, postProm]);
-  // let deleteProms = db.CustomTitle.destroy({
-  //   where: {
-  //     setId: req.params.set_id,
-  //     SourceId: req.user.id
-  //   }
-  // });
-
-  if (customTitlesToDelete.length) {
-    let standAloneTitle = await post.getStandaloneTitle();
-    await altTitlesRedisHandler.deleteAltTitles(customTitlesToDelete, standAloneTitle);
-
-    // await Promise.all(deleteProms);
-    res.send({ message: 'Title deleted' });
-  }
-  else {
-    res.send({ message: 'Title does not exist' })
-  }
-
-}));
-
-
-router.route('/posts/:post_id/custom-titles')
-
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let authUserProm = db.Source.findByPk(req.user.id);
-  let postProm = db.Post.findByPk(req.params.post_id);
-  let customTitleSpecs = req.body;
-  customTitleSpecs.setId = uuidv4();
-  let customTitleProm = db.CustomTitle.create(customTitleSpecs);
-
-  let [post, authUser, customTitle] = await Promise.all([postProm, authUserProm, customTitleProm]);
-
-  let dbResp = await db.StandaloneTitle.findOrCreate({
-    where: {
-      text: post.title,
-      hash: utils.hashCode(utils.uncurlify(post.title.substr(0, constants.LENGTH_TO_HASH)))
-    }
-  });
-
-  let standaloneTitle = dbResp[0];
-
-  let standaloneCustomTitleAssocProm = standaloneTitle.addStandaloneCustomTitles(customTitle);
-  let sourceTitleProm = authUser.addSourceCustomTitles(customTitle);
-  let postTitleProm = post.setStandaloneTitle(standaloneTitle);
-
-  let redisHandlerProm = altTitlesRedisHandler.addAltTitle(customTitle, standaloneTitle);
-
-  await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, postTitleProm, redisHandlerProm
-  ]);
-  res.send({ message: 'Title posted' });
-
-}))
-
-
-router.route('/posts/:post_id/:user_id/custom-titles')
-
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let posts = await db.Post.findAll({
-    where: {
-      [Op.and]: [{
-        id: req.params.post_id
-      }, {
-        '$StandaloneTitle->StandaloneCustomTitles.SourceId$': req.params.user_id
-      }]
-    },
-    include: [{
-      model: db.StandaloneTitle,
-      include: [{
-        model: db.CustomTitle,
-        as: 'StandaloneCustomTitles'
-      }]
-    }],
-    order: [
-      ['StandaloneTitle', 'StandaloneCustomTitles', 'setId', 'DESC'],
-      [ 'StandaloneTitle', 'StandaloneCustomTitles', 'version', 'DESC']
-    ]
-  })
-
-  res.send(posts[0].StandaloneTitle);
-}))
-
-//get custom titles from the auth_user's perspective
-router.route('/posts/:post_id/custom-titles')
-
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let post = await db.Post.findByPk(req.params.post_id);
-  let relations = await boostHelpers.getBoostersandCredSources(req);
-
-  let titleSources = relations.followedTrusteds.concat(post.SourceId);
-
-  if (req.headers.activityusername) {
-    let activityUser = await db.Source.findOne({
-      where: {
-        userName: req.headers.activityusername
-      }
-    });
-
-    titleSources.push(activityUser.id)
-  }
-
-  let posts = await db.Post.findAll({
-    where: {
-      [Op.and]: [{
-        id: req.params.post_id
-      }, {
-        '$StandaloneTitle->StandaloneCustomTitles.SourceId$': {
-          [Op.in]: titleSources
-        },
-      }]
-    },
-    include: [{
-      model: db.StandaloneTitle,
-      include: [{
-        model: db.CustomTitle,
-        as: 'StandaloneCustomTitles',
-        include: [{
-          model: db.Source,
-          as: 'Endorsers',
-        }]
-      }]
-    }],
-    order: [
-      ['StandaloneTitle', 'StandaloneCustomTitles', 'setId', 'DESC'],
-      [ 'StandaloneTitle', 'StandaloneCustomTitles', 'version', 'DESC']
-    ]
-  })
-  
-  let results = posts[0] && posts[0].StandaloneTitle ? posts[0].StandaloneTitle : {};
-
-  res.send(results);
-}));
 
 
 module.exports = router;
