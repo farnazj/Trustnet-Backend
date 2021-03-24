@@ -175,7 +175,6 @@ router.route('/custom-titles/:standalone_title_id/:set_id')
       ['StandaloneCustomTitles', 'version', 'DESC']
     ]
   }))[0];
-  console.log(standaloneTitle, req.params)
 
   let customTitles = standaloneTitle.StandaloneCustomTitles;
 
@@ -189,6 +188,7 @@ router.route('/custom-titles/:standalone_title_id/:set_id')
         endorsers = await title.getEndorsers();
 
       updateProms.push(title.update({ version: title.version - 1}));
+      updateProms.push(title.removeEndorsers());
     }
     let authUserProm = db.Source.findByPk(req.user.id);
     let customTitleSpecs = req.body;
@@ -299,7 +299,6 @@ router.route('/custom-titles/:standalone_title_id')
   
   let results = standaloneTitles.length ? standaloneTitles[0] : {};
 
-  console.log(standaloneTitles)
   res.send(results);
 }));
 
