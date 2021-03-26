@@ -4,7 +4,6 @@ var Sequelize = require('sequelize');
 var moment = require('moment');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
-var boostHelpers = require('../lib/boostHelpers');
 var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
@@ -106,7 +105,7 @@ router.route('/posts/import')
     isTransitive: false
    };
 
-  await routeHelpers.importPost(authUser, req.body.postUrl,
+  await routeHelpers.importPost(req.body.postUrl, authUser,
      assessmentObj, req.body.target_usernames);
 
   res.send({ message: 'Post has been imported' });
@@ -149,157 +148,6 @@ router.route('/posts/:post_id/seen-status')
   }
 
 }))
-
-
-//edit a title by posting a new version of it
-router.route('/posts/:post_id/custom-titles/:set_id')
-
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let customTitles = await db.CustomTitle.findAll({
-    where: {
-      setId: req.params.set_id,
-      sourceId: req.user.id
-    },
-    order: [
-      [ 'version', 'DESC'],
-    ]
-  });
-
-
-  if (customTitles.length) {
-
-    let updateProms = [];
-    let endorsers = [];
-
-    for (let title of customTitles) {
-      if (title.version == 1)
-        endorsers = await title.getEndorsers();
-
-      updateProms.push(title.update({ version: title.version - 1}));
-    }
-
-    let authUserProm = db.Source.findByPk(req.user.id);
-    let postProm = db.Post.findByPk(req.params.post_id);
-    let titleSpecs = req.body;
-    titleSpecs.setId = req.params.set_id;
-    let titleProm = db.CustomTitle.create(titleSpecs);
-
-    let [post, authUser, title] = await Promise.all([postProm, authUserProm, titleProm]);
-
-    let sourceTitle = authUser.addSourceCustomTitles(title);
-    let postTitle = post.addPostCustomTitle(title);
-    let addEndorsers = title.addEndorsers(endorsers);
-
-    await Promise.all([sourceTitle, postTitle, addEndorsers, ...updateProms]);
-
-    res.send({ message: 'Title updated' });
-  }
-  else {
-    res.send({ message: 'Title does not exist' })
-  }
-
-}))
-
-.delete(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let deleteProms = db.CustomTitle.destroy({
-    where: {
-      setId: req.params.set_id,
-      SourceId: req.user.id
-    }
-  });
-
-  if (deleteProms.length) {
-    await Promise.all(deleteProms);
-    res.send({ message: 'Title deleted' });
-  }
-  else {
-    res.send({ message: 'Title does not exist' })
-  }
-
-}));
-
-
-router.route('/posts/:post_id/custom-titles')
-
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let authUserProm = db.Source.findByPk(req.user.id);
-  let postProm = db.Post.findByPk(req.params.post_id);
-  let titleSpecs = req.body;
-  titleSpecs.setId = uuidv4();
-  let titleProm = db.CustomTitle.create(titleSpecs);
-
-  let [post, authUser, title] = await Promise.all([postProm, authUserProm, titleProm]);
-
-  let sourceTitle = authUser.addSourceCustomTitles(title);
-  let postTitle = post.addPostCustomTitle(title);
-
-  await Promise.all([sourceTitle, postTitle]);
-  res.send({ message: 'Title posted' });
-
-}))
-
-
-router.route('/posts/:post_id/:user_id/custom-titles')
-
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let titles = await db.CustomTitle.findAll({
-    where: {
-      SourceId: req.params.user_id,
-      PostId: req.params.post_id
-    },
-    order: [
-      ['setId', 'DESC'],
-      [ 'version', 'DESC']
-    ]
-  });
-
-  res.send(titles);
-}))
-
-//get custom titles from the auth_user's perspective
-router.route('/posts/:post_id/custom-titles')
-
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let post = await db.Post.findByPk(req.params.post_id);
-  let relations = await boostHelpers.getBoostersandCredSources(req);
-
-  let titleSources = relations.followedTrusteds.concat(post.SourceId);
-
-  if (req.headers.activityusername) {
-    let activityUser = await db.Source.findOne({
-      where: {
-        userName: req.headers.activityusername
-      }
-    });
-
-    titleSources.push(activityUser.id)
-  }
-
-  
-  let titles = await db.CustomTitle.findAll({
-    include: [{
-      model: db.Source,
-      as: 'Endorsers',
-    }],
-    where: {
-      SourceId: {
-        [Op.in]: titleSources
-      },
-      PostId: req.params.post_id
-    },
-    order: [
-      ['setId', 'DESC'],
-      ['version', 'DESC']
-    ]
-  });
-
-  res.send(titles);
-}));
 
 
 module.exports = router;
