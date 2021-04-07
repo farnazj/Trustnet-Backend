@@ -10,9 +10,6 @@ module.exports = (sequelize, DataTypes) => {
         max: 1,
       }
     },
-    body: {
-      type: DataTypes.TEXT('long')
-    },
     version: {
       type: DataTypes.INTEGER,
       defaultValue: 1
@@ -33,12 +30,13 @@ module.exports = (sequelize, DataTypes) => {
   Assessment.prototype.toJSON =  function () {
     var values = Object.assign({}, this.get());
 
-    delete values.AssessmentTargets;
+    // delete values.AssessmentTargets;
     return values;
   }
 
   Assessment.associate = function (models) {
     models.Assessment.belongsToMany(models.Source, {as: 'Arbiters', through: 'AssessmentArbiters' });
+    models.Assessment.hasMany(models.AssessmentReason, {as: 'Reasons'});
   };
 
   return Assessment;

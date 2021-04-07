@@ -17,19 +17,35 @@ router.route('/posts/:post_id/assessments')
 
   //let paginationReq = routeHelpers.getLimitOffset(req);
   let post = await db.Post.findOne({
-    where: {id: req.params.post_id},
+    where: { id: req.params.post_id },
     include: [
       {
         model: db.Assessment,
-        as: 'PostAssessments'
+        as: 'PostAssessments',
+        include: [{
+          model: db.AssessmentReason,
+          as: 'Reasons'
+        }]
       }
+    ],
+    order: [
+      ['PostAssessments', 'Reasons', 'Code', 'ASC' ]
     ]
   });
 
   res.send(post.PostAssessments);
 }))
 
-//post or update assessment
+
+/* 
+post new or update existing assessment
+expects req.body of the form:
+{
+  postCredibility: Boolean
+  sourceIsAnonymous (optional): Boolean
+  reasons: Array of Objects of the type { body: String, code: Number }
+}
+*/
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let assessments = await db.Assessment.findAll({
@@ -48,7 +64,6 @@ router.route('/posts/:post_id/assessments')
 
   let assessmentSpecs = {
     postCredibility: req.body.postCredibility,
-    body: req.body.body,
     isTransitive: false,
     sourceIsAnonymous: typeof req.body.sourceIsAnonymous !== 'undefined' ?
       req.body.sourceIsAnonymous : false
@@ -62,9 +77,13 @@ router.route('/posts/:post_id/assessments')
   let authUserProm = db.Source.findByPk(req.user.id);
   let postProm = db.Post.findByPk(req.params.post_id);
   let assessmentProm = db.Assessment.create(assessmentSpecs);
+  let reasonProms = req.body.reasons.map(reason => {
+    db.AssessmentReason.create(reason)
+  })
 
-  let [post, authUser, assessment] = await Promise.all([postProm, authUserProm, assessmentProm]);
+  let [post, authUser, assessment, reasons] = await Promise.all([postProm, authUserProm, assessmentProm, ...reasonProms]);
 
+  assessment.addReasons(reasons);
   let sourceAssessment = authUser.addSourceAssessment(assessment);
   let postAssessment = post.addPostAssessment(assessment);
 
@@ -85,8 +104,7 @@ router.route('/posts/:post_id/assessments')
   routeHelpers.markPostAsUnseenAfterAssessment(post, authUser.id);
 
 
-
-  if (assessment.postCredibility == 0)
+  if (assessment.postCredibility == constants.VALIDITY_CODES.QUESTIONED)
       notificationHelpers.notifyAboutQuestion(assessment, authUser, post, arbiters);
   else {
       db.Source.findAll({
@@ -141,12 +159,24 @@ router.route('/posts/:post_id/:user_id/assessment')
       SourceId: req.params.user_id,
       PostId: req.params.post_id
     },
+    include: [{
+      model: db.AssessmentReason,
+      as: 'Reasons'
+    }],
     order: [
       [ 'version', 'DESC'],
+      [ 'Reasons', 'Code', 'ASC' ]
     ]
   });
 
   res.send(assessments);
-}))
+}));
+
+
+router.route('/reason-codes')
+.get(wrapAsync(async function(req, res) {
+  res.send(constants.REASON_CODES_ENUM);
+}));
+
 
 module.exports = router;
