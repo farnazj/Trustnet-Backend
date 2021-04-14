@@ -43,7 +43,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     userName: {
       type: DataTypes.STRING,
-      allowNull: false,
+      validate: {
+        function(value){
+          allowNullforSystemMade(value, this.systemMade, "userName");
+        }
+      },
       unique: true
     },
     passwordHash: {

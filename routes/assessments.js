@@ -68,26 +68,39 @@ router.route('/posts/:post_id/assessments')
   let sourceAssessment = authUser.addSourceAssessment(assessment);
   let postAssessment = post.addPostAssessment(assessment);
 
-  let assessmentArbitersProm, arbiters;
+  let assessmentArbitersProm, registeredArbiters, outsideSources;
 
-  if (req.body.arbiters) {
-    arbiters = await db.Source.findAll({
+  if (req.body.sourceArbiters || req.body.emailArbiters) {
+    registeredArbiters = await db.Source.findAll({
       where: {
-        userName: {
-          [Op.in]: req.body.arbiters
-        }
+        [Op.and]: [{
+          isVerified: true
+        }, {
+          [Op.or]: [{
+            userName: {
+              [Op.in]: req.body.sourceArbiters
+            }
+          }, {
+            email: {
+              [Op.in]: req.body.emailArbiters
+            }
+          }]
+        }]
       }
     });
 
-    assessmentArbitersProm = assessment.addArbiters(arbiters);
+    let sourceEmails = registeredArbiters.map(arbiter => arbiter.email);
+    let emailsNotRegistered = req.body.emailArbiters.filter(email => !sourceEmails.includes(email));
+    outsideSources = await routeHelpers.makeOrFindAccountOnBehalf(emailsNotRegistered);
+
+    assessmentArbitersProm = assessment.addArbiters(registeredArbiters.concat(outsideSources));
   }
 
   routeHelpers.markPostAsUnseenAfterAssessment(post, authUser.id);
 
 
-
   if (assessment.postCredibility == 0)
-      notificationHelpers.notifyAboutQuestion(assessment, authUser, post, arbiters);
+      notificationHelpers.notifyAndEmailAboutQuestion(assessment, authUser, post, registeredArbiters.concat(outsideSources));
   else {
       db.Source.findAll({
         where: {
