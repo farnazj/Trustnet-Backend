@@ -15,9 +15,8 @@ router.route('/posts/:post_id/assessments')
 //TODO: need to change this if some posts become private
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  //let paginationReq = routeHelpers.getLimitOffset(req);
   let post = await db.Post.findOne({
-    where: {id: req.params.post_id},
+    where: { id: req.params.post_id },
     include: [
       {
         model: db.Assessment,
@@ -30,118 +29,149 @@ router.route('/posts/:post_id/assessments')
 }))
 
 //post or update assessment
-.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+.post(wrapAsync(async function(req, res) {
 
-  let assessments = await db.Assessment.findAll({
-    where: {
-      [Op.and]: [{
-        SourceId: req.user.id
-      },  {
-        PostId: req.params.post_id
-      }]
-      
-    },
-    order: [
-      [ 'version', 'DESC'],
-    ]
-  });
-
-  let assessmentSpecs = {
-    postCredibility: req.body.postCredibility,
-    body: req.body.body,
-    isTransitive: false,
-    sourceIsAnonymous: typeof req.body.sourceIsAnonymous !== 'undefined' ?
-      req.body.sourceIsAnonymous : false
-  };
-
-  if (assessments.length) {
-    for (let assessment of assessments)
-        assessment.update({ version: assessment.version - 1 });
+  if (typeof req.user === 'undefined' && typeof req.body.assessorToken === 'undefined') {
+    res.status(403).send({ message: 'User not recognized' });
   }
-
-  let authUserProm = db.Source.findByPk(req.user.id);
-  let postProm = db.Post.findByPk(req.params.post_id);
-  let assessmentProm = db.Assessment.create(assessmentSpecs);
-
-  let [post, authUser, assessment] = await Promise.all([postProm, authUserProm, assessmentProm]);
-
-  let sourceAssessment = authUser.addSourceAssessment(assessment);
-  let postAssessment = post.addPostAssessment(assessment);
-
-  let assessmentArbitersProm, registeredArbiters, outsideSources;
-
-  if (req.body.sourceArbiters || req.body.emailArbiters) {
-    registeredArbiters = await db.Source.findAll({
-      where: {
-        [Op.and]: [{
-          isVerified: true
-        }, {
-          [Op.or]: [{
-            userName: {
-              [Op.in]: req.body.sourceArbiters
-            }
-          }, {
-            email: {
-              [Op.in]: req.body.emailArbiters
-            }
-          }]
-        }]
-      }
-    });
-
-    let sourceEmails = registeredArbiters.map(arbiter => arbiter.email);
-    let emailsNotRegistered = req.body.emailArbiters.filter(email => !sourceEmails.includes(email));
-    outsideSources = await routeHelpers.makeOrFindAccountOnBehalf(emailsNotRegistered);
-
-    assessmentArbitersProm = assessment.addArbiters(registeredArbiters.concat(outsideSources));
-  }
-
-  routeHelpers.markPostAsUnseenAfterAssessment(post, authUser.id);
-
-
-  if (assessment.postCredibility == 0)
-      notificationHelpers.notifyAndEmailAboutQuestion(assessment, authUser, post, registeredArbiters.concat(outsideSources));
   else {
-      db.Source.findAll({
+
+    let authUser;
+
+    //for external sources that send an identifying token with their request
+    if (req.body.assessorToken) {
+      let token = await db.Token.findOne({
         where: {
-          '$Trusteds.id$': {
-            [Op.in]: [req.user.id]
-          }
+          tokenStr: req.body.assessorToken,
+          tokenType: constants.TOKEN_TYPES.OUTSIDE_SOURCE_ASSESSMENT
         },
         include: [{
-          model: db.Source,
-          as: 'Trusteds'
+          model: db.Source
         }]
-      })
-      .then(trusters => {
-        db.Assessment.findAll({
-          where: {
-            [Op.and]: [{
-              PostId: req.params.post_id
-            }, {
-              SourceId: {
-                [Op.in]: trusters.map(el => el.id)
+      });
+    
+      if (!token) {
+        res.status(403).send({ message: 'Source not recognized.' })
+      }
+      else {
+        authUser = token.Source;
+      }
+    }
+    else { //for sources that are signed up on the platform
+      authUser = await db.Source.findByPk(req.user.id);
+    }
+
+    let assessments = await db.Assessment.findAll({
+      where: {
+        [Op.and]: [{
+          SourceId: authUser.id
+        },  {
+          PostId: req.params.post_id
+        }]
+        
+      },
+      order: [
+        [ 'version', 'DESC'],
+      ]
+    });
+  
+    let assessmentSpecs = {
+      postCredibility: req.body.postCredibility,
+      body: req.body.body,
+      isTransitive: false,
+      sourceIsAnonymous: typeof req.body.sourceIsAnonymous !== 'undefined' ?
+        req.body.sourceIsAnonymous : false
+    };
+  
+    if (assessments.length) {
+      for (let assessment of assessments)
+          assessment.update({ version: assessment.version - 1 });
+    }
+  
+    let postProm = db.Post.findByPk(req.params.post_id);
+    let assessmentProm = db.Assessment.create(assessmentSpecs);
+  
+    let [post, assessment] = await Promise.all([postProm, assessmentProm]);
+  
+    let sourceAssessment = authUser.addSourceAssessment(assessment);
+    let postAssessment = post.addPostAssessment(assessment);
+  
+    let assessmentArbitersProm, registeredArbiters, outsideSources;
+  
+    if (req.body.sourceArbiters || req.body.emailArbiters) {
+      registeredArbiters = await db.Source.findAll({
+        where: {
+          [Op.and]: [{
+            isVerified: true
+          }, {
+            [Op.or]: [{
+              userName: {
+                [Op.in]: req.body.sourceArbiters
               }
             }, {
-              postCredibility: 0
-            }, {
-              version: 1
+              email: {
+                [Op.in]: req.body.emailArbiters
+              }
             }]
-              
-          }
-        }).then(prevPosedQuestions => {
-          if (prevPosedQuestions.length)
-            notificationHelpers.notifyAboutAnswer(assessment, authUser, post, trusters, prevPosedQuestions);
+          }]
+        }
+      });
+  
+      let sourceEmails = registeredArbiters.map(arbiter => arbiter.email);
+      let emailsNotRegistered = req.body.emailArbiters.filter(email => !sourceEmails.includes(email));
+      outsideSources = await routeHelpers.makeOrFindAccountOnBehalf(emailsNotRegistered);
+  
+      assessmentArbitersProm = assessment.addArbiters(registeredArbiters.concat(outsideSources));
+    }
+  
+    routeHelpers.markPostAsUnseenAfterAssessment(post, authUser.id);
+  
+  
+    if (assessment.postCredibility == 0)
+        notificationHelpers.notifyAndEmailAboutQuestion(assessment, authUser, post, registeredArbiters.concat(outsideSources));
+    else {
+        db.Source.findAll({
+          where: {
+            '$Trusteds.id$': {
+              [Op.in]: [authUser.id]
+            }
+          },
+          include: [{
+            model: db.Source,
+            as: 'Trusteds'
+          }]
         })
-      })
+        .then(trusters => {
+          db.Assessment.findAll({
+            where: {
+              [Op.and]: [{
+                PostId: req.params.post_id
+              }, {
+                SourceId: {
+                  [Op.in]: trusters.map(el => el.id)
+                }
+              }, {
+                postCredibility: 0
+              }, {
+                version: 1
+              }]
+                
+            }
+          }).then(prevPosedQuestions => {
+            if (prevPosedQuestions.length)
+              notificationHelpers.notifyAboutAnswer(assessment, authUser, post, trusters, prevPosedQuestions);
+          })
+        })
+    }
+  
+    await Promise.all([sourceAssessment, postAssessment, assessmentArbitersProm]);
+  
+    // queue.create('newAssessmentPosted', {postId: req.params.post_id, sourceId: req.user.id})
+    // .priority('medium').removeOnComplete(true).save();
+  
+    res.send({ message: 'Assessment posted' });
   }
 
-  await Promise.all([sourceAssessment, postAssessment, assessmentArbitersProm]);
-
-  // queue.create('newAssessmentPosted', {postId: req.params.post_id, sourceId: req.user.id})
-  // .priority('medium').removeOnComplete(true).save();
-
-  res.send({ message: 'Assessment posted' });
 }))
 
 
@@ -160,6 +190,7 @@ router.route('/posts/:post_id/:user_id/assessment')
   });
 
   res.send(assessments);
-}))
+}));
+
 
 module.exports = router;

@@ -59,9 +59,8 @@ router.route('/sources')
 
   let sources = await db.Source.findAll({
     where: {
-      [Op.and]: [{
-        isVerified: true
-      }, whereClause]},
+      whereClause
+    },
     ...paginationReq
   });
 

@@ -202,6 +202,6 @@ router.route('/reset-password/:token')
     res.send({ message: 'Password updated' });
   }
 
-}))
+}));
 
 module.exports = router;

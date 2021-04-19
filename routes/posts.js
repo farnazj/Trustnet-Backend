@@ -43,7 +43,7 @@ for the post, with the source as the sourceId and a value of "valid"
 router.route('/posts/:post_id')
 
 //TODO: need to change this if some posts become private
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+.get(wrapAsync(async function(req, res) {
 
   let post = await db.Post.findByPk(req.params.post_id)
   res.send(post);
