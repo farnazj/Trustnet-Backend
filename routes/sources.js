@@ -5,8 +5,8 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
-var kue = require('kue')
- , queue = kue.createQueue();
+// var kue = require('kue')
+//  , queue = kue.createQueue();
 
 router.route('/sources')
 
@@ -58,9 +58,7 @@ router.route('/sources')
   }
 
   let sources = await db.Source.findAll({
-    where: {
-      whereClause
-    },
+    where: whereClause,
     ...paginationReq
   });
 
