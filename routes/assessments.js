@@ -170,7 +170,6 @@ router.route('/posts/:post_id/assessments')
               required: false
             }]
           }).then(prevPosedQuestions => {
-            console.log(prevPosedQuestions, 'previously posed q***********')
             if (prevPosedQuestions.length) {
               notificationHelpers.notifyAndEmailAboutAnswer(assessment, authUser, post, trusters, prevPosedQuestions);
             }
