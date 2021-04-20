@@ -58,34 +58,41 @@ router.route('/signup')
     if (user) {
 
       crypto.randomBytes(20, async function(err, buf) {
-         let tokenStr = buf.toString('hex');
-         let token = await db.Token.create({
-           tokenStr,
-           tokenType: constants.TOKEN_TYPES.ACCOUNT_VERIFICATION,
-           expires: Date.now() + constants.TOKEN_EXP.ACCOUNT_VERIFICATION
-         });
-         token.setSource(user);
-         let verificationLink = constants.CLIENT_BASE_URL + '/verify-account/' + tokenStr;
+        let tokenStr = buf.toString('hex');
+        let token = await db.Token.create({
+          tokenStr,
+          tokenType: constants.TOKEN_TYPES.ACCOUNT_VERIFICATION,
+          expires: Date.now() + constants.TOKEN_EXP.ACCOUNT_VERIFICATION
+        });
+        token.setSource(user);
 
-         const signupMailOptions = {
-           from: process.env.EMAIL_USER,
-           to: user.email,
-           subject: `Account Verification for ${constants.SITE_NAME}`,
-           html: `<p>Hi ${user.firstName}!</p>
-           <p>Thanks for signing up for Trustent. If this wasn't you, please ignore
-           this email and we will remove your address from our records.</p>
-           <p>To activate your account, please click on the following link within the next 6 hours:</p>
-           <p> <a href="${verificationLink}">${verificationLink}</a></p>
-           <br>
-           <p>-The ${constants.SITE_NAME} team</p>`
-         };
+        console.log(info, 'info', "***\n");
+        let verificationLink;
+        if (info.type == 'NEW_USER')
+          verificationLink = `${constants.CLIENT_BASE_URL}/verify-new-account/${tokenStr}`;
+        else
+          verificationLink = `${constants.CLIENT_BASE_URL}/verify-existing-account/${tokenStr}`;
 
-         transporter.sendMail(signupMailOptions, function (err, info) {
-            if(err)
-              logger.error(err);
-            else
-              logger.info(info);
-         });
+
+        const signupMailOptions = {
+          from: process.env.EMAIL_USER,
+          to: user.email,
+          subject: `Account Verification for ${constants.SITE_NAME}`,
+          html: `<p>Hi ${user.firstName}!</p>
+          <p>Thanks for signing up for Trustent. If this wasn't you, please ignore
+          this email and we will remove your address from our records.</p>
+          <p>To activate your account, please click on the following link within the next 6 hours:</p>
+          <p> <a href="${verificationLink}">${verificationLink}</a></p>
+          <br>
+          <p>-The ${constants.SITE_NAME} team</p>`
+        };
+
+        transporter.sendMail(signupMailOptions, function (err, info) {
+          if(err)
+            logger.error(err);
+          else
+            logger.info(info);
+        });
       })
 
       res.status(202).send({ message: `Thanks for signing up! You should soon receive
@@ -99,7 +106,7 @@ router.route('/signup')
 });
 
 
-router.route('/verify-account/:token')
+router.route('/verify-new-account/:token')
 
 .post(wrapAsync(async function(req, res) {
 
@@ -119,9 +126,64 @@ router.route('/verify-account/:token')
   }
   else {
     if (!verificationToken.Source.isVerified) {
-      verificationToken.Source.update({isVerified: true});
+      verificationToken.Source.update({ isVerified: true });
       verificationToken.destroy();
       res.send({ message: 'User is now verified' });
+    }
+    else
+      console.log('What the hell');
+  }
+
+}));
+
+
+router.route('/verify-existing-account/:token')
+
+.post(wrapAsync(async function(req, res) {
+
+  let verificationToken = await db.Token.findOne({
+    where: {
+      tokenStr: req.params.token,
+      tokenType: constants.TOKEN_TYPES.ACCOUNT_VERIFICATION,
+      expires: { [Op.gt]: Date.now() }
+    },
+    include: [{
+      model: db.Source
+    }]
+  });
+
+  if (!verificationToken) {
+    res.status(403).send({ message: 'Verification token is invalid or has expired.' });
+  }
+  else {
+    if (!verificationToken.Source.isVerified) {
+
+      let existingUser = await db.Source.findOne({
+        where: {
+          email: verificationToken.Source.email,
+          systemMade: true
+        }
+      });
+
+      console.log('existing user before is', existingUser)
+
+      if (!existingUser)
+        res.status(403).send({ message: 'Something went wrong' });
+      else {
+        let tokenAssociatedSource = verificationToken.Source;
+        let userData = {
+          firstName: tokenAssociatedSource.firstName,
+          lastName: tokenAssociatedSource.lastName,
+          userName: tokenAssociatedSource.userName,
+          passwordHash: tokenAssociatedSource.passwordHash,
+          systemMade: false,
+          isVerified: true
+        }
+        await tokenAssociatedSource.destroy();
+
+        await Promise.all([existingUser.update(userData), verificationToken.destroy()]);
+        res.send({ message: 'User is now verified' });
+      }
     }
     else
       console.log('What the hell');
