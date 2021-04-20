@@ -90,9 +90,9 @@ module.exports = (sequelize, DataTypes) => {
   Source.prototype.getFullName = function() {
     if (this.firstName.length)
       return `${this.firstName} ${this.lastName}`;
-    else if (this.isVerified)
+    else if (this.isVerified) 
       return this.userName;
-    else
+    else //for external users
       return this.email;
   }
 
