@@ -61,13 +61,13 @@ router.route('/signup')
          let tokenStr = buf.toString('hex');
          let token = await db.Token.create({
            tokenStr,
-           tokenType: constants.TOKEN_TYPES.VERIFICATION,
-           expires: Date.now() + constants.TOKEN_EXP.VERIFICATION
+           tokenType: constants.TOKEN_TYPES.ACCOUNT_VERIFICATION,
+           expires: Date.now() + constants.TOKEN_EXP.ACCOUNT_VERIFICATION
          });
          token.setSource(user);
          let verificationLink = constants.CLIENT_BASE_URL + '/verify-account/' + tokenStr;
 
-         const passResetMailOptions = {
+         const signupMailOptions = {
            from: process.env.EMAIL_USER,
            to: user.email,
            subject: `Account Verification for ${constants.SITE_NAME}`,
@@ -80,7 +80,7 @@ router.route('/signup')
            <p>-The ${constants.SITE_NAME} team</p>`
          };
 
-         transporter.sendMail(passResetMailOptions, function (err, info) {
+         transporter.sendMail(signupMailOptions, function (err, info) {
             if(err)
               logger.error(err);
             else
@@ -106,7 +106,7 @@ router.route('/verify-account/:token')
   let verificationToken = await db.Token.findOne({
     where: {
       tokenStr: req.params.token,
-      tokenType: constants.TOKEN_TYPES.VERIFICATION,
+      tokenType: constants.TOKEN_TYPES.ACCOUNT_VERIFICATION,
       expires: { [Op.gt]: Date.now() }
     },
     include: [{
@@ -140,8 +140,8 @@ router.route('/forgot-password')
         let tokenStr = buf.toString('hex');
         let token = await db.Token.create({
           tokenStr,
-          tokenType: constants.TOKEN_TYPES.RECOVERY,
-          expires: Date.now() + constants.TOKEN_EXP.RECOVERY
+          tokenType: constants.TOKEN_TYPES.ACOUNT_RECOVERY,
+          expires: Date.now() + constants.TOKEN_EXP.ACOUNT_RECOVERY
         });
         token.setSource(source);
 
@@ -182,7 +182,7 @@ router.route('/reset-password/:token')
   let token = await db.Token.findOne({
     where: {
       tokenStr: req.params.token,
-      tokenType: constants.TOKEN_TYPES.RECOVERY,
+      tokenType: constants.TOKEN_TYPES.ACOUNT_RECOVERY,
       expires: { [Op.gt]: Date.now() }
     },
     include: [{
@@ -202,6 +202,6 @@ router.route('/reset-password/:token')
     res.send({ message: 'Password updated' });
   }
 
-}))
+}));
 
 module.exports = router;

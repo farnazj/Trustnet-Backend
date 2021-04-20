@@ -43,7 +43,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     userName: {
       type: DataTypes.STRING,
-      allowNull: false,
+      validate: {
+        function(value){
+          allowNullforSystemMade(value, this.systemMade, "userName");
+        }
+      },
       unique: true
     },
     passwordHash: {
@@ -86,8 +90,10 @@ module.exports = (sequelize, DataTypes) => {
   Source.prototype.getFullName = function() {
     if (this.firstName.length)
       return `${this.firstName} ${this.lastName}`;
-    else
+    else if (this.isVerified)
       return this.userName;
+    else
+      return this.email;
   }
 
   Source.associate = function (models) {
