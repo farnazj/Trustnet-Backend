@@ -90,8 +90,10 @@ module.exports = (sequelize, DataTypes) => {
   Source.prototype.getFullName = function() {
     if (this.firstName.length)
       return `${this.firstName} ${this.lastName}`;
-    else
+    else if (this.isVerified)
       return this.userName;
+    else
+      return this.email;
   }
 
   Source.associate = function (models) {

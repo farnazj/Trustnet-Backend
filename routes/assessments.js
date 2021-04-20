@@ -61,6 +61,8 @@ router.route('/posts/:post_id/assessments')
       authUser = await db.Source.findByPk(req.user.id);
     }
 
+    //find older assessments by the user for the post and decrement their version number
+    //so that the newly posted assessment can have a version of 1 (the most recent version)
     let assessments = await db.Assessment.findAll({
       where: {
         [Op.and]: [{
@@ -147,19 +149,32 @@ router.route('/posts/:post_id/assessments')
               [Op.and]: [{
                 PostId: req.params.post_id
               }, {
-                SourceId: {
-                  [Op.in]: trusters.map(el => el.id)
-                }
-              }, {
                 postCredibility: 0
               }, {
                 version: 1
-              }]
-                
-            }
+              },
+              {
+                [Op.or]: [{
+                  SourceId: {
+                    [Op.in]: trusters.map(el => el.id)
+                  }
+                }, {
+                  '$Arbiters.id$': authUser.id
+                }]
+              }
+            ]
+            },
+            include: [{
+              model: db.Source,
+              as: 'Arbiters',
+              required: false
+            }]
           }).then(prevPosedQuestions => {
-            if (prevPosedQuestions.length)
-              notificationHelpers.notifyAboutAnswer(assessment, authUser, post, trusters, prevPosedQuestions);
+            console.log(prevPosedQuestions, 'previously posed q***********')
+            if (prevPosedQuestions.length) {
+              notificationHelpers.notifyAndEmailAboutAnswer(assessment, authUser, post, trusters, prevPosedQuestions);
+            }
+              
           })
         })
     }
