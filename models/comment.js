@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 1
     },
     setId: {
-        type: DataTypes.UUID,
+        type: DataTypes.UUID
     }
   }, {
     charset: 'utf8mb4',
@@ -18,8 +18,8 @@ module.exports = (sequelize, DataTypes) => {
 
 
   Comment.associate = function (models) {
-    models.Comment.belongsTo(models.Comment, {as: 'RepliesToComment'});
-    models.Comment.belongsTo(models.Assessment, {as: 'RepliesToAssessment'});
+    models.Comment.belongsTo(models.Comment, { as: 'ParentComment' });
+    models.Comment.belongsTo(models.Assessment, { as: 'ParentAssessment' });
     models.Comment.belongsTo(models.Post);
     models.Comment.belongsTo(models.Source);
   };
