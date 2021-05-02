@@ -165,8 +165,6 @@ router.route('/verify-existing-account/:token')
         }
       });
 
-      console.log('existing user before is', existingUser)
-
       if (!existingUser)
         res.status(403).send({ message: 'Something went wrong' });
       else {

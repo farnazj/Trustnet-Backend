@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 1
     },
     setId: {
-      type: DataTypes.STRING
+      type: DataTypes.UUID,
     }
   }, {
     charset: 'utf8mb4',

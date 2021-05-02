@@ -16,7 +16,6 @@ var db = require('../models');
 var FeedQueue = require('../lib/feedQueue');
 var AltTitlesRedisHandler = require('../lib/alternativeTitles');
 const CronJob = require('cron').CronJob;
-
 const { fork } = require('child_process');
 
 //forked = fork('./lib/graphJobsHandler.js');
@@ -67,7 +66,6 @@ var server = http.createServer(app);
   server.on('error', onError);
   server.on('listening', onListening);
  });
-
 
 
 /**
