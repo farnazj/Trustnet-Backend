@@ -7,7 +7,6 @@ var boostHelpers = require('../lib/boostHelpers');
 var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const { v4: uuidv4 } = require('uuid');
-const { UUID } = require('sequelize');
 const Op = Sequelize.Op;
 
 router.route('/comments/sets/:set_id')
@@ -83,7 +82,7 @@ otherwise the replies would need to be deleted as well
     }
     else {
         let dummyCommentProm = db.Comment.create({
-            setId: UUID(),
+            setId: uuidv4(),
             version: 1,
         });
 
@@ -154,7 +153,7 @@ expects req.body of the form:
 
     let commentProm = db.Comment.create({
         body: req.body.body,
-        setId: UUID(),
+        setId: uuidv4(),
         version: 1
     });
 
