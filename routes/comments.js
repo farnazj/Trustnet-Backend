@@ -122,9 +122,8 @@ otherwise the replies would need to be deleted as well
 router.route('/comments/posts/:post_id')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
     let relations = await boostHelpers.getBoostersandCredSources(req);
-    let viewableSources = relations.followedTrusteds.concat(post.SourceId);
-
     let post = await db.Post.findByPk(req.params.post_id);
+    let viewableSources = relations.followedTrusteds.concat(post.SourceId);
   
     let comments = await db.Comment.findAll({
         where: {
