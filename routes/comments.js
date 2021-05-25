@@ -10,7 +10,7 @@ const { v4: uuidv4 } = require('uuid');
 const { UUID } = require('sequelize');
 const Op = Sequelize.Op;
 
-router.route('/comments/:set_id')
+router.route('/comments/sets/:set_id')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
     let comments = await db.Comment.findAll({
         where: {
@@ -19,30 +19,7 @@ router.route('/comments/:set_id')
     });
 
     res.send(comments);
-}));
-
-
-router.route('/comments/post/:post_id')
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-    let relations = await boostHelpers.getBoostersandCredSources(req);
-    let viewableSources = relations.followedTrusteds.concat(post.SourceId);
-
-    let post = await db.Post.findByPk(req.params.post_id);
-  
-    let comments = await db.Comment.findAll({
-        where: {
-            PostId: req.params.post_id,
-            SourceId: {
-                [Op.or]: {
-                    [Op.eq]: post.SourceId,
-                    [Op.in]: viewableSources
-                  }
-            }
-        }
-    })
-
-    res.send(comments);
-}));
+}))
 
 /*
 editing a previously posted comment
@@ -51,7 +28,6 @@ expects req.body of the form:
   body: String
 }
 */
-router.route('/comments/:set_id')
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
     let prevComments = await db.Comment.findAll({
         where: {
@@ -143,6 +119,28 @@ otherwise the replies would need to be deleted as well
 }))
 
 
+router.route('/comments/posts/:post_id')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+    let relations = await boostHelpers.getBoostersandCredSources(req);
+    let viewableSources = relations.followedTrusteds.concat(post.SourceId);
+
+    let post = await db.Post.findByPk(req.params.post_id);
+  
+    let comments = await db.Comment.findAll({
+        where: {
+            PostId: req.params.post_id,
+            SourceId: {
+                [Op.or]: {
+                    [Op.eq]: post.SourceId,
+                    [Op.in]: viewableSources
+                  }
+            }
+        }
+    })
+
+    res.send(comments);
+}))
+
 /*
 posting a new comment
 expects req.body of the form:
@@ -152,7 +150,6 @@ expects req.body of the form:
   repliesToType (optional): one of 1 for comment, 2 for assessment
 }
 */
-router.route('/comments/:post_id')
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
     let commentProm = db.Comment.create({
