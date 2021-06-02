@@ -349,7 +349,7 @@ router.route('/custom-titles')
   let dbResp = await db.StandaloneTitle.findOrCreate({
     where: {
       text: titleAssociatedWPost ? post.title : req.body.pageIndentifiedTitle,
-      hash: utils.hashCode(utils.uncurlify(post.title.substr(0, constants.LENGTH_TO_HASH)))
+      hash: utils.hashCode(utils.uncurlify(post.title.substr(0, constants.LENGTH_TO_HASH)).toLowerCase())
     }
   });
 
