@@ -16,7 +16,7 @@ const { v4: uuidv4 } = require('uuid');
 
 router.route('/custom-title-endorsement/user/:set_id')
 
-//if auth user has endorsed a custom title
+//returns whether the auth user has endorsed a custom title
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let title = await db.CustomTitle.findOne({
@@ -58,7 +58,7 @@ router.route('/custom-title-endorsement/user/:set_id')
   res.send({ message: 'Endorsement value changed' });
 }));
 
-
+//returns which sources have endorsed a title set (a title or any of its previous versions)
 router.route('/custom-title-endorsement/:set_id')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -103,11 +103,18 @@ router.route('/custom-titles-match')
 
   if (customTitlesSetIds.length) {
 
-    let majorityMode = req.headers.majoritymode == 'true' ? true : false;
+    let userPreferences = await db.Preferences.findOne({
+      where: {
+          sourceId: req.user.id
+      }
+    });
+  
+    let anySourceMode = (userPreferences && JSON.parse(userPreferences.preferencesBlob).headlineSources ===
+      constants.HEADLINE_SOURCES_MODES.ANY) ? true : false;
 
     let whereClause = {};
   
-    if (majorityMode) {
+    if (anySourceMode) {
       whereClause = {
         '$StandaloneCustomTitles.setId$': {
           [Op.in]: customTitlesSetIds
@@ -258,22 +265,38 @@ get the custom titles associated with a standaloneTitle from the auth user's per
 */
 router.route('/custom-titles/:standalone_title_id')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-  let relations = await boostHelpers.getBoostersandCredSources(req);
 
-  let titleSources = relations.followedTrusteds;
-
-  if (req.headers.activityusername) {
-    let activityUser = await db.Source.findOne({
-      where: {
-        userName: req.headers.activityusername
-      }
-    });
-
-    titleSources.push(activityUser.id)
-  }
-
-  let standaloneTitles = await db.StandaloneTitle.findAll({
+  let userPreferences = await db.Preferences.findOne({
     where: {
+        sourceId: req.user.id
+    }
+  });
+
+  let anySourceMode = (userPreferences && JSON.parse(userPreferences.preferencesBlob).headlineSources ===
+      constants.HEADLINE_SOURCES_MODES.ANY) ? true : false;
+
+  let whereConfig = {}
+
+  if (anySourceMode) {
+    whereConfig = {
+      id: req.params.standalone_title_id
+    }
+  }
+  else {
+    let relations = await boostHelpers.getBoostersandCredSources(req);
+    let titleSources = relations.followedTrusteds;
+
+    if (req.headers.activityusername) {
+      let activityUser = await db.Source.findOne({
+        where: {
+          userName: req.headers.activityusername
+        }
+      });
+  
+      titleSources.push(activityUser.id)
+    }
+
+    whereConfig = {
       [Op.and]: [{
         id: req.params.standalone_title_id
       }, {
@@ -281,6 +304,13 @@ router.route('/custom-titles/:standalone_title_id')
           [Op.in]: titleSources
         },
       }]
+    }
+  }
+
+
+  let standaloneTitles = await db.StandaloneTitle.findAll({
+    where: {
+      whereConfig
     },
     include: [{
       model: db.CustomTitle,
