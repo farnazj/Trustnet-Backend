@@ -105,7 +105,7 @@ router.route('/custom-titles-match')
 
     let userPreferences = await db.Preferences.findOne({
       where: {
-          sourceId: req.user.id
+          SourceId: req.user.id
       }
     });
   
@@ -114,6 +114,8 @@ router.route('/custom-titles-match')
 
     let whereClause = {};
   
+    //if user's preferences are set such that they see headlines submitted by any source, not just the ones
+    //they follow or trust
     if (anySourceMode) {
       whereClause = {
         '$StandaloneCustomTitles.setId$': {
@@ -147,7 +149,11 @@ router.route('/custom-titles-match')
           model: db.Source,
           as: 'Endorsers',
         }]
-      }]
+      }],
+      order: [
+        [ 'StandaloneCustomTitles', 'setId', 'DESC'],
+        [ 'StandaloneCustomTitles', 'version', 'DESC']
+      ]
     })
 
     res.send(standaloneTitles);
@@ -268,7 +274,7 @@ router.route('/custom-titles/:standalone_title_id')
 
   let userPreferences = await db.Preferences.findOne({
     where: {
-        sourceId: req.user.id
+        SourceId: req.user.id
     }
   });
 
@@ -309,9 +315,7 @@ router.route('/custom-titles/:standalone_title_id')
 
 
   let standaloneTitles = await db.StandaloneTitle.findAll({
-    where: {
-      whereConfig
-    },
+    where: whereConfig,
     include: [{
       model: db.CustomTitle,
       as: 'StandaloneCustomTitles',
