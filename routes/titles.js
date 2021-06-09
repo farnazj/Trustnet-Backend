@@ -347,19 +347,20 @@ router.route('/custom-titles')
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let postProm = new Promise(() => {return null;});
+  let postProm = new Promise(() => { return null; });
   if (req.body.postId) {
     postProm = db.Post.findByPk(req.body.postId);
   }
   else {
     try {
       await routeHelpers.importPost(req.body.postUrl);
+
       postProm = db.Post.findOne({
         where: { url: req.body.postUrl }
       });  
     }
-    catch(err) { //if the article does not conform to OGP
-      console.log(err)
+    catch(err) {//if the article does not conform to ogp and can't be imported
+      console.log(err);
     }
     
   }
@@ -372,18 +373,12 @@ router.route('/custom-titles')
 
   let [post, authUser, customTitle] = await Promise.all([postProm, authUserProm, customTitleProm]);
 
-  let titleAssociatedWPost = false;
-  if (req.body.appRequest == true || (post && utils.uncurlify(req.body.pageIndentifiedTitle) == utils.uncurlify(post.title)))
-    titleAssociatedWPost = true;
-  else {
-    console.log('title is either not a main title or something else is going on', req.body.pageIndentifiedTitle, post.title);
-  }
-
+  let titleToHash = (req.body.appRequest && post) ? post.title : req.body.pageIndentifiedTitle;
 
   let dbResp = await db.StandaloneTitle.findOrCreate({
     where: {
-      text: titleAssociatedWPost ? post.title : req.body.pageIndentifiedTitle,
-      hash: utils.hashCode(utils.uncurlify(post.title.substr(0, constants.LENGTH_TO_HASH)).toLowerCase())
+      text: titleToHash, 
+      hash: utils.hashCode(utils.uncurlify(titleToHash.substr(0, constants.LENGTH_TO_HASH)).toLowerCase())
     }
   });
 
@@ -392,12 +387,11 @@ router.route('/custom-titles')
   let standaloneCustomTitleAssocProm = standaloneTitle.addStandaloneCustomTitles(customTitle);
   let sourceTitleProm = authUser.addSourceCustomTitles(customTitle);
 
-  let postTitleProm = titleAssociatedWPost ? post.setStandaloneTitle(standaloneTitle) : Promise.resolve();
+  let postTitleProm = post ? post.setStandaloneTitle(standaloneTitle) : new Promise((resolve) => { resolve(); });
 
   let redisHandlerProm = altTitlesRedisHandler.addAltTitle(customTitle, standaloneTitle);
 
-  await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, postTitleProm, redisHandlerProm
-  ]);
+  await Promise.all([sourceTitleProm, standaloneCustomTitleAssocProm, postTitleProm, redisHandlerProm]);
   res.send({ message: 'Title posted', data: standaloneTitle });
 
 }));
