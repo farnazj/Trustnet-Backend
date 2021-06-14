@@ -32,12 +32,10 @@ router.route('/preferences')
         results[0].setSource(authUser);
     }
 
-    await results[0].update({
-        preferencesBlob: req.body.preferences
-    });
+    results[0].preferencesBlob = req.body.preferences;
+    await results[0].save();
 
     res.send({ message: 'Preferences are updated' });
-
 }));
   
 
