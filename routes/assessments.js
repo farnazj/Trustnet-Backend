@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
+var boostHelpers = require('../lib/boostHelpers');
 var notificationHelpers = require('../lib/notificationHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 var Sequelize = require('sequelize');
@@ -12,15 +13,21 @@ const Op = Sequelize.Op;
 //  , queue = kue.createQueue();
 
 router.route('/posts/:post_id/assessments')
-//TODO: need to change this if some posts become private
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let relations = await boostHelpers.getBoostersandCredSources(req);
 
   let post = await db.Post.findOne({
     where: { id: req.params.post_id },
     include: [
       {
         model: db.Assessment,
-        as: 'PostAssessments'
+        as: 'PostAssessments',
+        where: {
+          SourceId: {
+            [Op.in] : relations.followedTrusteds
+          }
+        }
       }
     ]
   });
@@ -206,5 +213,32 @@ router.route('/posts/:post_id/:user_id/assessment')
   res.send(assessments);
 }));
 
+
+router.route('/posts/assessments/url')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  console.log(req.headers)
+  let relations = await boostHelpers.getBoostersandCredSources(req);
+
+  let post = await db.Post.findOne({
+    where: { 
+      url: req.headers.url
+    },
+    include: [
+      {
+        model: db.Assessment,
+        as: 'PostAssessments',
+        where: {
+          SourceId: {
+            [Op.in] : relations.followedTrusteds
+          }
+        }
+      }
+    ]
+  });
+
+  let result = post ? post.PostAssessments : [];
+  res.send(result);
+}))
 
 module.exports = router;
