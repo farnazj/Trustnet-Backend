@@ -126,7 +126,7 @@ router.route('/verify-new-account/:token')
   else {
     if (!verificationToken.Source.isVerified) {
       verificationToken.Source.update({ isVerified: true });
-      verificationToken.destroy();
+      // verificationToken.destroy(); //TODO: restore later
       res.send({ message: 'User is now verified' });
     }
     else
