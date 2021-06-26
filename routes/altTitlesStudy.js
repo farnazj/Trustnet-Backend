@@ -5,6 +5,7 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 var constants = require('../lib/constants');
+var logger = require('../lib/logger');
 const Op = Sequelize.Op;
 
 
@@ -24,8 +25,6 @@ router.route('/alt-titles-feed')
 
     let followedIds = authUser.Follows.map(source => source.id);
     followedIds.push(authUser.id)
-
-    console.log(followedIds, 'followed Ids\n')
 
     let posts = await db.Post.findAll({
         where: {
@@ -78,7 +77,6 @@ router.route('/finish-alt-title-signup/:token')
         }
     });
 
-    console.log(authUserPreferences, '*****')
     let oldPreferences;
     if (authUserPreferences[0].preferencesBlob == undefined)
         oldPreferences = {};
@@ -95,7 +93,6 @@ router.route('/finish-alt-title-signup/:token')
         authUserPreferencesProms.push(authUserPreferences[0].setSource(authUser));
 
     await Promise.all(authUserPreferencesProms);
-    console.log('updated auth user preferences', authUserPreferences[0])
 
     let preferences = await db.Preferences.findAll({
         where: {
@@ -124,7 +121,6 @@ router.route('/finish-alt-title-signup/:token')
         
     });
 
-    console.log('inja\n')
     await Promise.all([...proms, verificationToken.destroy()]);
   
     res.send({ message: 'Finished alt title signup' })
@@ -158,8 +154,7 @@ router.route('/headline-study-log')
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-    //TODO
-
+    logger.study(`${req.user.id}, ${req.body.type}, ${req.body.data}`);
     res.send({ message: 'Log successful' });
 }));
 
