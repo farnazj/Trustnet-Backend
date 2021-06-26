@@ -12,7 +12,7 @@ const Op = Sequelize.Op;
 router.route('/alt-titles-feed')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
+    
     let authUser = await db.Source.findOne({
         where: {
             id: req.user.id
@@ -26,10 +26,22 @@ router.route('/alt-titles-feed')
     let followedIds = authUser.Follows.map(source => source.id);
     followedIds.push(authUser.id)
 
+    let titleSources = [];
+    if (req.headers.username) {
+        titleSources = [await db.Source.findOne({
+            where: {
+                userName: req.headers.username
+            }
+        })].map(el => el.id);
+    }
+    else {
+        titleSources = followedIds;
+    }
+
     let posts = await db.Post.findAll({
         where: {
             '$StandaloneTitle->StandaloneCustomTitles.SourceId$': {
-                [Op.in]: followedIds
+                [Op.in]: titleSources
             }
         },
         include: [{
@@ -40,6 +52,12 @@ router.route('/alt-titles-feed')
                 include: [{
                     model: db.Source,
                     as: 'Endorsers',
+                    where: {
+                        id: {
+                            [Op.in]: followedIds
+                        }
+                    },
+                    required: false
                 }]
             }]
         }],
