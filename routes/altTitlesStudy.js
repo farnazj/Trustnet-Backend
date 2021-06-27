@@ -38,10 +38,34 @@ router.route('/alt-titles-feed')
         titleSources = followedIds;
     }
 
+    let queryStr = 'SELECT DISTINCT `Post`.`id`, `Post`.`publishedDate` FROM `Posts` AS `Post` \
+    LEFT OUTER JOIN `StandaloneTitles` AS `StandaloneTitle` ON `Post`.`id` = `StandaloneTitle`.`PostId` \
+    LEFT OUTER JOIN `CustomTitles` AS `StandaloneTitle->StandaloneCustomTitles` ON `StandaloneTitle`.`id` = `StandaloneTitle->StandaloneCustomTitles`.`StandaloneTitleId` \
+    LEFT OUTER JOIN ( `TitleEndorsements` AS `StandaloneTitle->StandaloneCustomTitles->Endorsers->TitleEndorsements` \
+    INNER JOIN `Sources` AS `StandaloneTitle->StandaloneCustomTitles->Endorsers` ON \
+    `StandaloneTitle->StandaloneCustomTitles->Endorsers`.`id` = `StandaloneTitle->StandaloneCustomTitles->Endorsers->TitleEndorsements`.`SourceId`) \
+    ON `StandaloneTitle->StandaloneCustomTitles`.`id` = `StandaloneTitle->StandaloneCustomTitles->Endorsers->TitleEndorsements`.`CustomTitleId` AND \
+    `StandaloneTitle->StandaloneCustomTitles->Endorsers`.`id` IN :endorsers \
+    WHERE `StandaloneTitle->StandaloneCustomTitles`.`SourceId` IN :title_sources\
+    ORDER BY `Post`.`publishedDate` DESC \
+    LIMIT :offset, :limit;';
+
+    let replacements = {
+        endorsers: [followedIds],
+        title_sources: [titleSources],
+        offset: parseInt(req.query.offset),
+        limit: parseInt(req.query.limit)
+    }
+
+    let postObjs = await db.sequelize.query(queryStr,
+        { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
+    
+    let postIds = postObjs.map(el => el.id);
+
     let posts = await db.Post.findAll({
         where: {
-            '$StandaloneTitle->StandaloneCustomTitles.SourceId$': {
-                [Op.in]: titleSources
+            id: {
+                [Op.in]: postIds
             }
         },
         include: [{
@@ -61,8 +85,6 @@ router.route('/alt-titles-feed')
                 }]
             }]
         }],
-        limit: req.params.limit,
-        offset: req.params.offset,
         order: [
             [ 'publishedDate', 'DESC'],
             [ db.StandaloneTitle, 'StandaloneCustomTitles', 'updatedAt', 'DESC']
@@ -112,32 +134,35 @@ router.route('/finish-alt-title-signup/:token')
 
     await Promise.all(authUserPreferencesProms);
 
-    let preferences = await db.Preferences.findAll({
+    let otherUsers = await db.Source.findAll({
         where: {
-            '$Source.id$': {
-                [Op.ne]: authUser.id
-            }
+            [Op.and]: [{
+                systemMade: false
+            }, {
+                '$Source.id$': {
+                    [Op.ne]: authUser.id
+                }
+            }]
         },
         include: [{
-            model: db.Source
+            model: db.Preferences,
+            required: false
         }]
-    });
+    })
 
     let proms = [];
 
-    preferences.forEach(preference => {
-        if (preference.preferencesBlob != undefined) {
-            let preferencesBlob = JSON.parse(preference.preferencesBlob);
-            console.log('blob', preferencesBlob)
+    console.log('other users', otherUsers)
+
+    otherUsers.forEach(user => {
+        if (user.Preferences && user.Preferences.preferencesBlob != undefined) {
+            let preferencesBlob = JSON.parse(user.preference.preferencesBlob);
             if ('altExperiment' in preferencesBlob) {
-                proms.push(...[
-                    authUser.addFollow(preference.Source),
-                    preference.Source.addFollow(authUser)
-                ])
+                proms.push(user.addFollow(authUser));
             }
         }
-        
-    });
+        proms.push(authUser.addFollow(user));
+    })
 
     await Promise.all([...proms, verificationToken.destroy()]);
   
@@ -149,18 +174,44 @@ router.route('/study-users')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-    let preferences = await db.Preference.findAll({
-        include: [{
-            model: db.Source
-        }]
-    });
+    let paginationReq = routeHelpers.getLimitOffset(req);
+    let searchTerm = req.headers.searchterm ? req.headers.searchterm : '';
 
-    let sources = [];
-    preferences.forEach(preference => {
-        let preferencesBlob = JSON.parse(preference.preferencesBlob);
-        if ('altExperiment' in preferencesBlob) {
-            sources.push(preference.Source);
+    let whereClause = {
+        [Op.and]: [{
+            systemMade: false
+        }, {
+            '$Source.id$': {
+                [Op.ne]: req.user.id
+            }
+        }, {
+            isVerified: true
+        }]
+    }
+
+    if (searchTerm.length) {
+        let searchClause = {
+            [Op.or]: [ 
+                db.sequelize.where(db.sequelize.fn('concat', db.sequelize.col('firstName'), ' ', db.sequelize.col('lastName')), {
+                    [Op.like]: '%' + searchTerm + '%'
+                }),
+                {
+                userName: { [Op.like]: '%' + searchTerm + '%' }
+                }
+            ]
         }
+
+        whereClause = {
+            [Op.and]: [
+                whereClause,
+                searchClause
+            ]
+        }
+    }
+    
+    let sources = await db.Source.findAll({
+        where: whereClause,
+        ...paginationReq
     });
 
     res.send(sources);

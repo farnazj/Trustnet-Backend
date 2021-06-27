@@ -66,24 +66,27 @@ router.route('/signup')
         });
         token.setSource(user);
 
+        let clientUrl = req.body.headlineExp ? constants.HEADLINE_CLIENT_BASE_URL : constants.CLIENT_BASE_URL;
+        let siteName = req.body.headlineExp ? 'Reheadline' : constants.SITE_NAME;
+
         let verificationLink;
         if (info.type == 'NEW_USER')
-          verificationLink = `${constants.CLIENT_BASE_URL}/verify-new-account/${tokenStr}`;
+          verificationLink = `${clientUrl}/verify-new-account/${tokenStr}`;
         else
-          verificationLink = `${constants.CLIENT_BASE_URL}/verify-existing-account/${tokenStr}`;
+          verificationLink = `${clientUrl}/verify-existing-account/${tokenStr}`;
 
 
         const signupMailOptions = {
           from: process.env.EMAIL_USER,
           to: user.email,
-          subject: `Account Verification for ${constants.SITE_NAME}`,
+          subject: `Account Verification for ${siteName}`,
           html: `<p>Hi ${user.firstName}!</p>
           <p>Thanks for signing up for Trustent. If this wasn't you, please ignore
           this email and we will remove your address from our records.</p>
           <p>To activate your account, please click on the following link within the next 6 hours:</p>
           <p> <a href="${verificationLink}">${verificationLink}</a></p>
           <br>
-          <p>-The ${constants.SITE_NAME} team</p>`
+          <p>-The ${siteName} team</p>`
         };
 
         transporter.sendMail(signupMailOptions, function (err, info) {
