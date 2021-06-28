@@ -353,13 +353,15 @@ router.route('/custom-titles')
   }
   else {
     try {
+      //if the article does not conform to ogp and can't be imported using its url,
+      //a post will simply be created which holds the posted url
       await routeHelpers.importPost(req.body.postUrl);
 
       postProm = db.Post.findOne({
         where: { url: req.body.postUrl }
       });  
     }
-    catch(err) {//if the article does not conform to ogp and can't be imported
+    catch(err) {
       console.log(err);
     }
     
