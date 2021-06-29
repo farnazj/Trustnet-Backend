@@ -132,7 +132,7 @@ module.exports = function(passport) {
 
           // if no user is found, return the message
           if (!user)
-              return done(null, false, { message: 'No user found' });
+              return done(null, false, { message: 'No user found with the given username' });
           if (!user.isVerified)
               return done(null, false, {message: 'user not activated'});
 

@@ -106,7 +106,7 @@ router.route('/posts/import')
    };
 
   await routeHelpers.importPost(req.body.postUrl, authUser,
-     assessmentObj, req.body.target_usernames);
+     assessmentObj, true, req.body.target_usernames);
 
   res.send({ message: 'Post has been imported' });
 }));
