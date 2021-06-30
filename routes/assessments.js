@@ -106,8 +106,6 @@ router.route('/posts/:post_id/:user_id/assessment')
 router.route('/posts/assessments/url')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  console.log(req.headers)
-
   let assessors = [];
   if (req.headers.authuser)
     assessors = [req.user.id]
