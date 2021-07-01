@@ -4,11 +4,12 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
-var filterValidity = require('../lib/boostPatch');
+var filterAccuracy = require('../lib/boostPatch');
 var Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 var constants = require('../lib/constants');
 var db  = require('../models');
+const logger = require('../lib/logger');
 
 //get a boost from the auth_user's perspective
 router.route('/boosts/posts/:post_id')
@@ -126,10 +127,17 @@ router.route('/boosts')
 
   let authUser = await authUserProm;
 
-  await routeHelpers.boostPost(authUser, req.body.post_id, req.body.target_usernames,
-    req.body.target_lists);
-
-  res.send({}); //TODO: change
+  try {
+    await routeHelpers.boostPost(authUser, req.body.post_id, req.body.target_usernames,
+      req.body.target_lists);
+    let boostLink = `${constants.CLIENT_BASE_URL}/posts/${req.body.post_id}`;
+    res.send({ message: 'Post shared', data: boostLink });
+  }
+  catch (err) {
+    logger.error(err);
+    res.status(402).send({ message: 'A problem occured. Try again.' });
+  }
+  
 }));
 
 module.exports = router;

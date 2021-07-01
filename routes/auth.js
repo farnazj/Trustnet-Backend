@@ -66,7 +66,6 @@ router.route('/signup')
         });
         token.setSource(user);
 
-        console.log(info, 'info', "***\n");
         let verificationLink;
         if (info.type == 'NEW_USER')
           verificationLink = `${constants.CLIENT_BASE_URL}/verify-new-account/${tokenStr}`;

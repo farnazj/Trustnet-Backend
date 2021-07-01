@@ -9,6 +9,19 @@ var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
 
+
+router.route('/posts/url')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+  let url = req.headers.url;
+  let post = await db.Post.findOne({
+    where: {
+      url: url
+    }
+  });
+
+  res.send(post);
+}));
+
 router.route('/posts') //initiated posts
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -77,21 +90,21 @@ router.route('/posts/:post_id')
 }));
 
 
-router.route('/posts/:username')
+// router.route('/posts/:username')
 
-.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+// .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let paginationReq = routeHelpers.getLimitOffset(req);
-  let source = await db.Source.findOne({where: {userName: req.params.username }});
-  let results = await db.Post.findAndCountAll({
-    where: {
-      SourceId: source.id
-    },
-    ...paginationReq
-  });
+//   let paginationReq = routeHelpers.getLimitOffset(req);
+//   let source = await db.Source.findOne({where: {userName: req.params.username }});
+//   let results = await db.Post.findAndCountAll({
+//     where: {
+//       SourceId: source.id
+//     },
+//     ...paginationReq
+//   });
 
-  res.send(results); //results.count, results.rows
-}));
+//   res.send(results); //results.count, results.rows
+// }));
 
 
 router.route('/posts/import')
@@ -106,7 +119,7 @@ router.route('/posts/import')
    };
 
   await routeHelpers.importPost(req.body.postUrl, authUser,
-     assessmentObj, req.body.target_usernames);
+     assessmentObj, true, req.body.target_usernames);
 
   res.send({ message: 'Post has been imported' });
 }));
@@ -147,7 +160,7 @@ router.route('/posts/:post_id/seen-status')
     res.send({ message: 'Post not found' });
   }
 
-}))
+}));
 
 
 module.exports = router;
