@@ -6,6 +6,7 @@ var routeHelpers = require('../lib/routeHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 var constants = require('../lib/constants');
 var logger = require('../lib/logger');
+const source = require('../models/source');
 const Op = Sequelize.Op;
 
 
@@ -146,22 +147,23 @@ router.route('/finish-alt-title-signup/:token')
         },
         include: [{
             model: db.Preferences,
-            required: false
+            required: true
         }]
     })
 
     let proms = [];
 
-    console.log('other users', otherUsers)
-
     otherUsers.forEach(user => {
-        if (user.Preferences && user.Preferences.preferencesBlob != undefined) {
-            let preferencesBlob = JSON.parse(user.preference.preferencesBlob);
+        if (user.Preference && user.Preference.preferencesBlob != undefined) {
+            let preferencesBlob = JSON.parse(user.Preference.preferencesBlob);
             if ('altExperiment' in preferencesBlob) {
-                proms.push(user.addFollow(authUser));
+                proms.push(...[
+                    user.addFollow(authUser),
+                    authUser.addFollow(user)
+                ]);
             }
         }
-        proms.push(authUser.addFollow(user));
+        // proms.push(authUser.addFollow(user));
     })
 
     await Promise.all([...proms, verificationToken.destroy()]);
@@ -211,10 +213,24 @@ router.route('/study-users')
     
     let sources = await db.Source.findAll({
         where: whereClause,
+        include: [{
+            model: db.Preferences,
+            required: true
+        }],
         ...paginationReq
     });
 
-    res.send(sources);
+    let otherUserInStudy = [];
+    sources.forEach(user => {
+        if (user.Preference && user.Preference.preferencesBlob != undefined) {
+            let preferencesBlob = JSON.parse(user.Preference.preferencesBlob);
+            if ('altExperiment' in preferencesBlob) {
+                otherUserInStudy.push(user);
+            }
+        }
+    })
+
+    res.send(otherUserInStudy);
 }));
 
 
