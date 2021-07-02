@@ -48,6 +48,20 @@ morgan.token('user', (req) => {
   return 'no user info';
 });
 
+morgan.token('req-headers', (req) => {
+  let customHeaders =  Object.fromEntries(Object.entries(req.headers).filter(([key, value]) => 
+    !['cookie', 'if-none-match', 'accept-language'].includes(key)
+  ));
+  return JSON.stringify(customHeaders);
+});
+
+morgan.token('req-body', (req) => {
+  if (! ['/login', '/signup', '/reset-password'].includes(req.url))
+    return JSON.stringify(req.body);
+  else
+    return 'CREDS REDACTED';
+})
+
 function morganFormat(tokens, req, res) {
   return [
     tokens.method(req, res),
@@ -56,7 +70,9 @@ function morganFormat(tokens, req, res) {
     tokens.status(req, res),
     tokens.res(req, res, 'content-length'), '-',
     tokens['response-time'](req, res), 'ms',
-    tokens.date(req, res, 'iso')
+    tokens.date(req, res, 'iso'),
+    'req-headers-' + tokens['req-headers'](req),
+    'req-body-' + tokens['req-body'](req)
   ].join(' ')
 };
 
