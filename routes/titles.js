@@ -149,6 +149,8 @@ router.route('/custom-titles-match')
           model: db.Source,
           as: 'Endorsers',
         }]
+      }, {
+        model: db.Post,
       }],
       order: [
         [ 'StandaloneCustomTitles', 'setId', 'DESC'],
@@ -335,7 +337,6 @@ router.route('/custom-titles/:standalone_title_id')
 
   res.send(results);
 }));
-
 
 /*
 Create a new custom title ---This route is for articles that do not have an associated article yet.
