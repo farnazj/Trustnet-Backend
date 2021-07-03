@@ -239,7 +239,7 @@ router.route('/headline-study-log')
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-    logger.study(`${req.user.id}, ${req.body.type}, ${req.body.data}, ${req.body.source}`);
+    logger.study(`${req.user.id}, ${req.body.type}, ${JSON.stringify(req.body.data)}, ${req.body.client}`);
     res.send({ message: 'Log successful' });
 }));
 
