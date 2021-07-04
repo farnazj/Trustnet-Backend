@@ -181,15 +181,15 @@ router.route('/custom-titles-match')
 
         headlineStatuses.push(results[0]);
 
-        
-
         if (results[1]) { //if the status instance has just been created
 
           let withheldVal;
 
-          console.log('inja', standaloneTitle.StandaloneCustomTitles, '***', req.user.id)
-          console.log('\n*****', standaloneTitle.StandaloneCustomTitles.some((customTitle) => customTitle.SourceId == req.user.id))
-
+          /*
+          If any of the custom titles has been created by the user, it means that the user has seen the alt title
+          before (e.g., in the feed or by initiating the posting of title on a headline that doesn't have any alt
+          titles yet), and therefore they should not be withheld from the user.
+          */
           if (standaloneTitle.StandaloneCustomTitles.some((customTitle) => customTitle.SourceId == req.user.id ))
             withheldVal = false;
           else
@@ -209,10 +209,7 @@ router.route('/custom-titles-match')
 
     })
     
-    console.log(statusProms);
     await Promise.all(statusProms);
-
-    console.log('headlineStatuses', headlineStatuses, '\n')
 
     res.send({ titles: standaloneTitles, statuses: headlineStatuses });
   }
