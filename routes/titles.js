@@ -12,6 +12,7 @@ var utils = require('../lib/util');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
+const logger = require('../lib/logger');
 // const AltTitlesRedisHandler = require('../lib/alternativeTitles');
 
 router.route('/custom-title-endorsement/user/:set_id')
@@ -139,6 +140,8 @@ router.route('/custom-titles-match')
         }]
       }
     }
+
+    let authUserProm = db.Source.findByPk(req.user.id);
   
     let standaloneTitles = await db.StandaloneTitle.findAll({
       where: whereClause,
@@ -156,15 +159,95 @@ router.route('/custom-titles-match')
         [ 'StandaloneCustomTitles', 'setId', 'DESC'],
         [ 'StandaloneCustomTitles', 'version', 'DESC']
       ]
-    })
+    });
 
-    res.send(standaloneTitles);
+    let authUser = await authUserProm;
+    
+    let withholdProbs = [ { value: false, probability: 1- constants.ALT_HEADLINE_WITHHOLD_PROBABILITY},
+      { value: true, probability: constants.ALT_HEADLINE_WITHHOLD_PROBABILITY }];
+
+    let headlineStatuses = [];
+
+    let statusProms = standaloneTitles.map(standaloneTitle => {
+      return db.HeadlineStatus.findOrCreate({
+        where: {
+          [Op.and]: [{
+            SourceId: req.user.id
+          }, {
+            standaloneTitleId: standaloneTitle.id
+          }]
+        }
+      }).then((results) => {
+
+        headlineStatuses.push(results[0]);
+
+        
+
+        if (results[1]) { //if the status instance has just been created
+
+          let withheldVal;
+
+          console.log('inja', standaloneTitle.StandaloneCustomTitles, '***', req.user.id)
+          console.log('\n*****', standaloneTitle.StandaloneCustomTitles.some((customTitle) => customTitle.SourceId == req.user.id))
+
+          if (standaloneTitle.StandaloneCustomTitles.some((customTitle) => customTitle.SourceId == req.user.id ))
+            withheldVal = false;
+          else
+            withheldVal= utils.randomizer(withholdProbs)
+
+          results[0].isWithheld = withheldVal;
+          return Promise.all([
+            results[0].setSource(authUser),
+            results[0].setStandaloneTitle(standaloneTitle),
+            results[0].save()
+          ]);
+        }
+        else
+          return new Promise((resolve) => resolve());
+  
+      })
+
+    })
+    
+    console.log(statusProms);
+    await Promise.all(statusProms);
+
+    console.log('headlineStatuses', headlineStatuses, '\n')
+
+    res.send({ titles: standaloneTitles, statuses: headlineStatuses });
   }
   else {
-    res.send([])
+    res.send({ titles: [], statuses: [] });
   }
 
 }))
+
+
+router.route('/custom-titles/headline-status/:standalone_title_id')
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  try {
+    await db.HeadlineStatus.update({
+      isEncountered: req.body.isEncountered
+    }, {
+      where: {
+        [Op.and]: [{
+          SourceId: req.user.id
+        }, {
+          standaloneTitleId: req.params.standalone_title_id
+        }]
+      }
+    });
+    res.send({ message: 'Headline status updated' });
+  }
+  catch (err) {
+    console.log(err);
+    logger.error(`Error in updating headline status: ${err}`);
+    res.status(403).send({ message: 'Error in updating headline status' });
+  }
+   
+}));
+
 
 /*
 edit a title by posting a new version of it
@@ -337,6 +420,8 @@ router.route('/custom-titles/:standalone_title_id')
 
   res.send(results);
 }));
+
+
 
 /*
 Create a new custom title ---This route is for articles that do not have an associated article yet.
