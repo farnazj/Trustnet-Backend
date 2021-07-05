@@ -50,17 +50,34 @@ morgan.token('user', (req) => {
 
 morgan.token('req-headers', (req) => {
   let customHeaders =  Object.fromEntries(Object.entries(req.headers).filter(([key, value]) => 
-    !['cookie', 'if-none-match', 'accept-language'].includes(key)
+    !['cookie', 'if-none-match', 'accept-language', 'sec-ch-ua', 'sec-ch-ua-mobile', 'connection', 'sec-fetch-site', 'sec-fetch-mode',  'sec-fetch-dest', 'accept-encoding'].includes(key)
   ));
   return JSON.stringify(customHeaders);
 });
 
 morgan.token('req-body', (req) => {
-  if (! ['/login', '/signup', '/reset-password'].includes(req.url))
-    return JSON.stringify(req.body);
+  if (! ['/login', '/signup', '/reset-password'].includes(req.url)) {
+    if (req.url == '/custom-titles-match')
+      return 'HASHES REDACTED'
+    else
+      return JSON.stringify(req.body);
+  }
+    
   else
     return 'CREDS REDACTED';
-})
+});
+
+
+const originalSend = app.response.send;
+
+app.response.send = function sendOverWrite(body) {
+  originalSend.call(this, body);
+  this.__custombody__ = body;
+}
+
+morgan.token('res-body', (_req, res) =>
+  JSON.stringify(res.__custombody__),
+)
 
 function morganFormat(tokens, req, res) {
   return [
@@ -72,7 +89,8 @@ function morganFormat(tokens, req, res) {
     tokens['response-time'](req, res), 'ms',
     tokens.date(req, res, 'iso'),
     'req-headers-' + tokens['req-headers'](req),
-    'req-body-' + tokens['req-body'](req)
+    'req-body-' + tokens['req-body'](req),
+    // 'response-' + tokens['res-body'](req, res)
   ].join(' ')
 };
 
@@ -89,8 +107,8 @@ app.use(morgan(morganFormat, {
 }));
 
 
-app.use(bodyParser.json({limit: '500kb'}));
-app.use(bodyParser.urlencoded({ extended: true, limit: '500kb'}));
+app.use(express.json({limit: '500kb'}));
+app.use(express.urlencoded({ extended: true, limit: '500kb'}));
 //app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(compression()); //Compress all routes
