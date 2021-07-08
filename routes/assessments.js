@@ -102,7 +102,11 @@ router.route('/posts/:post_id/:user_id/assessment')
   res.send(assessments);
 }));
 
-
+/*
+headers: {
+  url: String -- url of the post the user is requesting assessments for
+}
+*/
 router.route('/posts/assessments/url')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
@@ -114,7 +118,7 @@ router.route('/posts/assessments/url')
   }
 
   let post = await db.Post.findOne({
-    where: { 
+    where: {
       url: req.headers.url
     },
     include: [
@@ -130,7 +134,7 @@ router.route('/posts/assessments/url')
     ]
   });
 
-  let result = post ? post.PostAssessments : [];
+  let result = (post != null) ? post.PostAssessments : [];
   res.send(result);
 }))
 
