@@ -42,6 +42,8 @@ expects req.body of the form:
         res.status(403).send({ message: 'Comment set does not exist or does not belong to the user' });
     }
     else {
+        let baseComment = prevComments[0];
+
         let prevCommentsProms = prevComments.map(comment => {
             return comment.update({
                 version: comment.version - 1
@@ -56,9 +58,28 @@ expects req.body of the form:
 
         let authUserProm = db.Source.findByPk(req.user.id);
 
-        let [comment, authUser] = await Promise.all([ commentProm, authUserProm ]);
-        await Promise.all([ comment.setSource(authUser), comment.setPost(prevComments.Post), prevCommentsProms ]);
-        res.send( { message: 'Comment updated'} );
+        let parentInstanceProm = new Promise((resolve) => resolve());
+
+        if (baseComment.ParentCommentId != null) {
+            parentInstanceProm = db.Comment.findByPk(baseComment.ParentCommentId);
+        }
+        else if (baseComment.ParentAssessmentId != null) {
+            parentInstanceProm = db.Assessment.findByPk(baseComment.ParentAssessmentId);
+        }
+
+        let [comment, authUser, parentInstance] = await Promise.all([ commentProm, authUserProm, parentInstanceProm ]);
+
+        let parentAssociationProm = new Promise((resolve) => resolve());
+
+        if (baseComment.ParentCommentId != null) {
+            parentAssociationProm = comment.setParentComment(parentInstance);
+        }
+        else if (baseComment.ParentAssessmentId != null) {
+            parentAssociationProm = comment.setParentAssessment(parentInstance);
+        }
+
+        await Promise.all([ comment.setSource(authUser), comment.setPost(baseComment.Post), parentAssociationProm, prevCommentsProms ]);
+        res.send( { message: prevComments} );
     }
 }))
 
@@ -162,7 +183,7 @@ expects req.body of the form:
     let parentInstanceProm = new Promise((resolve) => resolve());
 
     if (req.body.repliesTo) { //if the comment is not a top level comment
-        if (repliesToType == constants.COMMENT) {
+        if (req.body.repliesToType == constants.COMMENT_ASSESSMENT_TYPES.COMMENT) {
             parentInstanceProm = db.Comment.findByPk(req.body.repliesTo);
         }
         else {
@@ -175,11 +196,11 @@ expects req.body of the form:
     let parentAssociationProm = new Promise((resolve) => resolve());
 
     if (req.body.repliesTo) { //if the comment is not a top level comment
-        if (repliesToType == constants.COMMENT) {
-            parentAssociationProm = comment.setParentComment(parentAssociation);
+        if (req.body.repliesToType == constants.COMMENT_ASSESSMENT_TYPES.COMMENT) {
+            parentAssociationProm = comment.setParentComment(parentInstance);
         }
         else {
-            parentAssociationProm = comment.setParentAssessment(parentAssociation);
+            parentAssociationProm = comment.setParentAssessment(parentInstance);
         }
     }
 
