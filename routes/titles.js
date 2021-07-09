@@ -210,7 +210,6 @@ router.route('/custom-titles-match')
     })
     
     await Promise.all(statusProms);
-
     res.send({ titles: standaloneTitles, statuses: headlineStatuses });
   }
   else {
@@ -404,8 +403,11 @@ router.route('/custom-titles/:standalone_title_id')
       include: [{
         model: db.Source,
         as: 'Endorsers',
-      }]
-      
+      }
+      // , {
+      //   model: db.Post,
+      // }
+    ]  
     }],
     order: [
       [ 'StandaloneCustomTitles', 'setId', 'DESC'],
@@ -441,7 +443,7 @@ router.route('/custom-titles')
       await routeHelpers.importPost(req.body.postUrl);
 
       postProm = db.Post.findOne({
-        where: { url: req.body.postUrl }
+        where: { url: req.body.postUrl.split('?')[0] }
       });  
     }
     catch(err) {
