@@ -79,7 +79,7 @@ expects req.body of the form:
         }
 
         await Promise.all([ comment.setSource(authUser), comment.setPost(baseComment.Post), parentAssociationProm, prevCommentsProms ]);
-        res.send( { message: prevComments} );
+        res.send( { message: 'Comment edited', data: comment} );
     }
 }))
 
