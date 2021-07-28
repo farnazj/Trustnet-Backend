@@ -58,8 +58,16 @@ router.route('/sources')
   }
 
   let sources = await db.Source.findAll({
+    attributes: {
+      include: [
+        [Sequelize.fn('concat', db.sequelize.col('firstName'), ' ', db.sequelize.col('lastName')), 'Full_Name'],
+      ]
+    },
     where: whereClause,
-    ...paginationReq
+    ...paginationReq,
+    order: [
+      [Sequelize.literal('Full_Name DESC')]
+    ]
   });
 
   res.send(sources);
