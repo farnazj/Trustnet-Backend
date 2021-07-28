@@ -107,8 +107,8 @@ app.use(morgan(morganFormat, {
 }));
 
 
-app.use(express.json({limit: '500kb'}));
-app.use(express.urlencoded({ extended: true, limit: '500kb'}));
+app.use(express.json({limit: '750kb'}));
+app.use(express.urlencoded({ extended: true, limit: '750kb'}));
 //app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(compression()); //Compress all routes
