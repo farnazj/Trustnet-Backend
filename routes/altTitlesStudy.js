@@ -87,8 +87,8 @@ router.route('/alt-titles-feed')
             }]
         }],
         order: [
-            [ 'publishedDate', 'DESC'],
-            [ db.StandaloneTitle, 'StandaloneCustomTitles', 'updatedAt', 'DESC']
+            [ db.StandaloneTitle, 'StandaloneCustomTitles', 'updatedAt', 'DESC'],
+            [ 'publishedDate', 'DESC']
         ]
     });
 
