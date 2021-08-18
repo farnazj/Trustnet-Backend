@@ -14,6 +14,9 @@ router.route('/comments/sets/:set_id')
     let comments = await db.Comment.findAll({
         where: {
             setId: req.params.set_id
+        },
+        include: {
+            model: db.Source
         }
     });
 
@@ -154,6 +157,9 @@ router.route('/comments/posts/:post_id')
                     [Op.in]: viewableSources
                   }
             }
+        },
+        include: {
+            model: db.Source
         }
     })
 
