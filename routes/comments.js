@@ -95,16 +95,14 @@ otherwise the replies would need to be deleted as well
         where: {
             setId: req.params.set_id,
             SourceId: req.user.id
-        },
-        include: [{
-            model: db.Post
-        }]
+        }
     });
 
     if (!comments.length) {
         res.status(403).send({ message: 'Comment set does not exist or does not belong to the user' });
     }
     else {
+        let baseComment = comments[0];
         let dummyCommentProm = db.Comment.create({
             setId: uuidv4(),
             version: 1,
@@ -114,21 +112,43 @@ otherwise the replies would need to be deleted as well
 
         let [childComments, childAssessments, dummyComment] = await Promise.all([ db.Comment.findAll({
             where: {
-                ParentComment: {
+                ParentCommentId: {
                     [Op.in]: commentIds
                 }
             }
         }),
         db.Assessment.findAll({
             where: {
-                ParentComment: {
+                ParentCommentId: {
                     [Op.in]: commentIds
                 }
             }
         }),
         dummyCommentProm ]);
 
-        let children = [...childComments,...childAssessments];
+        if (baseComment.ParentCommentId != null)
+            parentInstanceProm = db.Comment.findByPk(baseComment.ParentCommentId);
+        else if (baseComment.ParentAssessmentId != null)
+            parentInstanceProm = db.Assessment.findByPk(baseComment.ParentAssessmentId);
+        else
+            parentInstanceProm = new Promise((resolve) => resolve());
+
+        let [commentPost, commentSource, commentParent] = await Promise.all([
+            db.Post.findByPk(baseComment.PostId),
+            db.Source.findByPk(baseComment.SourceId),
+            parentInstanceProm
+        ])
+
+        if (baseComment.ParentCommentId != null)
+            parentAssociationProm = dummyComment.setParentComment(commentParent);
+        else if (baseComment.ParentAssessmentId != null)
+            parentAssociationProm = dummyComment.setParentAssessment(commentParent);
+        else
+            parentAssociationProm = new Promise((resolve) => resolve());
+
+        await Promise.all([dummyComment.setPost(commentPost), dummyComment.setSource(commentSource), parentAssociationProm]);
+
+        let children = [...childComments, ...childAssessments];
         let associationProms = children.map(child => {
             child.setParentComment(dummyComment)
         })
