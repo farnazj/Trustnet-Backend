@@ -9,7 +9,9 @@ var logger = require('../lib/logger');
 const source = require('../models/source');
 const Op = Sequelize.Op;
 
-
+/*
+articles returned on the Reheadline feed
+*/
 router.route('/alt-titles-feed')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -172,7 +174,10 @@ router.route('/finish-alt-title-signup/:token')
     res.send({ message: 'Finished alt title signup' })
 }));
 
-
+/*
+Route for signing up Reheadline study users, where each user will automatically
+follow other users in the study upon signup
+*/
 router.route('/study-users')
 
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {

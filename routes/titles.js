@@ -8,7 +8,7 @@ var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
 var constants = require('../lib/constants');
-var utils = require('../lib/util');
+var util = require('../lib/util');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
@@ -193,7 +193,7 @@ router.route('/custom-titles-match')
           if (standaloneTitle.StandaloneCustomTitles.some((customTitle) => customTitle.SourceId == req.user.id ))
             withheldVal = false;
           else
-            withheldVal= utils.randomizer(withholdProbs)
+            withheldVal= util.randomizer(withholdProbs)
 
           results[0].isWithheld = withheldVal;
           return Promise.all([
@@ -443,7 +443,7 @@ router.route('/custom-titles')
       await routeHelpers.importPost(req.body.postUrl);
 
       postProm = db.Post.findOne({
-        where: { url: req.body.postUrl.split('?')[0] }
+        where: { url: util.extractHostname(req.body.postUrl) }
       });  
     }
     catch(err) {
@@ -465,7 +465,7 @@ router.route('/custom-titles')
   let dbResp = await db.StandaloneTitle.findOrCreate({
     where: {
       text: titleToHash, 
-      hash: utils.hashCode(utils.uncurlify(titleToHash.substr(0, constants.LENGTH_TO_HASH)).toLowerCase())
+      hash: util.hashCode(util.uncurlify(titleToHash.substr(0, constants.LENGTH_TO_HASH)).toLowerCase())
     }
   });
 
