@@ -3,6 +3,7 @@ var router = express.Router();
 var Sequelize = require('sequelize');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
+var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 
 router.route('/preferences')
@@ -28,6 +29,7 @@ router.route('/preferences')
     });
 
     if (results[1]) {
+        results[0].preferencesBlob = JSON.stringify({ "blackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS });
         let authUser = await db.Source.findByPk(req.user.id);
         results[0].setSource(authUser);
     }

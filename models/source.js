@@ -111,6 +111,8 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.belongsToMany(models.SourceList, { as: { singular: 'EntityList', plural: 'EntityLists' }, through: 'ListSourceEntities' });
 
     models.Source.belongsToMany(models.Assessment, { through: 'AssessmentArbiters' });
+
+    models.Source.hasOne(models.Preferences);
   };
 
   return Source;
