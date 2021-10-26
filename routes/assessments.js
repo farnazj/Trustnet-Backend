@@ -114,7 +114,12 @@ headers: {
 router.route('/posts/assessments/urls')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  console.log(JSON.parse(req.headers.urls), req.headers.excludeposter, "\n************baby shark")
+  console.log(JSON.parse(req.headers.urls), req.headers.excludeposter, "inside get assessments")
+
+  let urlSet = [];
+  JSON.parse(req.headers.urls).forEach(url => {
+    urlSet = urlSet.concat([`http://${url}`, `https://${url}`])
+  });
 
   let assessors = [];
   if (req.headers.authuser)
@@ -129,7 +134,7 @@ router.route('/posts/assessments/urls')
     whereConfig =  {
       [Op.and]: [{
         url: {
-          [Op.in]: JSON.parse(req.headers.urls)
+          [Op.in]: urlSet
         }
       }, {
         '$PostAssessments.SourceId$': {
@@ -141,7 +146,7 @@ router.route('/posts/assessments/urls')
   else {
     whereConfig = {
       url: {
-        [Op.in]: JSON.parse(req.headers.urls)
+        [Op.in]: urlSet
       }
     }
   }
@@ -161,7 +166,6 @@ router.route('/posts/assessments/urls')
     ]
   });
 
-  console.log('javab', posts, '\n\n(()))')
   res.send(posts.filter(post => post));
 }))
 
@@ -177,7 +181,6 @@ expects req.body of the form:
   sourceIsAnonymous (optional): Boolean,
   sourceArbiters (optional): Array of Strings
   emailArbiters (optional): Array of Strings
-
 }
 */
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -206,6 +209,10 @@ router.route('/posts/questions/urls')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
   console.log('inside questions', req.headers.urls,'\n')
 
+  let urlSet = [];
+  JSON.parse(req.headers.urls).forEach(url => {
+    urlSet = urlSet.concat([`http://${url}`, `https://${url}`])
+  })
   let trusters = (await boostHelpers.getBoostersandCredSources(req)).trusters;
 
   let posts = await db.Post.findAll({
@@ -218,7 +225,7 @@ router.route('/posts/questions/urls')
         */
         [Op.and]: [ {
           url: {
-            [Op.in]: JSON.parse(req.headers.urls)
+            [Op.in]: urlSet
           }
         }, {
           '$PostAssessments.postCredibility$': constants.ACCURACY_CODES.QUESTIONED
