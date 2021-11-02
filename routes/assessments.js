@@ -7,6 +7,7 @@ var wrapAsync = require('../lib/wrappers').wrapAsync;
 var Sequelize = require('sequelize');
 const constants = require('../lib/constants');
 var util = require('../lib/util');
+const got = require('got');
 const Op = Sequelize.Op;
 
 // var kue = require('kue')
@@ -114,12 +115,7 @@ headers: {
 router.route('/posts/assessments/urls')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  console.log(JSON.parse(req.headers.urls), req.headers.excludeposter, "inside get assessments")
-
-  let urlSet = [];
-  JSON.parse(req.headers.urls).forEach(url => {
-    urlSet = urlSet.concat([`http://${url}`, `https://${url}`])
-  });
+  let urls = JSON.parse(req.headers.urls);
 
   let assessors = [];
   if (req.headers.authuser)
@@ -134,7 +130,7 @@ router.route('/posts/assessments/urls')
     whereConfig =  {
       [Op.and]: [{
         url: {
-          [Op.in]: urlSet
+          [Op.in]: urls
         }
       }, {
         '$PostAssessments.SourceId$': {
@@ -146,7 +142,7 @@ router.route('/posts/assessments/urls')
   else {
     whereConfig = {
       url: {
-        [Op.in]: urlSet
+        [Op.in]: urls
       }
     }
   }
@@ -166,7 +162,7 @@ router.route('/posts/assessments/urls')
     ]
   });
 
-  res.send(posts.filter(post => post));
+  res.send( posts.filter(post => post) );
 }))
 
 
@@ -207,12 +203,7 @@ questions about the accuracy of a set of urls
 */
 router.route('/posts/questions/urls')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-  console.log('inside questions', req.headers.urls,'\n')
 
-  let urlSet = [];
-  JSON.parse(req.headers.urls).forEach(url => {
-    urlSet = urlSet.concat([`http://${url}`, `https://${url}`])
-  })
   let trusters = (await boostHelpers.getBoostersandCredSources(req)).trusters;
 
   let posts = await db.Post.findAll({
@@ -225,7 +216,7 @@ router.route('/posts/questions/urls')
         */
         [Op.and]: [ {
           url: {
-            [Op.in]: urlSet
+            [Op.in]: JSON.parse(req.headers.urls)
           }
         }, {
           '$PostAssessments.postCredibility$': constants.ACCURACY_CODES.QUESTIONED
@@ -265,7 +256,38 @@ router.route('/posts/questions/urls')
     ]
   });
 
-  res.send(posts.filter(post => post));
+  res.send( posts.filter(post => post) );
+}));
+
+
+/*
+Follow the urls and get the urls where they redirect to
+*/
+router.route('/urls/follow-redirects')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let gotProms = [];
+  let urlMapping = {};
+
+  JSON.parse(req.headers.urls).forEach(sentUrl => {
+
+    gotProms.push(got(sentUrl, {
+      timeout: 800,
+      retry: 1,
+      followRedirect: true
+    })
+    .then(({ body: html, url }) => {
+      urlMapping[util.extractHostname(url)] = sentUrl;
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+    )
+    
+  })
+
+  await Promise.allSettled(gotProms);
+  res.send(urlMapping);
 }))
 
 module.exports = router;
