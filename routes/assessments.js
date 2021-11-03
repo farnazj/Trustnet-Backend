@@ -9,7 +9,7 @@ const constants = require('../lib/constants');
 var util = require('../lib/util');
 const got = require('got');
 const Op = Sequelize.Op;
-
+const parse = require('node-html-parser').parse;
 // var kue = require('kue')
 //  , queue = kue.createQueue();
 
@@ -163,7 +163,7 @@ router.route('/posts/assessments/urls')
   });
 
   res.send( posts.filter(post => post) );
-}))
+}));
 
 
 router.route('/posts/assessments/url')
@@ -272,21 +272,32 @@ router.route('/urls/follow-redirects')
   JSON.parse(req.headers.urls).forEach(sentUrl => {
 
     gotProms.push(got(sentUrl, {
-      timeout: 800,
+      timeout: 2000,
       retry: 1,
       followRedirect: true
     })
-    .then(({ body: html, url }) => {
-      urlMapping[util.extractHostname(url)] = sentUrl;
+    .then((response) => {
+
+      let targetUrl;
+      try {
+        let dom = parse(response.body);
+        let meta = dom.querySelector('meta[property="og:url"]');
+        targetUrl = meta.getAttribute('content')
+      }
+      catch(err) {
+        targetUrl = response.url;
+      }
+      urlMapping[util.extractHostname(targetUrl)] = sentUrl;
     })
     .catch((err) => {
-      console.log(err)
+      console.log('fetching sentUrl encounterd an error', sentUrl, err)
     })
     )
     
   })
 
   await Promise.allSettled(gotProms);
+
   res.send(urlMapping);
 }))
 
