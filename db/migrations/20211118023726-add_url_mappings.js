@@ -6,41 +6,28 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
 
       try {
-        await queryInterface.createTable('HeadlineStatuses', {
+        await queryInterface.createTable('URLRedirections', {
           id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true
           },
-          isEncountered: {
-            type: Sequelize.BOOLEAN
+          originURL: {
+            type: Sequelize.STRING,
+            isUrl: true
           },
-          isWithheld: {
-            type: Sequelize.BOOLEAN
+          targetURL: {
+            type: Sequelize.STRING,
+            isUrl: true
+          },
+          lastAccessTime: {
+            type: Sequelize.DATE
           },
           createdAt: {
             type: Sequelize.DATE
           },
           updatedAt: {
             type: Sequelize.DATE
-          },
-          SourceId: {
-            type: Sequelize.INTEGER,
-            references: {
-              model: 'Sources',
-              key: 'id'
-            },
-            onUpdate: 'cascade',
-            onDelete: 'cascade'
-          },
-          StandaloneTitleId: {
-            type: Sequelize.INTEGER,
-            references: {
-              model: 'StandaloneTitles',
-              key: 'id'
-            },
-            onUpdate: 'cascade',
-            onDelete: 'cascade'
           }
         }, {
           charset: 'utf8mb4'
@@ -48,7 +35,7 @@ module.exports = {
 
         resolve();
       }
-      catch (err) {
+      catch(err) {
         console.log(err)
         logger.error(err);
         reject();
@@ -62,7 +49,7 @@ module.exports = {
       try {
         resolve();
       }
-      catch (err) {
+      catch(err) {
         console.log(err)
         logger.error(err);
         reject();
