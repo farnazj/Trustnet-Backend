@@ -10,6 +10,7 @@ var util = require('../lib/util');
 const got = require('got');
 const Op = Sequelize.Op;
 const parse = require('node-html-parser').parse;
+var moment = require('moment');
 // var kue = require('kue')
 //  , queue = kue.createQueue();
 
@@ -271,34 +272,101 @@ router.route('/urls/follow-redirects')
 
   JSON.parse(req.headers.urls).forEach(sentUrl => {
 
-    gotProms.push(got(sentUrl, {
+    gotProms.push(
+      got(sentUrl, {
       timeout: 2000,
       retry: 1,
       followRedirect: true
-    })
-    .then((response) => {
+      })
+      .then((response) => {
 
-      let targetUrl;
-      try {
-        let dom = parse(response.body);
-        let meta = dom.querySelector('meta[property="og:url"]');
-        targetUrl = meta.getAttribute('content')
-      }
-      catch(err) {
-        targetUrl = response.url;
-      }
-      urlMapping[util.extractHostname(targetUrl)] = sentUrl;
-    })
-    .catch((err) => {
-      console.log('fetching sentUrl encounterd an error', sentUrl, err)
-    })
+        let targetUrl;
+        try {
+          let dom = parse(response.body);
+          let meta = dom.querySelector('meta[property="og:url"]');
+          targetUrl = meta.getAttribute('content')
+        }
+        catch(err) {
+          targetUrl = response.url;
+        }
+        urlMapping[util.extractHostname(targetUrl)] = sentUrl;
+
+      })
+      .catch((err) => {
+        console.log('fetching sentUrl encounterd an error', sentUrl, err)
+      })
     )
     
   })
 
   await Promise.allSettled(gotProms);
 
+  let transformedURLMappings = [];
+  let currentTime = moment();
+
+  Object.entries(urlMapping).forEach(([key, val]) => {
+    transformedURLMappings.push({ originURL: key, targetURL: val });
+    db.URLRedirection.create({
+      originURL: key,
+      targetURL: val,
+      lastAccessTime: currentTime
+    })
+  });
+
+  urlMappingsRedisHandler.addMappings(transformedURLMappings);
+
   res.send(urlMapping);
+}));
+
+router.route('/urls/redirects')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let originURLs = JSON.parse(req.headers.urls);
+  let mappings = await urlMappingsRedisHandler.getURLMapping(originURLs);
+  let originURLsInDB = originURLs.filter((url, index) => 
+    mappings[index]
+  );
+
+  if (originURLsInDB.length) {
+    let currentTime = moment();
+
+    db.URLRedirection.update({
+      lastAccessTime: currentTime
+    }, {
+      where: {
+        originURL: {
+          [Op.in]: originURLsInDB
+        }
+      }
+    })
+  }
+
+  res.send(mappings);
 }))
+
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let urlMappings = JSON.parse(req.body.urlMappings);
+  let transformedURLMappings = [];
+  let currentTime = moment();
+
+  Object.entries(urlMappings).forEach(([key, val]) => {
+    transformedURLMappings.push({ originURL: key, targetURL: val});
+    db.URLRedirection.create({
+      originURL: key,
+      targetURL: val,
+      lastAccessTime: currentTime
+    })
+  });
+
+  if (transformedURLMappings.length)
+    await urlMappingsRedisHandler.addMappings(transformedURLMappings);
+  
+  res.send({ message: 'URL mappings updated' })
+
+}));
+
+
+
 
 module.exports = router;

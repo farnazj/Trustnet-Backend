@@ -11,10 +11,12 @@ var registerMedia = require('../registerNewsMedia');
 var constants = require('../lib/constants')
 var garbageCollection = require('../lib/garbageCollection');
 const oldPostsRemoval = require('../lib/oldPostsRemoval');
+const oldURLMappingRemoval = require('../lib/oldURLMappingRemoval');
 const logger = require('../lib/logger');
 var db = require('../models');
 var FeedQueue = require('../lib/feedQueue');
 var AltTitlesRedisHandler = require('../lib/alternativeTitles');
+var URLMappings = require('../lib/urlMappings');
 const CronJob = require('cron').CronJob;
 
 const { fork } = require('child_process');
@@ -49,6 +51,9 @@ var server = http.createServer(app);
 
   feedQueue.initFeedUpdateJobs();
 
+  altTitlesRedisHandler = await AltTitlesRedisHandler.build();
+  urlMappingsRedisHandler = await URLMappings.build();
+
   const garbageCollectionJob = new CronJob('00 1 4 * * *', function() {
     garbageCollection.removeExpiredTokensAccounts();
   });
@@ -59,9 +64,12 @@ var server = http.createServer(app);
     oldPostsRemoval.removeOldPosts();
   });
 
-  oldPostRemoverJob.start();
+  const oldURLMappingRemovalJob = new CronJob('00 1 3 * * *', function() {
+    oldURLMappingRemoval.removeOldURLMappings();
+  });
 
-  altTitlesRedisHandler = await AltTitlesRedisHandler.build();
+  oldPostRemoverJob.start();
+  oldURLMappingRemovalJob.start();
 
   server.listen(port);
   server.on('error', onError);
