@@ -79,8 +79,21 @@ router.route('/sources')
   //queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
   res.send({ message: 'Source created' });
-}));
+}))
 
+.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let result = await db.Source.update(
+    req.body,
+    {
+      where: {
+        id: req.user.id
+      }
+    }
+  );
+
+  res.send(result);
+}));
 
 router.route('/sources/ids/:id')
 .get(wrapAsync(async function(req, res) {
@@ -116,20 +129,6 @@ router.route('/sources/:username')
   })
 
   res.send({ message: 'Source deleted' });
-}))
-
-.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let result = await db.Source.update(
-    req.body,
-    {
-      where: {
-        userName: req.params.username
-      }
-    }
-  );
-
-  res.send(result);
 }));
 
 

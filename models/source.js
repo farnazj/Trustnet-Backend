@@ -63,7 +63,10 @@ module.exports = (sequelize, DataTypes) => {
             allowNullforSystemMade(value, this.systemMade, "email");
           }
         }
-      },
+    },
+    description: {
+      type: DataTypes.TEXT('long')
+    },
     photoUrl: {
       type: DataTypes.STRING
     },
