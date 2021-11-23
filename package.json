@@ -1,5 +1,5 @@
 {
-  "name": "TrustNetBackend",
+  "name": "Trustnet-Backend",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -45,6 +45,7 @@
     "open-graph-scraper": "^4.7.0",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
+    "pg": "^8.7.1",
     "psl": "^1.8.0",
     "redis": "^3.1.1",
     "rotating-file-stream": "^2.1.3",
