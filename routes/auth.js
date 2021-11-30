@@ -69,11 +69,13 @@ router.route('/signup')
         let clientUrl = req.body.headlineExp ? constants.HEADLINE_CLIENT_BASE_URL : constants.CLIENT_BASE_URL;
         let siteName = req.body.headlineExp ? 'Reheadline' : constants.SITE_NAME;
 
+        let extra = req.body.userStudy ? 'user-study/' : 'reg/';
+
         let verificationLink;
         if (info.type == 'NEW_USER')
-          verificationLink = `${clientUrl}/verify-new-account/${tokenStr}`;
+          verificationLink = `${clientUrl}/verify-new-account/${extra}${tokenStr}`;
         else
-          verificationLink = `${clientUrl}/verify-existing-account/${tokenStr}`;
+          verificationLink = `${clientUrl}/verify-existing-account/${extra}${tokenStr}`;
 
 
         const signupMailOptions = {
