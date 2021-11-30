@@ -163,7 +163,8 @@ router.route('/posts/assessments/urls')
     ]
   });
 
-  res.send( posts.filter(post => post) );
+  let returnedPosts = boostHelpers.anonymizeAnonymousQuestions(posts.filter(post => post), req.user.id)
+  res.send(returnedPosts);
 }));
 
 
@@ -205,7 +206,7 @@ questions about the accuracy of a set of urls
 router.route('/posts/questions/urls')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let trusters = (await boostHelpers.getBoostersandCredSources(req)).trusters;
+  let trusters = (await boostHelpers.getBoostersandCredSources(req)).trusters.concat(req.user.id);
 
   let posts = await db.Post.findAll({
     where: {
@@ -257,7 +258,8 @@ router.route('/posts/questions/urls')
     ]
   });
 
-  res.send( posts.filter(post => post) );
+  let returnedPosts = boostHelpers.anonymizeAnonymousQuestions(posts.filter(post => post), req.user.id)
+  res.send(returnedPosts);
 }));
 
 
@@ -320,7 +322,7 @@ router.route('/urls/follow-redirects')
 
 router.route('/urls/redirects')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
+  
   let originURLs = JSON.parse(req.headers.urls);
   let mappings = await urlMappingsRedisHandler.getURLMapping(originURLs);
   let originURLsInDB = originURLs.filter((url, index) => 
