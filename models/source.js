@@ -86,6 +86,8 @@ module.exports = (sequelize, DataTypes) => {
     delete values.SourceMutes;
     delete values.SourceBlocks;
     delete values.ListSourceEntities;
+    delete values.createdAt;
+    delete values.updatedAt;
 
     return values;
   }
