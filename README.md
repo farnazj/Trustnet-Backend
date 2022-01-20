@@ -1,16 +1,16 @@
-TrustNetBackend
+Trustnet-Backend
 =
 
-TrustNetBackend is a Node.js server that uses a MySQL backend.
+Trustnet-Backend is a Node.js server that uses a MySQL backend.
 Using this server, you can follow people or news sources with RSS feeds, boost their content to all or specific targets, add your own posts or import articles from external sources, and post your assessments of the accuracy of articles.
 
-TrustNetBackend considers [TrustnetClient](https://github.com/farnazj/TrustNetClient) as
+Trustnet-Backend considers [Trustnet-Client](https://github.com/farnazj/Trustnet-Client) as
 its client, although it can be configured to use other clients.
 
 ### Setup Instructions
 
 #### Install Git and clone this repository
-* `git clone https://github.com/farnazj/TrustNetBackend`
+* `git clone https://github.com/farnazj/Trustnet-Backend`
 
 #### Install Node Module Dependencies
 cd to the root directory of the project where package.json is. Run:
