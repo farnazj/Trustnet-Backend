@@ -125,13 +125,15 @@ router.route('/posts/assessments/urls')
     assessors = (await boostHelpers.getBoostersandCredSources(req)).followedTrusteds;
   }
 
+
+  let extendedUrls = util.constructAltURLs(urls)
   let whereConfig;
 
   if (req.headers.excludeposter && req.headers.excludeposter == 'true') {
     whereConfig =  {
       [Op.and]: [{
         url: {
-          [Op.in]: urls
+          [Op.in]: extendedUrls
         }
       }, {
         '$PostAssessments.SourceId$': {
@@ -143,7 +145,7 @@ router.route('/posts/assessments/urls')
   else {
     whereConfig = {
       url: {
-        [Op.in]: urls
+        [Op.in]: extendedUrls
       }
     }
   }
@@ -208,6 +210,9 @@ router.route('/posts/questions/urls')
 
   let trusters = (await boostHelpers.getBoostersandCredSources(req)).trusters.concat(req.user.id);
 
+  let urls = JSON.parse(req.headers.urls);
+  let extendedUrls = util.constructAltURLs(urls);
+
   let posts = await db.Post.findAll({
     where: {
         /*
@@ -218,7 +223,7 @@ router.route('/posts/questions/urls')
         */
         [Op.and]: [ {
           url: {
-            [Op.in]: JSON.parse(req.headers.urls)
+            [Op.in]: extendedUrls
           }
         }, {
           '$PostAssessments.postCredibility$': constants.ACCURACY_CODES.QUESTIONED
@@ -316,7 +321,6 @@ router.route('/urls/follow-redirects')
   });
 
   urlMappingsRedisHandler.addMappings(transformedURLMappings);
-
   res.send(urlMapping);
 }));
 
@@ -367,8 +371,6 @@ router.route('/urls/redirects')
   res.send({ message: 'URL mappings updated' })
 
 }));
-
-
 
 
 module.exports = router;
