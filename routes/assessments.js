@@ -85,7 +85,7 @@ router.route('/posts/:post_id/assessments')
     res.send({ message: 'Assessment posted' });
   }
 
-}))
+}));
 
 
 router.route('/posts/:post_id/:user_id/assessment')
@@ -111,6 +111,7 @@ headers: {
   authuser: id of the authUser (Optional)
   excludeposter: boolean indicating whether the assessments from the initiator of the
   post should be excluded
+  usernames: usernames of specified assessors
 }
 */
 router.route('/posts/assessments/urls')
@@ -121,12 +122,22 @@ router.route('/posts/assessments/urls')
   let assessors = [];
   if (req.headers.authuser)
     assessors = [req.user.id]
+  else if (req.headers.usernames) {
+    assessors = (await db.Source.findAll({
+      attributes: ['id'],
+      where: {
+        userName: {
+          [Op.in]: JSON.parse(req.headers.usernames)
+        }
+      }
+    })).map(el => el.id);
+  }
   else {
     assessors = (await boostHelpers.getBoostersandCredSources(req)).followedTrusteds;
   }
 
-
   let extendedUrls = util.constructAltURLs(urls)
+
   let whereConfig;
 
   if (req.headers.excludeposter && req.headers.excludeposter == 'true') {
@@ -170,6 +181,86 @@ router.route('/posts/assessments/urls')
 }));
 
 
+/*
+headers: {
+  url: stringified array -- urls of the posts the user is requesting assessments for
+}
+*/
+router.route('/posts/unfollowed-assessors/urls')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let urls = JSON.parse(req.headers.urls);
+  let extendedUrls = util.constructAltURLs(urls)
+  let followedAndTrusteds = (await boostHelpers.getBoostersandCredSources(req)).followedTrusteds;
+
+  let posts = await db.Post.findAll({
+ 
+    where: {
+      [Op.and]: [{
+        url: {
+          [Op.in]: extendedUrls
+        }
+      }, {
+        '$PostAssessments.SourceId$': {
+          [Op.notIn]: followedAndTrusteds,
+          [Op.ne]: Sequelize.col('Post.SourceId')
+        }
+      }, {
+        //Either the assessor has posted an assessment or has asked a question with no specified arbiter
+        [Op.or]: [{
+          '$PostAssessments.postCredibility$': {
+            [Op.ne]: 0
+          }
+        }, {
+          '$PostAssessments->Arbiters.id$': {
+            [Op.eq]: null
+          }
+        }]
+      }]
+    },
+    include: [
+      {
+        model: db.Assessment,
+        as: 'PostAssessments',
+        where: {
+          version: 1
+        },
+        include: [{
+          model: db.Source,
+          as: 'Arbiters',
+          through: {
+            attributes: []
+          },
+          required: false
+        }]
+      }
+    ]
+  });
+
+  let returnedPosts = boostHelpers.anonymizeAnonymousQuestions(posts.filter(post => post), req.user.id)
+
+  let assessorSourceIds = returnedPosts.map(post => post.PostAssessments.map(assessment => assessment.SourceId)).flat();
+
+  let queryStr = 'SELECT `Source`.`id`, `Source`.`systemMade`, `Source`.`firstName`, `Source`.`lastName`, \
+   `Source`.`userName`, `Source`.`email`, `Source`.`description`, `Source`.`photoUrl`, \
+   `Source`.`isVerified` FROM `Sources` AS `Source` LEFT OUTER JOIN \
+   ( `SourceTrusteds` AS `Trusteds->SourceTrusteds` INNER JOIN `Sources` AS `Trusteds` \
+   ON `Trusteds`.`id` = `Trusteds->SourceTrusteds`.`SourceId`) \
+   ON `Source`.`id` = `Trusteds->SourceTrusteds`.`TrustedId` \
+   WHERE `Source`.`id` IN :unfollowed_assessors GROUP BY `Source`.`id` ORDER BY COUNT(`Source`.`id`) DESC LIMIT :limit;';
+
+  let replacements = {
+    unfollowed_assessors: [assessorSourceIds],
+    limit: 10
+  }
+
+  let orderedAssessors = await db.sequelize.query(queryStr,
+    { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
+
+  res.send(orderedAssessors);
+}));
+
+
 router.route('/posts/assessments/url')
 /*
 posting an assessment
@@ -208,7 +299,25 @@ questions about the accuracy of a set of urls
 router.route('/posts/questions/urls')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
-  let trusters = (await boostHelpers.getBoostersandCredSources(req)).trusters.concat(req.user.id);
+  let questionPosers;
+
+  if (req.headers.usernames) {
+    questionPosers = (await db.Source.findAll({
+      attributes: ['id'],
+      where: {
+        userName: {
+          [Op.in]: JSON.parse(req.headers.usernames)
+        }
+      }
+    })).map(el => el.id);
+  }
+  else {
+    let relations = await boostHelpers.getBoostersandCredSources(req)
+    let followedAndTrusteds = relations.followedTrusteds;
+    let trusters = relations.trusters.concat(req.user.id);
+    questionPosers = followedAndTrusteds.concat(trusters);
+  }
+
 
   let urls = JSON.parse(req.headers.urls);
   let extendedUrls = util.constructAltURLs(urls);
@@ -217,9 +326,10 @@ router.route('/posts/questions/urls')
     where: {
         /*
         Questions (assessments of type question) that have either specified the auth
-        user as an arbiter or have specified no arbiter and have marked the auth user
+        user as an arbiter or have specified no arbiter and [have either marked the auth user
         as a trusted source (the SourceId of the question is the id of someone who is 
-        among the trusters of the auth user)
+        among the trusters of the auth user) or are among the people the auth user follows
+        or trusts]
         */
         [Op.and]: [ {
           url: {
@@ -240,7 +350,7 @@ router.route('/posts/questions/urls')
               }
             }, {
               '$PostAssessments.SourceId$': {
-                [Op.in]: trusters
+                [Op.in]: questionPosers
               }
             }]
 
