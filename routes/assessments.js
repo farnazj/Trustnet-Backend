@@ -3,6 +3,7 @@ var router = express.Router();
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
+var urlRedirectHelpers = require('../lib/urlRedirectHelpers');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 var Sequelize = require('sequelize');
 const constants = require('../lib/constants');
@@ -237,27 +238,34 @@ router.route('/posts/unfollowed-assessors/urls')
     ]
   });
 
-  let returnedPosts = boostHelpers.anonymizeAnonymousQuestions(posts.filter(post => post), req.user.id)
+  let returnedPosts = boostHelpers.anonymizeAnonymousQuestions(posts.filter(post => post), req.user.id);
 
-  let assessorSourceIds = returnedPosts.map(post => post.PostAssessments.map(assessment => assessment.SourceId)).flat();
+  if (returnedPosts.length) {
+    let assessorSourceIds = returnedPosts.map(post => post.PostAssessments.map(assessment => assessment.SourceId)).flat();
 
-  let queryStr = 'SELECT `Source`.`id`, `Source`.`systemMade`, `Source`.`firstName`, `Source`.`lastName`, \
-   `Source`.`userName`, `Source`.`email`, `Source`.`description`, `Source`.`photoUrl`, \
-   `Source`.`isVerified` FROM `Sources` AS `Source` LEFT OUTER JOIN \
-   ( `SourceTrusteds` AS `Trusteds->SourceTrusteds` INNER JOIN `Sources` AS `Trusteds` \
-   ON `Trusteds`.`id` = `Trusteds->SourceTrusteds`.`SourceId`) \
-   ON `Source`.`id` = `Trusteds->SourceTrusteds`.`TrustedId` \
-   WHERE `Source`.`id` IN :unfollowed_assessors GROUP BY `Source`.`id` ORDER BY COUNT(`Source`.`id`) DESC LIMIT :limit;';
-
-  let replacements = {
-    unfollowed_assessors: [assessorSourceIds],
-    limit: 10
+    let queryStr = 'SELECT `Source`.`id`, `Source`.`systemMade`, `Source`.`firstName`, `Source`.`lastName`, \
+     `Source`.`userName`, `Source`.`email`, `Source`.`description`, `Source`.`photoUrl`, \
+     `Source`.`isVerified` FROM `Sources` AS `Source` LEFT OUTER JOIN \
+     ( `SourceTrusteds` AS `Trusteds->SourceTrusteds` INNER JOIN `Sources` AS `Trusteds` \
+     ON `Trusteds`.`id` = `Trusteds->SourceTrusteds`.`SourceId`) \
+     ON `Source`.`id` = `Trusteds->SourceTrusteds`.`TrustedId` \
+     WHERE `Source`.`id` IN :unfollowed_assessors GROUP BY `Source`.`id` ORDER BY COUNT(`Source`.`id`) DESC LIMIT :limit;';
+  
+    let replacements = {
+      unfollowed_assessors: [assessorSourceIds],
+      limit: 10
+    }
+  
+    let orderedAssessors = await db.sequelize.query(queryStr,
+      { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
+  
+    res.send(orderedAssessors);
+  }
+  else {
+    res.send([]);
   }
 
-  let orderedAssessors = await db.sequelize.query(queryStr,
-    { replacements: replacements, type: Sequelize.QueryTypes.SELECT });
-
-  res.send(orderedAssessors);
+  
 }));
 
 
@@ -383,56 +391,36 @@ Follow the urls and get the urls where they redirect to
 */
 router.route('/urls/follow-redirects')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let gotProms = [];
-  let urlMapping = {};
-
-  JSON.parse(req.headers.urls).forEach(sentUrl => {
-
-    gotProms.push(
-      got(sentUrl, {
-      timeout: 2000,
-      retry: 1,
-      followRedirect: true
-      })
-      .then((response) => {
-
-        let targetUrl;
-        try {
-          let dom = parse(response.body);
-          let meta = dom.querySelector('meta[property="og:url"]');
-          targetUrl = meta.getAttribute('content')
-        }
-        catch(err) {
-          targetUrl = response.url;
-        }
-        urlMapping[util.extractHostname(targetUrl)] = sentUrl;
-
-      })
-      .catch((err) => {
-        console.log('fetching sentUrl encounterd an error', sentUrl, err)
-      })
-    )
-    
-  })
-
-  await Promise.allSettled(gotProms);
-
-  let transformedURLMappings = [];
-  let currentTime = moment();
-
-  Object.entries(urlMapping).forEach(([key, val]) => {
-    transformedURLMappings.push({ originURL: key, targetURL: val });
-    db.URLRedirection.create({
-      originURL: key,
-      targetURL: val,
-      lastAccessTime: currentTime
-    })
-  });
-
-  urlMappingsRedisHandler.addMappings(transformedURLMappings);
+  let urlMapping = await urlRedirectHelpers.followLinkMappings(JSON.parse(req.headers.urls), 2000, 1);
+  urlRedirectHelpers.storeURLMappings(urlMapping);
   res.send(urlMapping);
 }));
+
+
+router.route('/urls/schedule-redirects')
+.post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let initialLinks = Object.keys(req.body.urlMappings);
+  setTimeout(() => {
+    console.log('scheduled fetching of redirects is about to start');
+    let urlMapping = urlRedirectHelpers.followLinkMappings(initialLinks, 2000, 2);
+    let urlsFailed = initialLinks.filter(x => !Object.values(urlMapping).includes(x));
+
+    let clientMappingsForFailedURLs = {};
+    Object.entries(req.body.urlMappings).forEach(([key, val]) => {
+      if (urlsFailed.includes(key))
+        clientMappingsForFailedURLs[key] = val;
+    })
+
+    console.log('mappings that the server has received from the client and wants to store', clientMappingsForFailedURLs);
+    urlRedirectHelpers.storeURLMappings(clientMappingsForFailedURLs);
+
+  }, 20000)
+
+  res.send({ message: 'fetching redirects scheduled' });
+
+}));
+
 
 router.route('/urls/redirects')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
@@ -458,26 +446,12 @@ router.route('/urls/redirects')
   }
 
   res.send(mappings);
-}))
+})) 
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let urlMappings = JSON.parse(req.body.urlMappings);
-  let transformedURLMappings = [];
-  let currentTime = moment();
-
-  Object.entries(urlMappings).forEach(([key, val]) => {
-    transformedURLMappings.push({ originURL: key, targetURL: val});
-    db.URLRedirection.create({
-      originURL: key,
-      targetURL: val,
-      lastAccessTime: currentTime
-    })
-  });
-
-  if (transformedURLMappings.length)
-    await urlMappingsRedisHandler.addMappings(transformedURLMappings);
-  
+  urlRedirectHelpers.storeURLMappings(urlMappings);
   res.send({ message: 'URL mappings updated' })
 
 }));
