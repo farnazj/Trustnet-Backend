@@ -118,6 +118,7 @@ var sess = {
    return uuidv4() // use UUIDs for session IDs
   },
   secret: process.env.SESSION_KEY,
+  name: process.env.COOKIE_NAME,
   resave: false,
   saveUninitialized: true,
   cookie: {
