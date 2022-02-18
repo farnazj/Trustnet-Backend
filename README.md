@@ -17,7 +17,7 @@ cd to the root directory of the project where package.json is. Run:
 * `npm install`
 
 #### Database Configurations
-Install MySQL Server. Connect to MySQL server using MySQL client and create a database for TrustNetBackend to connect to. Create a user and grant them privileges on the database.
+Install MySQL Server. Connect to MySQL server using MySQL client and create a database for Trustnet-Backend to connect to. Create a user and grant them privileges on the database.
 
 * `mysql -u root -p` (type the root password when prompted)
 * `CREATE DATABASE db_name;`
@@ -29,7 +29,7 @@ Install MySQL Server. Connect to MySQL server using MySQL client and create a da
 * `ALTER USER user IDENTIFIED WITH MYSQL_NATIVE_PASSWORD BY 'password'`
 
 #### Sequelize Configurations
-TrustNetBackend uses Sequelize as an ORM to connect to the database. The database configurations for Sequelize should be in ./config/database.json. Copy the contents of ./config/example_database.json and change the fields username, password, database, and host for whichever environment you are running TrustNetBackend in (the default environment is development).
+Trustnet-Backend uses Sequelize as an ORM to connect to the database. The database configurations for Sequelize should be in ./config/database.json. Copy the contents of ./config/example_database.json and change the fields username, password, database, and host for whichever environment you are running Trustnet-Backend in (the default environment is development).
 
 #### Setup Environment Variables
 The server uses dotenv to load environment variables from a .env file into process.env.
@@ -39,6 +39,7 @@ The server uses dotenv to load environment variables from a .env file into proce
 
     + ADMIN_KEY=secret (ADMIN_KEY is used for registering RSS feeds of news publishing entities)
     + SESSION_KEY=secret
+    + COOKIE_NAME=secret (the name of the sesssion ID cookie that is to be stored in the browser by the client)
     + NODE_ENV (one of 'development', 'test', or 'production'. The default is set to 'development')
     + LOG_LEVEL (refer to [Winston's](https://www.npmjs.com/package/winston) documentation)
     + EMAIL_USER (the email address from which to send account verification and password recovery instructions)
@@ -51,6 +52,6 @@ This Nodejs server stores session ids in a Redis store. In addition, Redis is us
 #### Specify the Client
 Upon user signup and also for retrieving an account whose password the user has forgotten, this server sends an email containing the full URL of the client path that should confirm activation/password recovery. Therefore, the client base URL needs to be specified in './lib/constants'
 
-#### Run TrustNetBackend Server
+#### Run Trustnet-Backend Server
 cd to the root directory of the project. Run:
 * `npm start`
