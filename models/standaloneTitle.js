@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
 
 
   StandaloneTitle.associate = function (models) {
-    models.StandaloneTitle.hasMany(models.CustomTitle, {as: 'StandaloneCustomTitles'});
+    models.StandaloneTitle.belongsToMany(models.CustomTitle, {as: 'StandaloneCustomTitles', through: 'OriginalCustomTitles'});
     models.StandaloneTitle.belongsTo(models.Post);
   };
 
