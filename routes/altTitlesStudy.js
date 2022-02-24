@@ -42,16 +42,20 @@ router.route('/alt-titles-feed')
     }
 
     let queryStr = 'SELECT DISTINCT `Post`.`id`, `Post`.`publishedDate` FROM `Posts` AS `Post` \
-    LEFT OUTER JOIN `StandaloneTitles` AS `StandaloneTitle` ON `Post`.`id` = `StandaloneTitle`.`PostId` \
-    LEFT OUTER JOIN `CustomTitles` AS `StandaloneTitle->StandaloneCustomTitles` ON `StandaloneTitle`.`id` = `StandaloneTitle->StandaloneCustomTitles`.`StandaloneTitleId` \
-    LEFT OUTER JOIN ( `TitleEndorsements` AS `StandaloneTitle->StandaloneCustomTitles->Endorsers->TitleEndorsements` \
-    INNER JOIN `Sources` AS `StandaloneTitle->StandaloneCustomTitles->Endorsers` ON \
-    `StandaloneTitle->StandaloneCustomTitles->Endorsers`.`id` = `StandaloneTitle->StandaloneCustomTitles->Endorsers->TitleEndorsements`.`SourceId`) \
-    ON `StandaloneTitle->StandaloneCustomTitles`.`id` = `StandaloneTitle->StandaloneCustomTitles->Endorsers->TitleEndorsements`.`CustomTitleId` AND \
-    `StandaloneTitle->StandaloneCustomTitles->Endorsers`.`id` IN :endorsers \
-    WHERE `StandaloneTitle->StandaloneCustomTitles`.`SourceId` IN :title_sources\
+    LEFT OUTER JOIN `StandaloneTitles` AS `PostStandAloneTitles` ON `Post`.`id` = `PostStandAloneTitles`.`PostId` \
+    LEFT OUTER JOIN (`OriginalCustomTitles` AS `StandaloneTitles->OriginalCustomTitles` \
+    INNER JOIN `CustomTitles` AS `StandaloneTitles->StandaloneCustomTitles` ON \
+    `StandaloneTitles->StandaloneCustomTitles`.`id` = `StandaloneTitles->OriginalCustomTitles`.`CustomTitleId`) \
+    ON `PostStandAloneTitles`.`id` = `StandaloneTitles->OriginalCustomTitles`.`standaloneTitleId` \
+    LEFT OUTER JOIN ( `TitleEndorsements` AS `StandaloneTitles->StandaloneCustomTitles->Endorsers->TitleEndorsements` \
+    INNER JOIN `Sources` AS `StandaloneTitles->StandaloneCustomTitles->Endorsers` ON \
+    `StandaloneTitles->StandaloneCustomTitles->Endorsers`.`id` = `StandaloneTitles->StandaloneCustomTitles->Endorsers->TitleEndorsements`.`SourceId`) \
+    ON `StandaloneTitles->StandaloneCustomTitles`.`id` = `StandaloneTitles->StandaloneCustomTitles->Endorsers->TitleEndorsements`.`CustomTitleId` AND \
+    `StandaloneTitles->StandaloneCustomTitles->Endorsers`.`id` IN :endorsers \
+    WHERE `StandaloneTitles->StandaloneCustomTitles`.`SourceId` IN :title_sources\
     ORDER BY `Post`.`publishedDate` DESC \
     LIMIT :offset, :limit;';
+
 
     let replacements = {
         endorsers: [followedIds],
@@ -73,6 +77,7 @@ router.route('/alt-titles-feed')
         },
         include: [{
             model: db.StandaloneTitle,
+            as: 'PostStandAloneTitles',
             include: [{
                 model: db.CustomTitle,
                 as: 'StandaloneCustomTitles',
@@ -89,7 +94,7 @@ router.route('/alt-titles-feed')
             }]
         }],
         order: [
-            [ db.StandaloneTitle, 'StandaloneCustomTitles', 'updatedAt', 'DESC'],
+            // [ db.StandaloneTitle, 'StandaloneCustomTitles', 'updatedAt', 'DESC'],
             [ 'publishedDate', 'DESC']
         ]
     });

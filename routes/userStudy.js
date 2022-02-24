@@ -86,7 +86,7 @@ router.route('/finish-user-study-signup/:token')
 }));
 
 
-router.route('/extension-study-log')
+router.route('/log-interaction')
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
