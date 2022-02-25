@@ -57,6 +57,12 @@ router.route('/signup')
 
     if (user) {
 
+      db.Consent.create({ value: req.body.consent })
+      .then((consent) => {
+        consent.setSource(user);
+      })
+      
+
       crypto.randomBytes(20, async function(err, buf) {
         let tokenStr = buf.toString('hex');
         let token = await db.Token.create({
@@ -83,7 +89,7 @@ router.route('/signup')
           to: user.email,
           subject: `Account Verification for ${siteName}`,
           html: `<p>Hi ${user.firstName}!</p>
-          <p>Thanks for signing up for Trustent. If this wasn't you, please ignore
+          <p>Thanks for signing up for ${siteName}. If this wasn't you, please ignore
           this email and we will remove your address from our records.</p>
           <p>To activate your account, please click on the following link within the next 6 hours:</p>
           <p> <a href="${verificationLink}">${verificationLink}</a></p>
