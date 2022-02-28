@@ -9,6 +9,31 @@ var wrapAsync = require('../lib/wrappers').wrapAsync;
 const { v4: uuidv4 } = require('uuid');
 const Op = Sequelize.Op;
 
+
+// Query Params: offset, limit
+router.route('/comments/trees/:root_set_id')
+.get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+    
+    let paginationReq = routeHelpers.getLimitOffset(req);
+    let comments = await db.Comment.findAll({
+        where: {
+            rootSetId: req.params.root_set_id,
+            version: 1
+        },
+        include: {
+            model: db.Source,
+            attributes: {exclude: ['passwordHash', 'isVerified', 'createdAt', 'updatedAt']}
+        },
+        order: [
+            ['createdAt', 'ASC']
+        ],
+        ...paginationReq
+    });
+
+    res.send(comments);
+}))
+
+
 router.route('/comments/sets/:set_id')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
     let comments = await db.Comment.findAll({
@@ -71,41 +96,6 @@ expects req.body of the form:
 
         await Promise.all([ comment.setSource(authUser), comment.setPost(baseComment.Post), prevCommentsProms ]);
 
-        // let parentInstanceProm = new Promise((resolve) => resolve());
-        // if (baseComment.ParentCommentId !== null) {
-        //     parentInstanceProm = db.Comment.findByPk(baseComment.ParentCommentId);
-        // }
-        // else if (baseComment.ParentAssessmentId !== null) {
-        //     parentInstanceProm = db.Assessment.findByPk(baseComment.ParentAssessmentId);
-        // }
-
-        // let rootInstanceProm = new Promise((resolve) => resolve());
-        // if (baseComment.RootCommentId !== null) {
-        //     rootInstanceProm = db.Comment.findByPk(baseComment.RootCommentId);
-        // }
-        // else if (baseComment.RootAssessmentId !== null) {
-        //     rootInstanceProm = db.Assessment.findByPk(baseComment.RootAssessmentId);
-        // }
-
-        // let [comment, authUser, parentInstance, rootInstance] = await Promise.all([ commentProm, authUserProm, parentInstanceProm, rootInstanceProm ]);
-
-        // let parentAssociationProm = new Promise((resolve) => resolve());
-        // if (baseComment.ParentCommentId !== null) {
-        //     parentAssociationProm = comment.setParentComment(parentInstance);
-        // }
-        // else if (baseComment.ParentAssessmentId !== null) {
-        //     parentAssociationProm = comment.setParentAssessment(parentInstance);
-        // }
-
-        // let rootAssociationProm = new Promise((resolve) => resolve());
-        // if (baseComment.RootCommentId !== null) {
-        //     rootAssociationProm = comment.setRootComment(rootInstance);
-        // }
-        // else if (baseComment.RootAssessmentId !== null) {
-        //     rootAssociationProm = comment.setRootAssessment(rootInstance);
-        // }
-
-        // await Promise.all([ comment.setSource(authUser), comment.setPost(baseComment.Post), parentAssociationProm, rootAssociationProm, prevCommentsProms ]);
         res.send( { message: 'Comment edited', data: comment} );
     }
 }))
@@ -152,24 +142,10 @@ otherwise the replies would need to be deleted as well
         }),
         dummyCommentProm ]);
 
-        // if (baseComment.ParentCommentId != null)
-        //     parentInstanceProm = db.Comment.findByPk(baseComment.ParentCommentId);
-        // else if (baseComment.ParentAssessmentId != null)
-        //     parentInstanceProm = db.Assessment.findByPk(baseComment.ParentAssessmentId);
-        // else
-        //     parentInstanceProm = new Promise((resolve) => resolve());
-
         let [commentPost, commentSource] = await Promise.all([
             db.Post.findByPk(baseComment.PostId),
             db.Source.findByPk(baseComment.SourceId)
         ])
-
-        // if (baseComment.ParentCommentId != null)
-        //     parentAssociationProm = dummyComment.setParentComment(commentParent);
-        // else if (baseComment.ParentAssessmentId != null)
-        //     parentAssociationProm = dummyComment.setParentAssessment(commentParent);
-        // else
-        //     parentAssociationProm = new Promise((resolve) => resolve());
 
         await Promise.all([ dummyComment.setPost(commentPost), dummyComment.setSource(commentSource) ]);
 
@@ -189,11 +165,14 @@ otherwise the replies would need to be deleted as well
 }))
 
 
+// Top-level comments only
 router.route('/comments/posts/:post_id')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
     let relations = await boostHelpers.getBoostersandCredSources(req);
     let post = await db.Post.findByPk(req.params.post_id);
     let viewableSources = relations.followedTrusteds.concat(post.SourceId);
+
+    let paginationReq = routeHelpers.getLimitOffset(req);
   
     let comments = await db.Comment.findAll({
         where: {
@@ -204,11 +183,16 @@ router.route('/comments/posts/:post_id')
                     [Op.in]: viewableSources
                   }
             },
+            rootSetId: null,
             version: 1
         },
         include: {
             model: db.Source
-        }
+        },
+        order: [
+            ['createdAt', 'ASC']
+        ],
+        ...paginationReq
     })
 
     res.send(comments);
