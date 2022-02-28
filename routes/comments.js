@@ -120,8 +120,9 @@ otherwise the replies would need to be deleted as well
     else {
         let baseComment = comments[0]; // Pick an arbitrary comment from the set to extract the transitive associations and shared properties
         let dummyCommentProm = db.Comment.create({
+            body: null,
             version: 1,
-            setId: uuidv4(),
+            setId: baseComment.setId,
             createdAt: baseComment.createdAt,
             parentType: baseComment.parentType,
             parentId: baseComment.parentId,
@@ -160,7 +161,7 @@ otherwise the replies would need to be deleted as well
 
         await Promise.all([...associationProms, ...destroyProms]);
 
-        res.send( { message: 'Comment deleted'} );
+        res.send( { message: 'Comment deleted', data: dummyComment} );
     }
 }))
 
