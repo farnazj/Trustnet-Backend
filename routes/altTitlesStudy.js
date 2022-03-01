@@ -128,7 +128,7 @@ router.route('/finish-alt-title-signup/:token')
     let oldPreferences;
 
     if (authUserPreferences[0].preferencesBlob == undefined)
-        oldPreferences = { "blackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS };
+        oldPreferences = { "reheadlineBlackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS };
     else
         oldPreferences = JSON.parse(authUserPreferences[0].preferencesBlob);
 

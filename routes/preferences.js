@@ -29,7 +29,10 @@ router.route('/preferences')
     });
 
     if (results[1]) {
-        results[0].preferencesBlob = JSON.stringify({ "blackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS });
+        results[0].preferencesBlob = JSON.stringify({ 
+            "reheadlineBlackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS,
+            "trustnetBlackListedWebsites": []
+         });
         let authUser = await db.Source.findByPk(req.user.id);
         results[0].setSource(authUser);
     }
