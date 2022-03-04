@@ -39,8 +39,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Assessment.associate = function (models) {
     models.Assessment.belongsToMany(models.Source, { as: 'Arbiters', through: 'AssessmentArbiters' });
-    // models.Assessment.belongsTo(models.Assessment, { as: 'ParentAssessment' });
-    // models.Assessment.belongsTo(models.Assessment, { as: 'ParentComment' });
   };
 
   return Assessment;

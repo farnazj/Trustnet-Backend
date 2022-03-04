@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
 
   CustomTitle.associate = function (models) {
     models.CustomTitle.belongsToMany(models.Source, {as: 'Endorsers', through: 'TitleEndorsements'});
+    models.CustomTitle.belongsToMany(models.StandaloneTitle, {as: 'parentOriginalTitle', through: 'OriginalCustomTitles'});
   };
 
   return CustomTitle;

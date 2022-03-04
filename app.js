@@ -48,6 +48,37 @@ morgan.token('user', (req) => {
   return 'no user info';
 });
 
+morgan.token('req-headers', (req) => {
+  let customHeaders =  Object.fromEntries(Object.entries(req.headers).filter(([key, value]) => 
+    !['cookie', 'if-none-match', 'accept-language', 'sec-ch-ua', 'sec-ch-ua-mobile', 'connection', 'sec-fetch-site', 'sec-fetch-mode',  'sec-fetch-dest', 'accept-encoding'].includes(key)
+  ));
+  return JSON.stringify(customHeaders);
+});
+
+morgan.token('req-body', (req) => {
+  if (! ['/login', '/signup', '/reset-password'].includes(req.url)) {
+    if (req.url == '/custom-titles-match')
+      return 'HASHES REDACTED'
+    else
+      return JSON.stringify(req.body);
+  }
+    
+  else
+    return 'CREDS REDACTED';
+});
+
+
+const originalSend = app.response.send;
+
+app.response.send = function sendOverWrite(body) {
+  originalSend.call(this, body);
+  this.__custombody__ = body;
+}
+
+morgan.token('res-body', (_req, res) =>
+  JSON.stringify(res.__custombody__),
+)
+
 function morganFormat(tokens, req, res) {
   return [
     tokens.method(req, res),
@@ -56,7 +87,10 @@ function morganFormat(tokens, req, res) {
     tokens.status(req, res),
     tokens.res(req, res, 'content-length'), '-',
     tokens['response-time'](req, res), 'ms',
-    tokens.date(req, res, 'iso')
+    tokens.date(req, res, 'iso'),
+    'req-headers-' + tokens['req-headers'](req),
+    'req-body-' + tokens['req-body'](req),
+    // 'response-' + tokens['res-body'](req, res)
   ].join(' ')
 };
 
@@ -73,8 +107,8 @@ app.use(morgan(morganFormat, {
 }));
 
 
-app.use(bodyParser.json({limit: '500kb'}));
-app.use(bodyParser.urlencoded({ extended: true, limit: '500kb'}));
+app.use(express.json({limit: '750kb'}));
+app.use(express.urlencoded({ extended: true, limit: '750kb'}));
 //app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(compression()); //Compress all routes
@@ -84,6 +118,7 @@ var sess = {
    return uuidv4() // use UUIDs for session IDs
   },
   secret: process.env.SESSION_KEY,
+  name: process.env.COOKIE_NAME,
   resave: false,
   saveUninitialized: true,
   cookie: {

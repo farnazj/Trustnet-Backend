@@ -63,7 +63,10 @@ module.exports = (sequelize, DataTypes) => {
             allowNullforSystemMade(value, this.systemMade, "email");
           }
         }
-      },
+    },
+    description: {
+      type: DataTypes.TEXT('long')
+    },
     photoUrl: {
       type: DataTypes.STRING
     },
@@ -83,6 +86,8 @@ module.exports = (sequelize, DataTypes) => {
     delete values.SourceMutes;
     delete values.SourceBlocks;
     delete values.ListSourceEntities;
+    delete values.createdAt;
+    delete values.updatedAt;
 
     return values;
   }
@@ -111,6 +116,8 @@ module.exports = (sequelize, DataTypes) => {
     models.Source.belongsToMany(models.SourceList, { as: { singular: 'EntityList', plural: 'EntityLists' }, through: 'ListSourceEntities' });
 
     models.Source.belongsToMany(models.Assessment, { through: 'AssessmentArbiters' });
+
+    models.Source.hasOne(models.Preferences);
   };
 
   return Source;

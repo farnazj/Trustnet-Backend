@@ -10,6 +10,13 @@ const Op = Sequelize.Op;
 
 router.route('/sources')
 
+/*
+Headers (optional):
+followconstraint: either 'followed' or 'not followed'
+individual: either 'true' (for retrieving accounts belonging to individuals) or 'false' (for 
+  retrieving accounts belonging to news media)
+searchterm: a String
+*/
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let paginationReq = routeHelpers.getLimitOffset(req);
@@ -30,6 +37,30 @@ router.route('/sources')
 
     let authUser = await db.Source.findByPk(req.user.id);
     let followedIds = (await authUser.getFollows()).map(el => el.id);
+
+    if (req.headers.individual) {
+      
+      let appendedWhere;
+
+      if (req.headers.individual == 'true') {
+        appendedWhere = {
+          systemMade: 0
+        }
+      }
+      else { //req.headers.individual == 'false'
+        appendedWhere = {
+          systemMade: 1,
+          isVerified: 1
+        }
+      }
+
+      whereClause = {
+        [Op.and]: [
+          whereClause,
+          appendedWhere
+        ]
+      }
+    }
 
     if (req.headers.followconstraint == 'followed') {
       whereClause = {
@@ -58,8 +89,16 @@ router.route('/sources')
   }
 
   let sources = await db.Source.findAll({
+    attributes: {
+      include: [
+        [Sequelize.fn('concat', db.sequelize.col('firstName'), ' ', db.sequelize.col('lastName')), 'Full_Name'],
+      ]
+    },
     where: whereClause,
-    ...paginationReq
+    ...paginationReq,
+    order: [
+      [Sequelize.literal('Full_Name DESC')]
+    ]
   });
 
   res.send(sources);
@@ -71,8 +110,21 @@ router.route('/sources')
   //queue.create('addNode', {sourceId: source.id}).priority('high').save();
 
   res.send({ message: 'Source created' });
-}));
+}))
 
+.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  let result = await db.Source.update(
+    req.body,
+    {
+      where: {
+        id: req.user.id
+      }
+    }
+  );
+
+  res.send(result);
+}));
 
 router.route('/sources/ids/:id')
 .get(wrapAsync(async function(req, res) {
@@ -108,20 +160,6 @@ router.route('/sources/:username')
   })
 
   res.send({ message: 'Source deleted' });
-}))
-
-.put(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-
-  let result = await db.Source.update(
-    req.body,
-    {
-      where: {
-        userName: req.params.username
-      }
-    }
-  );
-
-  res.send(result);
 }));
 
 
