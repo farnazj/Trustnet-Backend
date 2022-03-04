@@ -33,8 +33,13 @@ router.route('/finish-user-study-signup/:token')
 
     let oldPreferences;
 
-    if (authUserPreferences[0].preferencesBlob == undefined)
-        oldPreferences = { "blackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS };
+    if (authUserPreferences[0].preferencesBlob == undefined) {
+        oldPreferences = { 
+            "reheadlineBlackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS,
+            "trustnetBlackListedWebsites": []
+        };
+    }
+        
     else
         oldPreferences = JSON.parse(authUserPreferences[0].preferencesBlob);
 

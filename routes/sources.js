@@ -10,6 +10,12 @@ const Op = Sequelize.Op;
 
 router.route('/sources')
 
+/*
+Headers (optional):
+followconstraint: either 'followed' or 'not followed'
+individual: either 'true' (for retrieving accounts belonging to individuals) or 'false' (for 
+  retrieving accounts belonging to news media)
+*/
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let paginationReq = routeHelpers.getLimitOffset(req);
@@ -30,6 +36,18 @@ router.route('/sources')
 
     let authUser = await db.Source.findByPk(req.user.id);
     let followedIds = (await authUser.getFollows()).map(el => el.id);
+
+    if (req.headers.individual) {
+      let systemMadeValue = req.headers.individual == 'true' ? 0 : 1;
+      whereClause = {
+        [Op.and]: [
+          whereClause,
+          {
+            systemMade: systemMadeValue
+          }
+        ]
+      }
+    }
 
     if (req.headers.followconstraint == 'followed') {
       whereClause = {
