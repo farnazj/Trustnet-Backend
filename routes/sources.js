@@ -15,6 +15,7 @@ Headers (optional):
 followconstraint: either 'followed' or 'not followed'
 individual: either 'true' (for retrieving accounts belonging to individuals) or 'false' (for 
   retrieving accounts belonging to news media)
+searchterm: a String
 */
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
@@ -38,13 +39,25 @@ individual: either 'true' (for retrieving accounts belonging to individuals) or 
     let followedIds = (await authUser.getFollows()).map(el => el.id);
 
     if (req.headers.individual) {
-      let systemMadeValue = req.headers.individual == 'true' ? 0 : 1;
+      
+      let appendedWhere;
+
+      if (req.headers.individual == 'true') {
+        appendedWhere = {
+          systemMade: 0
+        }
+      }
+      else { //req.headers.individual == 'false'
+        appendedWhere = {
+          systemMade: 1,
+          isVerified: 1
+        }
+      }
+
       whereClause = {
         [Op.and]: [
           whereClause,
-          {
-            systemMade: systemMadeValue
-          }
+          appendedWhere
         ]
       }
     }
