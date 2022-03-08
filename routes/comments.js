@@ -215,7 +215,13 @@ expects req.body of the form:
     let commentProm = db.Comment.create({
         body: req.body.body,
         setId: uuidv4(),
-        version: 1
+        version: 1,
+
+        parentType: null,
+        parentId: null,
+        parentSetId: null,
+        rootType: null,
+        rootSetId: null
     });
 
     let authUserProm = db.Source.findByPk(req.user.id);
