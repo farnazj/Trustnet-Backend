@@ -60,8 +60,7 @@ router.route('/signup')
       db.Consent.create({ value: req.body.consent })
       .then((consent) => {
         consent.setSource(user);
-      })
-      
+      })      
 
       crypto.randomBytes(20, async function(err, buf) {
         let tokenStr = buf.toString('hex');
@@ -75,7 +74,7 @@ router.route('/signup')
         let clientUrl = req.body.headlineExp ? constants.HEADLINE_CLIENT_BASE_URL : constants.CLIENT_BASE_URL;
         let siteName = req.body.headlineExp ? 'Reheadline' : constants.SITE_NAME;
 
-        let extra = req.body.userStudy ? 'user-study/' : 'reg/';
+        let extra = req.body.specialGroup ? `${req.body.specialGroup}/` : 'reg/';
 
         let verificationLink;
         if (info.type == 'NEW_USER')
