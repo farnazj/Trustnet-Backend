@@ -33,12 +33,6 @@ module.exports = (sequelize, DataTypes) => {
 
 
   Comment.associate = function (models) {
-    // models.Comment.belongsTo(models.Comment, { as: 'ParentComment' });
-    // models.Comment.belongsTo(models.Assessment, { as: 'ParentAssessment' });
-
-    // models.Comment.belongsTo(models.Comment, { as: 'RootComment' });
-    // models.Comment.belongsTo(models.Assessment, { as: 'RootAssessment' });
-
     models.Comment.belongsTo(models.Post);
     models.Comment.belongsTo(models.Source);
   };
