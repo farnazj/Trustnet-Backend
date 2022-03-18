@@ -23,11 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       author: DataTypes.STRING,
       publishedDate: DataTypes.DATE,
-      opinion: DataTypes.BOOLEAN,
-      iframeIsAllowed: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-      }
+      opinion: DataTypes.BOOLEAN
   }, {
     charset: 'utf8mb4',
   });
