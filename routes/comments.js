@@ -6,6 +6,7 @@ var routeHelpers = require('../lib/routeHelpers');
 var boostHelpers = require('../lib/boostHelpers');
 var constants = require('../lib/constants');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
+var notificationHelpers = require('../lib/notificationHelpers');
 const { v4: uuidv4 } = require('uuid');
 const Op = Sequelize.Op;
 
@@ -262,6 +263,8 @@ expects req.body of the form:
     }
 
     await Promise.all( [comment.setSource(authUser), comment.setPost(post), parentAssociationProm, rootAssocationProm ]);
+    notificationHelpers.notifyAndEmailAboutComment(comment, authUser, post, parentInstance);
+    
     res.send({ message: 'Comment posted', data: comment })
 }));
 

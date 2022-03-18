@@ -13,6 +13,8 @@ router.route('/finish-user-study-signup/:token')
 
 .post(wrapAsync(async function(req, res) {
 
+    console.log('req body', req.body)
+
     let verificationToken = await db.Token.findOne({
         where: {
           tokenStr: req.params.token,
@@ -44,7 +46,7 @@ router.route('/finish-user-study-signup/:token')
         oldPreferences = JSON.parse(authUserPreferences[0].preferencesBlob);
 
     let updatedPreferences = oldPreferences;
-    updatedPreferences.extensionStudy = true;
+    updatedPreferences[req.body.specialGroup] = true;
     authUserPreferences[0].preferencesBlob = JSON.stringify(updatedPreferences);
 
     let authUserPreferencesProms = [];
@@ -75,7 +77,7 @@ router.route('/finish-user-study-signup/:token')
     otherUsers.forEach(user => {
         if (user.Preference && user.Preference.preferencesBlob != undefined) {
             let preferencesBlob = JSON.parse(user.Preference.preferencesBlob);
-            if ('extensionStudy' in preferencesBlob) {
+            if (req.body.specialGroup in preferencesBlob) {
                 proms.push(...[
                     user.addFollow(authUser),
                     authUser.addFollow(user)

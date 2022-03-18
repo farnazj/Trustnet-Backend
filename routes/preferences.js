@@ -16,7 +16,24 @@ router.route('/preferences')
         }
     });
 
-    let result = preferences ? preferences.preferencesBlob : '{}';
+    let result;
+
+    if (preferences)
+        result = preferences.preferencesBlob;
+    else {
+        let newPreferences = await db.Preferences.create();
+        newPreferences.preferencesBlob = JSON.stringify({ 
+            "reheadlineBlackListedWebsites": constants.DEFAULT_HEADLINE_BLACKLISTS,
+            "trustnetBlackListedWebsites": []
+         });
+        let preferenceProm = newPreferences.save();
+        let authUserProm = db.Source.findByPk(req.user.id);
+        let [authUser, _] = await Promise.all([authUserProm, preferenceProm])
+        newPreferences.setSource(authUser);
+
+        result = newPreferences.preferencesBlob
+    }
+
     res.send(result);
 }))
 
