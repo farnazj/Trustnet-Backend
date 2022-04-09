@@ -36,7 +36,7 @@
     "metascraper-publisher": "^5.25.2",
     "metascraper-title": "^5.25.2",
     "metascraper-url": "^5.25.2",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.2",
     "mysql2": "^2.2.5",
