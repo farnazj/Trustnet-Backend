@@ -5,6 +5,7 @@ var moment = require('moment');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var constants = require('../lib/constants');
+var util = require('../lib/util');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
@@ -15,7 +16,9 @@ router.route('/posts/url')
   let url = req.headers.url;
   let post = await db.Post.findOne({
     where: {
-      url: url
+      url: {
+        [Op.in]: util.constructAltURLs([url])
+      }
     }
   });
 
