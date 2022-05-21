@@ -32,7 +32,7 @@ Install MySQL Server. Connect to MySQL server using MySQL client and create a da
 Trustnet-Backend uses Sequelize as an ORM to connect to the database. The database configurations for Sequelize should be in ./config/database.json. Copy the contents of ./config/example_database.json and change the fields username, password, database, and host for whichever environment you are running Trustnet-Backend in (the default environment is development).
 
 #### Create OAuth 2.0 Credentials
-Trustnet-Backend uses gmail to communicate with users, e.g., for verifying their email address or for password recovery. You will need to set up a project on the [Google Developer Console][https://console.cloud.google.com], use it to create  OAuth 2.0 API Credentials (client ID and secret), and get a refresh token from the [OAuth 2.0 Playground][https://developers.google.com/oauthplayground]. You can follow [this tutorial][https://dev.to/chandrapantachhetri/sending-emails-securely-using-node-js-nodemailer-smtp-gmail-and-oauth2-g3a] for setting up the credentials.
+Trustnet-Backend uses gmail to communicate with users, e.g., for verifying their email address or for password recovery. You will need to set up a project on the [Google Developer Console](https://console.cloud.google.com), use it to create  OAuth 2.0 API Credentials (client ID and secret), and get a refresh token from the [OAuth 2.0 Playground](https://developers.google.com/oauthplayground). You can follow [this tutorial](https://dev.to/chandrapantachhetri/sending-emails-securely-using-node-js-nodemailer-smtp-gmail-and-oauth2-g3a) for setting up the credentials.
 
 #### Setup Environment Variables
 The server uses dotenv to load environment variables from a .env file into process.env.
