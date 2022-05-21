@@ -23,6 +23,7 @@
     "express-session": "^1.17.1",
     "fastpriorityqueue": "^0.6.3",
     "feedparser": "^2.2.10",
+    "googleapis": "^100.0.0",
     "got": "^11.8.2",
     "helmet": "^4.2.0",
     "kue": "^0.11.6",
