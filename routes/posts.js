@@ -14,10 +14,26 @@ const { v4: uuidv4 } = require('uuid');
 router.route('/posts/url')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
   let url = req.headers.url;
+
+  let altURLs = util.constructAltURLs([url]);
+
+  let wProtocolAlts = altURLs.map(url => {
+    if (url.indexOf("//") == -1) {
+      if (url.indexOf("www") == -1)
+        return 'https://www.' + url;
+      else
+        return 'https://' + url;
+    }
+    return null;
+
+  }).filter(url => url);
+
+  altURLs = altURLs.concat(wProtocolAlts);
+
   let post = await db.Post.findOne({
     where: {
       url: {
-        [Op.in]: util.constructAltURLs([url])
+        [Op.in]: altURLs
       }
     }
   });
