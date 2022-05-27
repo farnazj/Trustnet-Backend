@@ -1,0 +1,179 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "winston\\.0b312cdc2eda66ef6c7376c494d6bfc4ec54d5d3-audit.json",
+    "files": [
+        {
+            "date": 1646081563228,
+            "name": "winston\\error-2022-02-28-15.log",
+            "hash": "f58df6820d18343bd9b3783bdaaa5a63"
+        },
+        {
+            "date": 1646082660492,
+            "name": "winston\\error-2022-02-28-16.log",
+            "hash": "21a9b75c4bbbe1fdb6677994461d34d4"
+        },
+        {
+            "date": 1646086080664,
+            "name": "winston\\error-2022-02-28-17.log",
+            "hash": "6aa4a47b63ee97f0e6975324674d85c5"
+        },
+        {
+            "date": 1646089501054,
+            "name": "winston\\error-2022-02-28-18.log",
+            "hash": "6956875d1747a2197bbedd19dc1800aa"
+        },
+        {
+            "date": 1646095536990,
+            "name": "winston\\error-2022-02-28-19.log",
+            "hash": "48994b668919f4ac85212625dad04ea6"
+        },
+        {
+            "date": 1646096580560,
+            "name": "winston\\error-2022-02-28-20.log",
+            "hash": "cde4fc371d68ecb73b38628343dccf96"
+        },
+        {
+            "date": 1646100300644,
+            "name": "winston\\error-2022-02-28-21.log",
+            "hash": "6de9da9560b2264a244243a92adadc47"
+        },
+        {
+            "date": 1646103720944,
+            "name": "winston\\error-2022-02-28-22.log",
+            "hash": "f2c9f8ddaaff41d4915fb84d73d571a6"
+        },
+        {
+            "date": 1646107440580,
+            "name": "winston\\error-2022-02-28-23.log",
+            "hash": "fbff11c904dd92734c390677278ca803"
+        },
+        {
+            "date": 1646111040542,
+            "name": "winston\\error-2022-03-01-00.log",
+            "hash": "48753609aec81d82daffcff3aecc47ac"
+        },
+        {
+            "date": 1646114700529,
+            "name": "winston\\error-2022-03-01-01.log",
+            "hash": "c14d4064077e974b29a16cf70cd73381"
+        },
+        {
+            "date": 1646118300619,
+            "name": "winston\\error-2022-03-01-02.log",
+            "hash": "1bf3dc84c7fdfbf995bd5b35b183dcf2"
+        },
+        {
+            "date": 1646121900515,
+            "name": "winston\\error-2022-03-01-03.log",
+            "hash": "3f48f7bb9217114217510c618cced179"
+        },
+        {
+            "date": 1646143128378,
+            "name": "winston\\error-2022-03-01-08.log",
+            "hash": "ca5c1f1282d5a52649b9720f36757f4b"
+        },
+        {
+            "date": 1646143201204,
+            "name": "winston\\error-2022-03-01-09.log",
+            "hash": "15f4268bfa378b7c3c3572bf36db7b79"
+        },
+        {
+            "date": 1646146860822,
+            "name": "winston\\error-2022-03-01-10.log",
+            "hash": "671c4886b815006630487c3fe0dcfce3"
+        },
+        {
+            "date": 1646150460982,
+            "name": "winston\\error-2022-03-01-11.log",
+            "hash": "9fb9c0b8bd811a4f760609d8caee494e"
+        },
+        {
+            "date": 1646154420770,
+            "name": "winston\\error-2022-03-01-12.log",
+            "hash": "6702205d8cdb9c842e41d67fdf17395d"
+        },
+        {
+            "date": 1646158080734,
+            "name": "winston\\error-2022-03-01-13.log",
+            "hash": "55664b083f6adb24a6efd19f888599e8"
+        },
+        {
+            "date": 1646161441113,
+            "name": "winston\\error-2022-03-01-14.log",
+            "hash": "7bb748f01a7c66715a3e7e23fbeb7b8a"
+        },
+        {
+            "date": 1646164920629,
+            "name": "winston\\error-2022-03-01-15.log",
+            "hash": "bc19ad5d54b9e8b362778c98f57787dd"
+        },
+        {
+            "date": 1646168405471,
+            "name": "winston\\error-2022-03-01-16.log",
+            "hash": "00f91e134fc242c0c49fc5562c18087e"
+        },
+        {
+            "date": 1646172721402,
+            "name": "winston\\error-2022-03-01-17.log",
+            "hash": "1881e390b3813df38ff40788dee01359"
+        },
+        {
+            "date": 1646175900734,
+            "name": "winston\\error-2022-03-01-18.log",
+            "hash": "08680bc02ebeb9184a4a70db911e5ff7"
+        },
+        {
+            "date": 1646179680910,
+            "name": "winston\\error-2022-03-01-19.log",
+            "hash": "19fae5aba938e72219b09642e5cbc84f"
+        },
+        {
+            "date": 1646183401208,
+            "name": "winston\\error-2022-03-01-20.log",
+            "hash": "b421073c3f062292ad6de385736bb459"
+        },
+        {
+            "date": 1646186701480,
+            "name": "winston\\error-2022-03-01-21.log",
+            "hash": "6c06f9e99f3cba90357bfaa3fe246e97"
+        },
+        {
+            "date": 1646331672089,
+            "name": "winston\\error-2022-03-03-13.log",
+            "hash": "82d68080affa6aaedca41d88be18b782"
+        },
+        {
+            "date": 1646334000595,
+            "name": "winston\\error-2022-03-03-14.log",
+            "hash": "9b3629e735b5efb318acb2b153c53c7b"
+        },
+        {
+            "date": 1646337720470,
+            "name": "winston\\error-2022-03-03-15.log",
+            "hash": "d850d9c322af2fabff4e0d588599d604"
+        },
+        {
+            "date": 1646341320765,
+            "name": "winston\\error-2022-03-03-16.log",
+            "hash": "7e76bcc182242d698ddbc660665f593b"
+        },
+        {
+            "date": 1646345340744,
+            "name": "winston\\error-2022-03-03-17.log",
+            "hash": "2e06fb49cd66e255c27f1836f6d073f2"
+        },
+        {
+            "date": 1646352583372,
+            "name": "winston\\error-2022-03-03-19.log",
+            "hash": "a5ab19ab874680f7dd361ffb273e2968"
+        },
+        {
+            "date": 1646439218484,
+            "name": "winston/error-2022-03-04-19.log",
+            "hash": "a4ea19e5e9a4da18e0f0a625d91fb72a"
+        }
+    ]
+}
