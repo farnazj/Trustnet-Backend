@@ -5,6 +5,7 @@ var moment = require('moment');
 var db  = require('../models');
 var routeHelpers = require('../lib/routeHelpers');
 var constants = require('../lib/constants');
+var util = require('../lib/util');
 var wrapAsync = require('../lib/wrappers').wrapAsync;
 const Op = Sequelize.Op;
 const { v4: uuidv4 } = require('uuid');
@@ -13,9 +14,27 @@ const { v4: uuidv4 } = require('uuid');
 router.route('/posts/url')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
   let url = req.headers.url;
+
+  let altURLs = util.constructAltURLs([url]);
+
+  let wProtocolAlts = altURLs.map(url => {
+    if (url.indexOf("//") == -1) {
+      if (url.indexOf("www") == -1)
+        return 'https://www.' + url;
+      else
+        return 'https://' + url;
+    }
+    return null;
+
+  }).filter(url => url);
+
+  altURLs = altURLs.concat(wProtocolAlts);
+
   let post = await db.Post.findOne({
     where: {
-      url: url
+      url: {
+        [Op.in]: altURLs
+      }
     }
   });
 

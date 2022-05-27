@@ -6,7 +6,7 @@ var wrapAsync = require('../lib/wrappers').wrapAsync;
 var db  = require('../models');
 var constants = require('../lib/constants');
 const logger = require('../lib/logger');
-var transporter = require('../lib/transporter');
+var transporterProm = require('../lib/transporter');
 var Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 var crypto = require('crypto');
@@ -95,6 +95,8 @@ router.route('/signup')
           <br>
           <p>-The ${siteName} team</p>`
         };
+
+        let transporter = await transporterProm;
 
         transporter.sendMail(signupMailOptions, function (err, info) {
           if(err)
@@ -229,6 +231,8 @@ router.route('/forgot-password')
           <br>
           <p>-The ${constants.SITE_NAME} team</p>`
         };
+
+        let transporter = await transporterProm;
 
         transporter.sendMail(passResetMailOptions, function (err, info) {
            if(err)

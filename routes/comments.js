@@ -12,12 +12,14 @@ const Op = Sequelize.Op;
 
 
 // Query Params: offset, limit
-router.route('/comments/trees/:root_set_id')
+router.route('/comments/trees/:post_id/:root_set_id')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
     
     let paginationReq = routeHelpers.getLimitOffset(req);
+
     let comments = await db.Comment.findAll({
         where: {
+            postId: req.params.post_id,
             rootSetId: req.params.root_set_id,
             version: 1
         },
