@@ -11,7 +11,7 @@ var Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 var crypto = require('crypto');
 var path = require('path');
-require('dotenv').config({ path: path.join(__dirname,'.env') })
+require('dotenv').config({ path: path.join(__dirname,'/../.env') })
 
 
 router.route('/login')
