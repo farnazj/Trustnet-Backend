@@ -4,8 +4,8 @@ var feedHelpers = require('./lib/feedHelpers');
 var fs = require("fs");
 // var kue = require('kue')
 //  , queue = kue.createQueue();
-
-var media = JSON.parse(fs.readFileSync("./jsons/media.json"));
+var path = require('path');
+var media = JSON.parse(fs.readFileSync(path.join(__dirname, "jsons/media.json")));
 
 module.exports = async function(){
 
