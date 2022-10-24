@@ -10,7 +10,8 @@ var transporterProm = require('../lib/transporter');
 var Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 var crypto = require('crypto');
-require('dotenv').config();
+var path = require('path');
+require('dotenv').config({ path: path.join(__dirname,'/../.env') })
 
 
 router.route('/login')
@@ -40,8 +41,11 @@ router.route('/logout')
 
 .post( function(req, res) {
 
-  req.logout();
-  res.sendStatus(200);
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.sendStatus(200);
+
+  });
 });
 
 

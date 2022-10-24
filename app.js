@@ -16,7 +16,7 @@ var compression = require('compression');
 var helmet = require('helmet');
 const { v4: uuidv4 } = require('uuid');
 var rfs = require('rotating-file-stream');
-require('dotenv').config(); //for loading environment variables into process.env
+require('dotenv').config({ path: path.join(__dirname,'/../.env') }); //for loading environment variables into process.env
 var redisClient = require('./lib/redisConfigs');
 
 const { AssertionError } = require('assert');

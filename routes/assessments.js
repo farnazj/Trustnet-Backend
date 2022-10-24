@@ -137,7 +137,7 @@ router.route('/posts/assessments/urls')
     assessors = (await boostHelpers.getBoostersandCredSources(req)).followedTrusteds;
   }
 
-  let extendedUrls = util.constructAltURLs(urls)
+  let extendedUrls = util.constructAltURLs(urls);
 
   let whereConfig;
 
@@ -148,10 +148,16 @@ router.route('/posts/assessments/urls')
           [Op.in]: extendedUrls
         }
       }, {
-        '$PostAssessments.SourceId$': {
-          [Op.ne]: Sequelize.col('Post.SourceId')
-        }
-      }]
+        [Op.or]: [{
+          SourceId: null
+        }, {
+          '$PostAssessments.SourceId$': {
+            [Op.ne]: Sequelize.col('Post.SourceId')
+          }
+        }]
+        
+      } 
+      ]
     }
   }
   else {
@@ -176,8 +182,9 @@ router.route('/posts/assessments/urls')
       }
     ]
   });
+  
+  let returnedPosts = boostHelpers.anonymizeAnonymousQuestions(posts.filter(post => post), req.user.id);
 
-  let returnedPosts = boostHelpers.anonymizeAnonymousQuestions(posts.filter(post => post), req.user.id)
   res.send(returnedPosts);
 }));
 
@@ -204,7 +211,14 @@ router.route('/posts/unfollowed-assessors/urls')
       }, {
         '$PostAssessments.SourceId$': {
           [Op.notIn]: followedAndTrusteds,
-          [Op.ne]: Sequelize.col('Post.SourceId')
+          
+          [Op.or]: [{
+            SourceId: null
+          }, {
+            [Op.ne]: Sequelize.col('Post.SourceId')
+          }]
+          
+          
         }
       }, {
         //Either the assessor has posted an assessment or has asked a question with no specified arbiter
@@ -445,12 +459,14 @@ router.route('/urls/redirects')
     })
   }
 
+  console.log('mappings', mappings)
   res.send(mappings);
 })) 
 
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
 
   let urlMappings = JSON.parse(req.body.urlMappings);
+  console.log('what is the client sending for storage', urlMappings)
   urlRedirectHelpers.storeURLMappings(urlMappings);
   res.send({ message: 'URL mappings updated' })
 

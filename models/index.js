@@ -1,6 +1,8 @@
 'use strict';
+var path = require('path');
+require('dotenv').config({ path: path.join(__dirname,'/../.env') })
 
-require('dotenv').config();
+console.log('process env', process.env)
 
 var fs        = require('fs');
 var path      = require('path');
@@ -16,6 +18,7 @@ var logger    = require("../lib/logger")
 // else
 //   config.logging = false;
 
+console.log('confiiiig', config)
 
 if (config.use_env_variable) {
   var sequelize = new Sequelize(process.env[config.use_env_variable], config);
