@@ -48,8 +48,11 @@ router.route('/logout')
 
 .post( function(req, res) {
 
-  req.logout();
-  res.sendStatus(200);
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.sendStatus(200);
+
+  });
 });
 
 
