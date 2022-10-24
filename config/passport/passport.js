@@ -2,8 +2,8 @@ var LocalStrategy = require('passport-local').Strategy;
 var models = require('../../models');
 var routeHelpers = require('../../lib/routeHelpers');
 var bCrypt = require('bcrypt');
-var kue = require('kue')
- , queue = kue.createQueue();
+// var kue = require('kue')
+//  , queue = kue.createQueue();
 
 module.exports = function(passport) {
 
@@ -25,7 +25,6 @@ module.exports = function(passport) {
                   return done(null, false, {
                     message: 'That username is already taken'
                   });
-
                 }
                 else {
                   User.findOne({
@@ -34,15 +33,15 @@ module.exports = function(passport) {
                      }
                    }).then(function(user) {
 
-                      if (user) {
-                        return done(null, false, {
-                          message: 'That email is already taken'
-                         });
-                      }
-                      else {
-                        routeHelpers.generateHash(password).then((userPassword) => {
+                    if (user && user.isVerified) {
+                      return done(null, false, {
+                        message: 'That email is already taken'
+                        });
+                    }
+                    else {
+                      routeHelpers.generateHash(password).then((userPassword) => {
 
-                        var data = {
+                        let data = {
                           firstName: req.body.firstName,
                           lastName: req.body.lastName,
                           userName: username,
@@ -61,26 +60,39 @@ module.exports = function(passport) {
                         });
 
                         if (!dataComplete) {
-                          return done(null, false, {message: 'Request incomplete'});
+                          return done(null, false, { message: 'Request incomplete' });
                         }
                         else {
 
-                          User.create(data).then(function(newUser, created) {
+                          if (!user) {
+                            User.create(data).then((newUser, created) => {
 
-                            if (!newUser) {
-                              return done(null, false, {message: 'Sth went wrong'});
-                            }
+                              if (!newUser) {
+                                return done(null, false, { message: 'Sth went wrong' });
+                              }
+                              else {
+                                // queue.create('addNode', {sourceId: newUser.id}).priority('high').save();
+                                return done(null, newUser, { message: 'New user created', type: 'NEW_USER' });
+                              }
 
-                            else {
-                              queue.create('addNode', {sourceId: newUser.id}).priority('high').save();
-                              return done(null, newUser, {message: 'New user created'});
-                            }
+                            })
+                          }
+                          else {
+                            /*
+                            if user has already assessed posts externally, in which case a proxy account for them
+                            already exists. Here type is USER_MERGE
+                            */
+                            User.create(data)
+                            .then( (newUser, created) =>{
+                            return done(null, newUser, { message: 'New user created', type: 'USER_MERGE' });
+                            })
 
-                          })
+                          }
+
                         }
 
-                        })
-                      }
+                      })
+                    }
 
                    })
                 }
@@ -120,7 +132,7 @@ module.exports = function(passport) {
 
           // if no user is found, return the message
           if (!user)
-              return done(null, false, { message: 'No user found' });
+              return done(null, false, { message: 'No user found with the given username' });
           if (!user.isVerified)
               return done(null, false, {message: 'user not activated'});
 

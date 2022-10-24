@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     postCredibility: {
       type: DataTypes.DOUBLE,
       allowNull: false,
-      validate: { //specified in constants.VALIDITY_CODES
+      validate: { //specified in constants.ACCURACY_CODES
         min: -1,
         max: 1,
       }
@@ -19,11 +19,27 @@ module.exports = (sequelize, DataTypes) => {
     },
     isTransitive: {
       type: DataTypes.BOOLEAN
+    },
+    sourceIsAnonymous: {
+      type: DataTypes.BOOLEAN,
+      default: true
     }
 
   }, {
     charset: 'utf8mb4',
   });
+
+
+  Assessment.prototype.toJSON =  function () {
+    var values = Object.assign({}, this.get());
+
+    delete values.AssessmentTargets;
+    return values;
+  }
+
+  Assessment.associate = function (models) {
+    models.Assessment.belongsToMany(models.Source, { as: 'Arbiters', through: 'AssessmentArbiters' });
+  };
 
   return Assessment;
 };

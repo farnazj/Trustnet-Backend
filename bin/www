@@ -9,18 +9,20 @@ var debug = require('debug')('express-example:server');
 var http = require('http');
 var registerMedia = require('../registerNewsMedia');
 var constants = require('../lib/constants')
-var feedHelpers = require('../lib/feedHelpers');
 var garbageCollection = require('../lib/garbageCollection');
+const oldPostsRemoval = require('../lib/oldPostsRemoval');
+const oldURLMappingRemoval = require('../lib/oldURLMappingRemoval');
 const logger = require('../lib/logger');
 var db = require('../models');
 var FeedQueue = require('../lib/feedQueue');
+var AltTitlesRedisHandler = require('../lib/alternativeTitles');
+var URLMappings = require('../lib/urlMappings');
 const CronJob = require('cron').CronJob;
-
 const { fork } = require('child_process');
 
-forked = fork('./lib/graphJobsHandler.js');
-var kue = require('kue')
-  , queue = kue.createQueue();
+//forked = fork('./lib/graphJobsHandler.js');
+// var kue = require('kue')
+//   , queue = kue.createQueue();
 /**
  * Get port from environment and store in Express.
  */
@@ -44,21 +46,34 @@ var server = http.createServer(app);
   feedQueue = await FeedQueue.build();
   logger.info('past registering media');
 
-  forked.send({ message: 'child process is working' });
+  //forked.send({ message: 'child process is working' });
 
-  feedQueue.initFeedUpdateJobs();
+  //feedQueue.initFeedUpdateJobs();
 
-  const garbageCollectionJob = new CronJob('00 */5 * * * *', function() {
+  altTitlesRedisHandler = await AltTitlesRedisHandler.build();
+  urlMappingsRedisHandler = await URLMappings.build();
+
+  const garbageCollectionJob = new CronJob('00 1 4 * * *', function() {
     garbageCollection.removeExpiredTokensAccounts();
   });
 
   garbageCollectionJob.start();
 
+  const oldPostRemoverJob = new CronJob('00 1 2 * * *', function() {
+    oldPostsRemoval.removeOldPosts();
+  });
+
+  const oldURLMappingRemovalJob = new CronJob('00 1 3 * * *', function() {
+    oldURLMappingRemoval.removeOldURLMappings();
+  });
+
+  oldPostRemoverJob.start();
+  oldURLMappingRemovalJob.start();
+
   server.listen(port);
   server.on('error', onError);
   server.on('listening', onListening);
  });
-
 
 
 /**

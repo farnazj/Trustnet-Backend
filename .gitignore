@@ -5,5 +5,7 @@
 .DS_Store
 /config/database.json
 .env
+log/
 *.log
+winston/
 dump.rdb

@@ -20,7 +20,10 @@ module.exports = (sequelize, DataTypes) => {
         // validate:{
         //    isUrl: true
         // }
-      }
+      },
+      author: DataTypes.STRING,
+      publishedDate: DataTypes.DATE,
+      opinion: DataTypes.BOOLEAN
   }, {
     charset: 'utf8mb4',
   });
@@ -36,7 +39,9 @@ module.exports = (sequelize, DataTypes) => {
     models.Post.hasMany(models.Boost, {as: 'PostBoosts'});
     models.Post.belongsToMany(models.Source, {as: 'Seers', through: 'PostSeers'});
     models.Post.hasMany(models.Assessment, {as: 'PostAssessments'});
-    models.Post.hasMany(models.CustomTitle, {as: 'PostCustomTitles'});
+    // models.Post.hasMany(models.CustomTitle, {as: 'PostCustomTitles'});
+    models.Post.belongsToMany(models.Tag, {through: 'PostTags'});
+    models.Post.hasMany(models.StandaloneTitle, {as: 'PostStandAloneTitles' });
   };
 
   return Post;
