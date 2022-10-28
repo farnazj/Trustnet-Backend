@@ -5,6 +5,9 @@ module.exports = (sequelize, DataTypes) => {
     body: {
       type: DataTypes.TEXT('long')
     },
+    originTime: {
+      type: DataTypes.DATE
+    },
     version: {
       type: DataTypes.INTEGER,
       defaultValue: 1
