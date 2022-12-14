@@ -19,7 +19,7 @@
     "cron": "^1.8.2",
     "debug": "~4.2.0",
     "dotenv": "^8.2.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-session": "^1.17.1",
     "extend": "^3.0.2",
     "fastpriorityqueue": "^0.6.3",
