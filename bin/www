@@ -48,7 +48,7 @@ var server = http.createServer(app);
 
   //forked.send({ message: 'child process is working' });
 
-  //feedQueue.initFeedUpdateJobs();
+  feedQueue.initFeedUpdateJobs();
 
   altTitlesRedisHandler = await AltTitlesRedisHandler.build();
   urlMappingsRedisHandler = await URLMappings.build();

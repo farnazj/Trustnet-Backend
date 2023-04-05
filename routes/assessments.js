@@ -213,7 +213,7 @@ router.route('/posts/unfollowed-assessors/urls')
           [Op.notIn]: followedAndTrusteds,
           
           [Op.or]: [{
-            SourceId: null
+            [op.eq]: null
           }, {
             [Op.ne]: Sequelize.col('Post.SourceId')
           }]
@@ -302,6 +302,8 @@ expects req.body of the form:
   let post = await db.Post.findOne({
     where: { url: util.extractHostname(req.body.url) }
   });  
+
+  console.log('post chi shod', post)
   
   let authUser = await db.Source.findByPk(req.user.id);
 
