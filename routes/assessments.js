@@ -213,7 +213,7 @@ router.route('/posts/unfollowed-assessors/urls')
           [Op.notIn]: followedAndTrusteds,
           
           [Op.or]: [{
-            [op.eq]: null
+            [Op.eq]: null
           }, {
             [Op.ne]: Sequelize.col('Post.SourceId')
           }]
