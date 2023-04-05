@@ -85,7 +85,7 @@ expects req.body of the form:
             body: req.body.body,
             version: 1,
             setId: req.params.set_id,
-            createdAt: baseComment.createdAt,
+            originTime: baseComment.originTime,
             parentType: baseComment.parentType,
             parentId: baseComment.parentId,
             parentSetId: baseComment.parentSetId,
@@ -240,9 +240,12 @@ expects req.body of the form:
 
     let [comment, authUser, post, parentInstance] = await Promise.all([ commentProm, authUserProm, postProm, parentInstanceProm ]);
 
+    const originTimeProm = comment.update({
+        'originTime': comment.createdAt
+    })
+
     let parentAssociationProm = new Promise((resolve) => resolve());
     let rootAssocationProm = new Promise((resolve) => resolve());
-
     if (req.body.repliesTo) { //if the comment is not a top level comment
         parentAssociationProm = comment.update({
                 'parentType': parseInt(req.body.repliesToType),
@@ -264,7 +267,7 @@ expects req.body of the form:
         }
     }
 
-    await Promise.all( [comment.setSource(authUser), comment.setPost(post), parentAssociationProm, rootAssocationProm ]);
+    await Promise.all( [ originTimeProm, comment.setSource(authUser), comment.setPost(post), parentAssociationProm, rootAssocationProm ]);
     notificationHelpers.notifyAndEmailAboutComment(comment, authUser, post, parentInstance);
     
     res.send({ message: 'Comment posted', data: comment })
