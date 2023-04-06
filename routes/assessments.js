@@ -210,14 +210,16 @@ router.route('/posts/unfollowed-assessors/urls')
         }
       }, {
         '$PostAssessments.SourceId$': {
-          [Op.notIn]: followedAndTrusteds,
-          
-          [Op.or]: [{
-            [Op.eq]: null
+          [Op.and]: [{
+            [Op.notIn]: followedAndTrusteds,
           }, {
-            [Op.ne]: Sequelize.col('Post.SourceId')
+
+            [Op.or]: [{
+              [Op.eq]: null
+            }, {
+              [Op.ne]: Sequelize.col('Post.SourceId')
+            }]
           }]
-          
           
         }
       }, {
@@ -408,6 +410,8 @@ Follow the urls and get the urls where they redirect to
 router.route('/urls/follow-redirects')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
   let urlMapping = await urlRedirectHelpers.followLinkMappings(JSON.parse(req.headers.urls), 2000, 1);
+
+  console.log('following redirect9999', urlMapping)
   urlRedirectHelpers.storeURLMappings(urlMapping);
   res.send(urlMapping);
 }));
@@ -443,6 +447,7 @@ router.route('/urls/redirects')
   
   let originURLs = JSON.parse(req.headers.urls);
   let mappings = await urlMappingsRedisHandler.getURLMapping(originURLs);
+
   let originURLsInDB = originURLs.filter((url, index) => 
     mappings[index]
   );
@@ -461,7 +466,7 @@ router.route('/urls/redirects')
     })
   }
 
-  console.log('mappings', mappings)
+  console.log('mappings from', originURLs, 'to', mappings)
   res.send(mappings);
 })) 
 
