@@ -409,16 +409,27 @@ Follow the urls and get the urls where they redirect to
 */
 router.route('/urls/follow-redirects')
 .get(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
-  let urlMapping = await urlRedirectHelpers.followLinkMappings(JSON.parse(req.headers.urls), 2000, 1);
 
-  console.log('following redirect9999', urlMapping)
-  urlRedirectHelpers.storeURLMappings(urlMapping);
-  res.send(urlMapping);
+  if (req.body.originator.includes('dl.acm.org')) {
+    res.status(403);
+  }
+  else {
+    let urlMapping = await urlRedirectHelpers.followLinkMappings(JSON.parse(req.headers.urls), 2000, 1);
+  
+    urlRedirectHelpers.storeURLMappings(urlMapping);
+    res.send(urlMapping);
+  }
+
 }));
 
 
 router.route('/urls/schedule-redirects')
 .post(routeHelpers.isLoggedIn, wrapAsync(async function(req, res) {
+
+  if (req.body.originator.includes('dl.acm.org')) {
+    res.status(403);
+  }
+  else {
 
   let initialLinks = Object.keys(req.body.urlMappings);
   setTimeout(() => {
@@ -438,6 +449,7 @@ router.route('/urls/schedule-redirects')
   }, 20000)
 
   res.send({ message: 'fetching redirects scheduled' });
+  }
 
 }));
 
